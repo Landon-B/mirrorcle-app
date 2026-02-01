@@ -3,6 +3,7 @@
     "name": "mirrorcle-ios",
     "slug": "mirrorcle-ios",
     "version": "1.0.0",
+    "scheme": "mirrorcle",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -17,7 +18,8 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Mirrorcle needs camera access to show your reflection during affirmation sessions.",
         "NSSpeechRecognitionUsageDescription": "Mirrorcle uses speech recognition to help with affirmation practice."
-      }
+      },
+      "bundleIdentifier": "com.anonymous.mirrorcleios"
     },
     "android": {
       "adaptiveIcon": {
@@ -28,7 +30,8 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
-      ]
+      ],
+      "package": "com.anonymous.mirrorcleios"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -46,7 +49,19 @@
         {
           "cameraPermission": "Mirrorcle needs camera access for mirror sessions."
         }
+      ],
+      [
+        "@react-native-voice/voice",
+        {
+          "microphonePermission": "Mirrorcle needs microphone access to listen during affirmation sessions.",
+          "speechRecognitionPermission": "Mirrorcle uses speech recognition to highlight your affirmations."
+        }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "3473c6ed-a607-4017-9c40-f224d4543c01"
+      }
+    }
   }
 }

@@ -3,9 +3,12 @@ import { View, Text, StyleSheet, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
-import { GradientBackground, PrimaryButton, GhostButton } from '../components/common';
+import { GradientBackground, PrimaryButton, GhostButton, IconButton } from '../components/common';
+import { AffirmationHighlightText } from '../components/affirmation';
 import { PROMPTS } from '../constants';
 import { useStats } from '../hooks/useStats';
+import { useSpeechMatcher } from '../hooks/useSpeechMatcher';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { storageService } from '../services/storage';
 import { formatTime } from '../utils/dateUtils';
 
@@ -16,13 +19,37 @@ export const CameraSessionScreen = ({ navigation }) => {
   const [completedPrompts, setCompletedPrompts] = useState([]);
   const [sessionTime, setSessionTime] = useState(0);
   const [feeling, setFeeling] = useState('');
+  const [speechNote, setSpeechNote] = useState('');
   const { recordSession } = useStats();
+  const promptText = PROMPTS[currentPromptIndex];
+  const { displayTokens, activeToken, updateWithSpeech } = useSpeechMatcher(promptText);
+  const {
+    isListening,
+    partial,
+    finalText,
+    error: speechError,
+    isSupported: isSpeechSupported,
+    startListening,
+    stopListening,
+  } = useSpeechRecognition();
 
   useEffect(() => {
     storageService.getCurrentFeeling().then((value) => {
       if (value) setFeeling(value);
     });
   }, []);
+
+  useEffect(() => {
+    if (partial) updateWithSpeech(partial);
+  }, [partial, updateWithSpeech]);
+
+  useEffect(() => {
+    if (finalText) updateWithSpeech(finalText);
+  }, [finalText, updateWithSpeech]);
+
+  useEffect(() => {
+    if (speechError) setSpeechNote('Speech recognition error. Try again.');
+  }, [speechError]);
 
   useEffect(() => {
     let interval;
@@ -74,6 +101,26 @@ export const CameraSessionScreen = ({ navigation }) => {
   };
 
   const progress = (completedPrompts.length / PROMPTS.length) * 100;
+  const speechStatus = !isSpeechSupported
+    ? 'Speech recognition unavailable'
+    : isListening
+      ? 'Listening for your affirmation...'
+      : 'Tap the mic to start speaking';
+
+  const toggleListening = async () => {
+    if (isListening) {
+      await stopListening();
+      return;
+    }
+
+    if (!isSpeechSupported) {
+      setSpeechNote('Speech recognition is not configured for this device yet.');
+      return;
+    }
+
+    setSpeechNote('');
+    await startListening({ language: 'en-US' });
+  };
 
   return (
     <GradientBackground>
@@ -92,7 +139,17 @@ export const CameraSessionScreen = ({ navigation }) => {
               <CameraView style={styles.cameraView} facing="front" />
               <View style={styles.cameraOverlay}>
                 <View style={styles.promptCard}>
-                  <Text style={styles.promptText}>"{PROMPTS[currentPromptIndex]}"</Text>
+                  <AffirmationHighlightText
+                    tokens={displayTokens}
+                    activeToken={activeToken}
+                    style={styles.promptText}
+                    spokenStyle={styles.promptSpoken}
+                    currentStyle={styles.promptCurrent}
+                    pendingStyle={styles.promptPending}
+                    showQuotes
+                  />
+                  {speechNote ? <Text style={styles.speechNote}>{speechNote}</Text> : null}
+                  {isListening ? <Text style={styles.listeningBadge}>Listening...</Text> : null}
                 </View>
               </View>
             </View>
@@ -121,6 +178,11 @@ export const CameraSessionScreen = ({ navigation }) => {
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${progress}%` }]} />
           </View>
+        </View>
+
+        <View style={styles.speechRow}>
+          <Text style={styles.speechStatusText}>{speechStatus}</Text>
+          <IconButton icon={isListening ? 'mic-off' : 'mic'} onPress={toggleListening} active={isListening} />
         </View>
 
         <View style={styles.controlRow}>
@@ -173,7 +235,12 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 18,
   },
-  promptText: { color: '#fff', fontSize: 22, textAlign: 'center' },
+  promptText: { color: '#fff', fontSize: 22, textAlign: 'center', lineHeight: 30 },
+  promptSpoken: { color: '#34D399' },
+  promptCurrent: { color: '#C084FC', fontWeight: '700' },
+  promptPending: { color: '#E2E8F0' },
+  speechNote: { color: '#FCA5A5', fontSize: 12, textAlign: 'center', marginTop: 8 },
+  listeningBadge: { color: '#A7F3D0', fontSize: 12, textAlign: 'center', marginTop: 6 },
   cameraPlaceholder: {
     flex: 1,
     backgroundColor: 'rgba(30, 41, 59, 0.7)',
@@ -196,6 +263,14 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   progressFill: { height: '100%', backgroundColor: '#A855F7' },
+  speechRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginTop: 12,
+  },
+  speechStatusText: { color: '#CBD5F5', fontSize: 12, flex: 1, marginRight: 12 },
   controlRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginTop: 12 },
   rowButtons: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingBottom: 16, marginTop: 12 },
 });
