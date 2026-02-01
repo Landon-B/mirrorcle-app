@@ -1,0 +1,192 @@
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, StatusBar, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { GradientBackground } from '../components/common';
+import { THEMES, getFreeThemes, getPremiumThemes } from '../constants';
+import { useTheme } from '../context/ThemeContext';
+import { useApp } from '../context/AppContext';
+
+export const ThemesScreen = ({ navigation }) => {
+  const { theme, changeTheme } = useTheme();
+  const { isPro } = useApp();
+
+  const freeThemes = getFreeThemes();
+  const premiumThemes = getPremiumThemes();
+
+  const handleThemeSelect = (selectedTheme) => {
+    if (selectedTheme.isPremium && !isPro) {
+      navigation.navigate('Paywall');
+      return;
+    }
+    changeTheme(selectedTheme.id);
+  };
+
+  const renderThemeCard = (themeOption) => {
+    const isSelected = theme.id === themeOption.id;
+    const isLocked = themeOption.isPremium && !isPro;
+
+    return (
+      <Pressable
+        key={themeOption.id}
+        onPress={() => handleThemeSelect(themeOption)}
+        style={[styles.themeCard, isSelected && styles.themeCardSelected]}
+      >
+        <LinearGradient
+          colors={themeOption.gradient}
+          style={styles.themePreview}
+        >
+          <LinearGradient
+            colors={themeOption.primary}
+            style={styles.themeAccent}
+          />
+          {isLocked && (
+            <View style={styles.lockBadge}>
+              <Ionicons name="lock-closed" size={14} color="#fff" />
+            </View>
+          )}
+          {isSelected && (
+            <View style={styles.checkBadge}>
+              <Ionicons name="checkmark" size={14} color="#fff" />
+            </View>
+          )}
+        </LinearGradient>
+        <Text style={styles.themeName}>{themeOption.name}</Text>
+        {isLocked && <Text style={styles.proBadge}>PRO</Text>}
+      </Pressable>
+    );
+  };
+
+  return (
+    <GradientBackground>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.header}>
+          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </Pressable>
+          <Text style={styles.title}>Themes</Text>
+          <View style={styles.placeholder} />
+        </View>
+
+        <ScrollView contentContainerStyle={styles.content}>
+          <Text style={styles.sectionTitle}>Free Themes</Text>
+          <View style={styles.themesGrid}>
+            {freeThemes.map(renderThemeCard)}
+          </View>
+
+          <Text style={styles.sectionTitle}>Premium Themes</Text>
+          <View style={styles.themesGrid}>
+            {premiumThemes.map(renderThemeCard)}
+          </View>
+
+          {!isPro && (
+            <Pressable
+              style={styles.upgradeCard}
+              onPress={() => navigation.navigate('Paywall')}
+            >
+              <LinearGradient
+                colors={['#F59E0B', '#F97316']}
+                style={styles.upgradeGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Ionicons name="crown" size={24} color="#fff" />
+                <View style={styles.upgradeText}>
+                  <Text style={styles.upgradeTitle}>Unlock Premium Themes</Text>
+                  <Text style={styles.upgradeSubtitle}>Get access to all themes and more</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color="#fff" />
+              </LinearGradient>
+            </Pressable>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </GradientBackground>
+  );
+};
+
+const styles = StyleSheet.create({
+  safeArea: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: { color: '#fff', fontSize: 20, fontWeight: '600' },
+  placeholder: { width: 40 },
+  content: { padding: 20, gap: 20 },
+  sectionTitle: { color: '#CBD5F5', fontSize: 14, fontWeight: '600', textTransform: 'uppercase' },
+  themesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+  themeCard: {
+    width: '47%',
+    alignItems: 'center',
+    gap: 8,
+  },
+  themeCardSelected: {},
+  themePreview: {
+    width: '100%',
+    aspectRatio: 1.2,
+    borderRadius: 16,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  themeAccent: {
+    width: '60%',
+    height: 8,
+    borderRadius: 4,
+  },
+  lockBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#22C55E',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeName: { color: '#fff', fontSize: 14, fontWeight: '500' },
+  proBadge: {
+    color: '#F59E0B',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  upgradeCard: { marginTop: 20 },
+  upgradeGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderRadius: 20,
+    gap: 16,
+  },
+  upgradeText: { flex: 1 },
+  upgradeTitle: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  upgradeSubtitle: { color: 'rgba(255, 255, 255, 0.8)', fontSize: 12, marginTop: 2 },
+});
