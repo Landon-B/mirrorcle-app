@@ -12,6 +12,9 @@ import {
   OnboardingScreen,
   PaywallScreen,
   NotificationSettingsScreen,
+  WelcomeScreen,
+  CreateAccountScreen,
+  LoginScreen,
 } from '../screens';
 import { useApp } from '../context/AppContext';
 
@@ -27,9 +30,12 @@ export const AppNavigator = () => {
   return (
     <Stack.Navigator
       screenOptions={{ headerShown: false }}
-      initialRouteName={hasCompletedOnboarding ? 'Home' : 'Onboarding'}
+      initialRouteName={hasCompletedOnboarding ? 'AffirmationHome' : 'Welcome'}
     >
-      {/* Onboarding */}
+      {/* Auth Flow */}
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
 
       {/* Main Flow */}

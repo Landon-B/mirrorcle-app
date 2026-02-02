@@ -32,7 +32,7 @@ export const PrimaryButton = ({ title, icon, onPress, disabled, style }) => {
 };
 
 const styles = StyleSheet.create({
-  primaryButton: { width: '100%' },
+  primaryButton: {},
   primaryButtonGradient: {
     borderRadius: 999,
     paddingVertical: 18,

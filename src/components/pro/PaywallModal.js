@@ -33,7 +33,7 @@ export const PaywallModal = ({ visible, onClose, feature }) => {
         <View style={styles.sheet}>
           <View style={styles.header}>
             <LinearGradient colors={['#F59E0B', '#F97316']} style={styles.badge}>
-              <Ionicons name="crown" size={24} color="#fff" />
+              <Ionicons name="diamond" size={24} color="#fff" />
             </LinearGradient>
             <Text style={styles.title}>Unlock {feature || 'Pro Features'}</Text>
             <Text style={styles.subtitle}>Upgrade to access all premium features</Text>

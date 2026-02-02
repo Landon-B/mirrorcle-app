@@ -33,7 +33,7 @@ export const ReflectionScreen = ({ navigation }) => {
         <ScrollView contentContainerStyle={styles.reflectionContainer}>
           <View style={styles.reflectionHeader}>
             <LinearGradient colors={['#A855F7', '#EC4899']} style={styles.reflectionBadge}>
-              <Ionicons name="award" size={28} color="#fff" />
+              <Ionicons name="trophy" size={28} color="#fff" />
             </LinearGradient>
             <Text style={styles.sectionTitle}>Reflection Room</Text>
             <Text style={styles.sectionSubtitle}>{randomMessage}</Text>

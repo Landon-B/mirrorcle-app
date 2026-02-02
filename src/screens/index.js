@@ -9,3 +9,6 @@ export { ThemesScreen } from './ThemesScreen';
 export { OnboardingScreen } from './OnboardingScreen';
 export { PaywallScreen } from './PaywallScreen';
 export { NotificationSettingsScreen } from './NotificationSettingsScreen';
+export { WelcomeScreen } from './WelcomeScreen';
+export { CreateAccountScreen } from './CreateAccountScreen';
+export { LoginScreen } from './LoginScreen';

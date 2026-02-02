@@ -92,7 +92,7 @@ export const ThemesScreen = ({ navigation }) => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Ionicons name="crown" size={24} color="#fff" />
+                <Ionicons name="diamond" size={24} color="#fff" />
                 <View style={styles.upgradeText}>
                   <Text style={styles.upgradeTitle}>Unlock Premium Themes</Text>
                   <Text style={styles.upgradeSubtitle}>Get access to all themes and more</Text>

@@ -81,7 +81,7 @@ export const AffirmationHomeScreen = ({ navigation }) => {
 
   const settingsItems = [
     {
-      icon: 'crown',
+      icon: 'diamond',
       label: 'Upgrade to Pro',
       subtitle: isPro ? 'You are a Pro member!' : 'Unlock premium features',
       colors: ['#F59E0B', '#F97316'],

@@ -44,7 +44,7 @@ export const PaywallScreen = ({ navigation }) => {
 
           <View style={styles.proContent}>
             <LinearGradient colors={['#F59E0B', '#F97316']} style={styles.proBadge}>
-              <Ionicons name="crown" size={48} color="#fff" />
+              <Ionicons name="diamond" size={48} color="#fff" />
             </LinearGradient>
             <Text style={styles.proTitle}>You're a Pro!</Text>
             <Text style={styles.proSubtitle}>Thank you for supporting Mirrorcle</Text>
@@ -68,7 +68,7 @@ export const PaywallScreen = ({ navigation }) => {
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.heroSection}>
             <LinearGradient colors={['#F59E0B', '#F97316']} style={styles.crownBadge}>
-              <Ionicons name="crown" size={36} color="#fff" />
+              <Ionicons name="diamond" size={36} color="#fff" />
             </LinearGradient>
             <Text style={styles.heroTitle}>Upgrade to Pro</Text>
             <Text style={styles.heroSubtitle}>Unlock the full Mirrorcle experience</Text>

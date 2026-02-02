@@ -51,11 +51,12 @@ export const FeelingsScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.rowButtons}>
-            <GhostButton title="Back" onPress={() => navigation.goBack()} />
+            <GhostButton title="Back" onPress={() => navigation.goBack()} style={styles.flexButton} />
             <PrimaryButton
               title="Continue"
               onPress={handleContinue}
               disabled={!selected}
+              style={styles.flexButton}
             />
           </View>
         </ScrollView>
@@ -86,6 +87,7 @@ const styles = StyleSheet.create({
   },
   feelingText: { color: '#CBD5F5', fontSize: 16 },
   feelingTextActive: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  rowButtons: { flexDirection: 'row', gap: 12, marginTop: 20 },
+  rowButtons: { flexDirection: 'row', gap: 12, marginTop: 20, width: '100%' },
+  flexButton: { flex: 1 },
   buttonPressed: { transform: [{ scale: 0.98 }] },
 });
