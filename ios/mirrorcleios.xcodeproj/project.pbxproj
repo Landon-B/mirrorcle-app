@@ -8,25 +8,25 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		317003955A8EAE0E2A3D938F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 1C0B50D206FD2FCDF164E7E6 /* PrivacyInfo.xcprivacy */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		668C52E18B5C6825B460195A /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD337D0257CF3F79B607B593 /* ExpoModulesProvider.swift */; };
-		86AFC73B76CB6DABA193E93E /* libPods-mirrorcleios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BA9CF4DFA1F79091B8315552 /* libPods-mirrorcleios.a */; };
-		B18EFA0974090405E7B0F396 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 1F01FBF86BD73FDB59762E0C /* PrivacyInfo.xcprivacy */; };
+		520D5C526CB5CE86C2C08C08 /* libPods-mirrorcleios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C7C51D6856FCC8B34DC0EC66 /* libPods-mirrorcleios.a */; };
+		765FD3953F3266B853C5DD46 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15CA83E519A244DEC9D88CD9 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		1029CBAF803735C8FBB5A70C /* Pods-mirrorcleios.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mirrorcleios.release.xcconfig"; path = "Target Support Files/Pods-mirrorcleios/Pods-mirrorcleios.release.xcconfig"; sourceTree = "<group>"; };
-		134D3813CB052704D46C4DB7 /* Pods-mirrorcleios.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mirrorcleios.debug.xcconfig"; path = "Target Support Files/Pods-mirrorcleios/Pods-mirrorcleios.debug.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* mirrorcleios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = mirrorcleios.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = mirrorcleios/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = mirrorcleios/Info.plist; sourceTree = "<group>"; };
-		1F01FBF86BD73FDB59762E0C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = mirrorcleios/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		15CA83E519A244DEC9D88CD9 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-mirrorcleios/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		1C0B50D206FD2FCDF164E7E6 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = mirrorcleios/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = mirrorcleios/SplashScreen.storyboard; sourceTree = "<group>"; };
-		BA9CF4DFA1F79091B8315552 /* libPods-mirrorcleios.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-mirrorcleios.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		CD337D0257CF3F79B607B593 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-mirrorcleios/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		C7C51D6856FCC8B34DC0EC66 /* libPods-mirrorcleios.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-mirrorcleios.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC0F1D9C9D3031A0F7B9A773 /* Pods-mirrorcleios.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mirrorcleios.debug.xcconfig"; path = "Target Support Files/Pods-mirrorcleios/Pods-mirrorcleios.debug.xcconfig"; sourceTree = "<group>"; };
+		D9BAAB80EC215B1EA4DB13B1 /* Pods-mirrorcleios.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mirrorcleios.release.xcconfig"; path = "Target Support Files/Pods-mirrorcleios/Pods-mirrorcleios.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = mirrorcleios/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* mirrorcleios-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "mirrorcleios-Bridging-Header.h"; path = "mirrorcleios/mirrorcleios-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -37,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				86AFC73B76CB6DABA193E93E /* libPods-mirrorcleios.a in Frameworks */,
+				520D5C526CB5CE86C2C08C08 /* libPods-mirrorcleios.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,15 +53,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				1F01FBF86BD73FDB59762E0C /* PrivacyInfo.xcprivacy */,
-			);
-			name = mirrorcleios;
-			sourceTree = "<group>";
-		};
-		1C2A6CCF5E025D2A05ECF45B /* mirrorcleios */ = {
-			isa = PBXGroup;
-			children = (
-				CD337D0257CF3F79B607B593 /* ExpoModulesProvider.swift */,
+				1C0B50D206FD2FCDF164E7E6 /* PrivacyInfo.xcprivacy */,
 			);
 			name = mirrorcleios;
 			sourceTree = "<group>";
@@ -70,9 +62,27 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				BA9CF4DFA1F79091B8315552 /* libPods-mirrorcleios.a */,
+				C7C51D6856FCC8B34DC0EC66 /* libPods-mirrorcleios.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		6D27FBFB16E087F905053C21 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				A50C7A0D277C216631BF6C41 /* mirrorcleios */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		791A8479A75E402284286C37 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				CC0F1D9C9D3031A0F7B9A773 /* Pods-mirrorcleios.debug.xcconfig */,
+				D9BAAB80EC215B1EA4DB13B1 /* Pods-mirrorcleios.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -89,8 +99,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				862CD4B8DEF5981E827836D5 /* Pods */,
-				B16D168E682AC8A3387F0F4F /* ExpoModulesProviders */,
+				791A8479A75E402284286C37 /* Pods */,
+				6D27FBFB16E087F905053C21 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -105,22 +115,12 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		862CD4B8DEF5981E827836D5 /* Pods */ = {
+		A50C7A0D277C216631BF6C41 /* mirrorcleios */ = {
 			isa = PBXGroup;
 			children = (
-				134D3813CB052704D46C4DB7 /* Pods-mirrorcleios.debug.xcconfig */,
-				1029CBAF803735C8FBB5A70C /* Pods-mirrorcleios.release.xcconfig */,
+				15CA83E519A244DEC9D88CD9 /* ExpoModulesProvider.swift */,
 			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
-		B16D168E682AC8A3387F0F4F /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				1C2A6CCF5E025D2A05ECF45B /* mirrorcleios */,
-			);
-			name = ExpoModulesProviders;
+			name = mirrorcleios;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -140,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "mirrorcleios" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				50999DF1941552D52F525EE4 /* [Expo] Configure project */,
+				4B81F94B28C1CF38797B8081 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				36DAF119FBFF7AC6B0CAF85C /* [CP] Embed Pods Frameworks */,
+				37190AEEF294B6DB76868686 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				B18EFA0974090405E7B0F396 /* PrivacyInfo.xcprivacy in Resources */,
+				317003955A8EAE0E2A3D938F /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -242,7 +242,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		36DAF119FBFF7AC6B0CAF85C /* [CP] Embed Pods Frameworks */ = {
+		37190AEEF294B6DB76868686 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -264,7 +264,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-mirrorcleios/Pods-mirrorcleios-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		50999DF1941552D52F525EE4 /* [Expo] Configure project */ = {
+		4B81F94B28C1CF38797B8081 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -306,6 +306,8 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
@@ -320,6 +322,8 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -334,7 +338,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				668C52E18B5C6825B460195A /* ExpoModulesProvider.swift in Sources */,
+				765FD3953F3266B853C5DD46 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -343,7 +347,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 134D3813CB052704D46C4DB7 /* Pods-mirrorcleios.debug.xcconfig */;
+			baseConfigurationReference = CC0F1D9C9D3031A0F7B9A773 /* Pods-mirrorcleios.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -379,7 +383,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 1029CBAF803735C8FBB5A70C /* Pods-mirrorcleios.release.xcconfig */;
+			baseConfigurationReference = D9BAAB80EC215B1EA4DB13B1 /* Pods-mirrorcleios.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

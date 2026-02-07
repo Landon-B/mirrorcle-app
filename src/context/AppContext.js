@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { storageService } from '../services/storage';
+import { authService } from '../services/auth';
 
 const AppContext = createContext(null);
 
@@ -26,9 +27,20 @@ export const AppProvider = ({ children }) => {
   const [sessions, setSessions] = useState([]);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     loadAppData();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = authService.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        setHasCompletedOnboarding(true);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const loadAppData = async () => {
@@ -45,7 +57,8 @@ export const AppProvider = ({ children }) => {
       setPreferences(loadedPrefs);
       setFavorites(loadedFavorites);
       setSessions(loadedSessions);
-      setHasCompletedOnboarding(onboardingDone);
+      // For testing: always show login/signup flow
+      setHasCompletedOnboarding(false);
     } catch (error) {
       console.error('Error loading app data:', error);
     } finally {
@@ -76,6 +89,12 @@ export const AppProvider = ({ children }) => {
     await storageService.setOnboardingCompleted();
   }, []);
 
+  const signOut = useCallback(async () => {
+    await authService.signOut();
+    setUser(null);
+    setHasCompletedOnboarding(false);
+  }, []);
+
   const value = {
     // State
     stats,
@@ -85,6 +104,7 @@ export const AppProvider = ({ children }) => {
     hasCompletedOnboarding,
     isLoading,
     isPro: preferences.isPro,
+    user,
 
     // Actions
     updateStats,
@@ -92,6 +112,7 @@ export const AppProvider = ({ children }) => {
     addSession,
     setFavorites,
     completeOnboarding,
+    signOut,
     refreshData: loadAppData,
   };
 

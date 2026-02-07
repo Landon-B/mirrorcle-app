@@ -27,7 +27,14 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
+          <string>mirrorcle</string>
           <string>com.anonymous.mirrorcleios</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>exp+mirrorcle-ios</string>
         </array>
       </dict>
     </array>
@@ -48,6 +55,8 @@
     <string>Mirrorcle needs camera access for mirror sessions.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Mirrorcle needs microphone access to listen during affirmation sessions.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Mirrorcle may save session photos to your library.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
     <string>Mirrorcle uses speech recognition to highlight your affirmations.</string>
     <key>RCTNewArchEnabled</key>

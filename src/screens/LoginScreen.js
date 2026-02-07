@@ -8,12 +8,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
+  Keyboard,
+  TouchableWithoutFeedback,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { GradientBackground, PrimaryButton, GhostButton } from '../components/common';
+import { GradientBackground } from '../components/common';
 import { useApp } from '../context/AppContext';
+import { authService } from '../services/auth';
 
 const QUOTES = [
   {
@@ -34,6 +40,7 @@ export const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { updatePreferences, completeOnboarding } = useApp();
 
   const randomQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
@@ -41,96 +48,140 @@ export const LoginScreen = ({ navigation }) => {
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) return;
 
-    // For prototype, just save a default name and navigate
-    await updatePreferences({ userName: 'Friend' });
-    await completeOnboarding();
-    navigation.replace('AffirmationHome');
+    Keyboard.dismiss();
+    setIsLoading(true);
+
+    try {
+      const { user } = await authService.signIn({
+        email: email.trim(),
+        password: password.trim(),
+      });
+      const userName = user?.user_metadata?.name || 'Friend';
+      await updatePreferences({ userName });
+      await completeOnboarding();
+      navigation.replace('Home');
+    } catch (error) {
+      Alert.alert('Sign In Error', error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const isLoginDisabled = !email.trim() || !password.trim();
+  const handleBack = () => {
+    Keyboard.dismiss();
+    navigation.goBack();
+  };
+
+  const isLoginDisabled = isLoading || !email.trim() || !password.trim();
 
   return (
     <GradientBackground>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
         <StatusBar barStyle="light-content" />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.container}
+          keyboardVerticalOffset={0}
         >
+          {/* Fixed Header with Navigation */}
           <View style={styles.header}>
-            <LinearGradient
-              colors={['#A855F7', '#EC4899']}
-              style={styles.iconContainer}
-            >
-              <Ionicons name="sparkles" size={32} color="#fff" />
-            </LinearGradient>
-            <Text style={styles.title}>Welcome back</Text>
-            <Text style={styles.subtitle}>Continue your journey of self-discovery</Text>
-          </View>
-
-          <View style={styles.quoteCard}>
-            <Text style={styles.quoteText}>"{randomQuote.text}"</Text>
-            <Text style={styles.quoteAuthor}>— {randomQuote.author}</Text>
-          </View>
-
-          <View style={styles.formContainer}>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="mail-outline" size={22} color="#94A3B8" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Email address"
-                placeholderTextColor="#64748B"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-              />
-            </View>
-
-            <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={22} color="#94A3B8" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor="#64748B"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-              />
-              <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
-                <Ionicons
-                  name={showPassword ? "eye-off-outline" : "eye-outline"}
-                  size={22}
-                  color="#94A3B8"
-                />
-              </Pressable>
-            </View>
-
-            <Pressable style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+            <Pressable onPress={handleBack} style={styles.headerButton}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+              <Text style={styles.headerButtonText}>Back</Text>
             </Pressable>
-          </View>
 
-          <View style={styles.buttonSection}>
-            <PrimaryButton
-              title="Sign In"
-              icon="log-in-outline"
+            <Pressable
               onPress={handleLogin}
+              style={[styles.headerButton, styles.headerButtonRight, isLoginDisabled && styles.headerButtonDisabled]}
               disabled={isLoginDisabled}
-            />
-            <GhostButton
-              title="Back"
-              onPress={() => navigation.goBack()}
-            />
-          </View>
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
-            <Pressable onPress={() => navigation.navigate('CreateAccount')}>
-              <Text style={styles.footerLink}>Sign up</Text>
+            >
+              <Text style={[styles.headerButtonText, styles.headerButtonTextRight, isLoginDisabled && styles.headerButtonTextDisabled]}>
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </Text>
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#C084FC" />
+              ) : (
+                <Ionicons
+                  name="log-in-outline"
+                  size={20}
+                  color={isLoginDisabled ? "#64748B" : "#C084FC"}
+                />
+              )}
             </Pressable>
           </View>
+
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.headerContent}>
+                <LinearGradient
+                  colors={['#A855F7', '#EC4899']}
+                  style={styles.iconContainer}
+                >
+                  <Ionicons name="sparkles" size={32} color="#fff" />
+                </LinearGradient>
+                <Text style={styles.title}>Welcome back</Text>
+                <Text style={styles.subtitle}>Continue your journey of self-discovery</Text>
+              </View>
+
+              <View style={styles.quoteCard}>
+                <Text style={styles.quoteText}>"{randomQuote.text}"</Text>
+                <Text style={styles.quoteAuthor}>— {randomQuote.author}</Text>
+              </View>
+
+              <View style={styles.formContainer}>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="mail-outline" size={22} color="#94A3B8" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Email address"
+                    placeholderTextColor="#64748B"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    returnKeyType="next"
+                  />
+                </View>
+
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="lock-closed-outline" size={22} color="#94A3B8" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Password"
+                    placeholderTextColor="#64748B"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    returnKeyType="done"
+                    onSubmitEditing={handleLogin}
+                  />
+                  <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
+                    <Ionicons
+                      name={showPassword ? "eye-off-outline" : "eye-outline"}
+                      size={22}
+                      color="#94A3B8"
+                    />
+                  </Pressable>
+                </View>
+
+                <Pressable style={styles.forgotPassword}>
+                  <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>Don't have an account? </Text>
+                <Pressable onPress={() => navigation.navigate('CreateAccount')}>
+                  <Text style={styles.footerLink}>Sign up</Text>
+                </Pressable>
+              </View>
+            </ScrollView>
+          </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </GradientBackground>
@@ -141,11 +192,49 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   container: {
     flex: 1,
-    padding: 24,
   },
   header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(71, 85, 105, 0.3)',
+  },
+  headerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    minWidth: 80,
+  },
+  headerButtonRight: {
+    justifyContent: 'flex-end',
+  },
+  headerButtonDisabled: {
+    opacity: 0.5,
+  },
+  headerButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 6,
+  },
+  headerButtonTextRight: {
+    color: '#C084FC',
+    fontWeight: '600',
+    marginLeft: 0,
+    marginRight: 6,
+  },
+  headerButtonTextDisabled: {
+    color: '#64748B',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 24,
+  },
+  headerContent: {
+    alignItems: 'center',
     marginBottom: 24,
   },
   iconContainer: {
@@ -218,13 +307,11 @@ const styles = StyleSheet.create({
     color: '#C084FC',
     fontSize: 14,
   },
-  buttonSection: {
-    gap: 12,
-  },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 24,
+    marginTop: 'auto',
+    paddingTop: 24,
   },
   footerText: {
     color: '#94A3B8',

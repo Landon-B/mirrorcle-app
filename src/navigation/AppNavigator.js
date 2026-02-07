@@ -30,7 +30,7 @@ export const AppNavigator = () => {
   return (
     <Stack.Navigator
       screenOptions={{ headerShown: false }}
-      initialRouteName={hasCompletedOnboarding ? 'AffirmationHome' : 'Welcome'}
+      initialRouteName={hasCompletedOnboarding ? 'Home' : 'Welcome'}
     >
       {/* Auth Flow */}
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
