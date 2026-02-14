@@ -89,7 +89,7 @@ export const ForgotPasswordScreen = ({ navigation }) => {
 
   const handleNext = async () => {
     if (step === 0 && !email.trim()) return;
-    if (step === 1 && (otpCode.length !== 6 || !newPassword.trim() || !confirmPassword.trim())) return;
+    if (step === 1 && (otpCode.length !== 8 || !newPassword.trim() || !confirmPassword.trim())) return;
 
     Keyboard.dismiss();
 
@@ -154,7 +154,7 @@ export const ForgotPasswordScreen = ({ navigation }) => {
   const isNextDisabled = () => {
     if (isLoading) return true;
     if (step === 0) return !email.trim();
-    if (step === 1) return otpCode.length !== 6 || !newPassword.trim() || !confirmPassword.trim();
+    if (step === 1) return otpCode.length !== 8 || !newPassword.trim() || !confirmPassword.trim();
     return false;
   };
 
@@ -201,13 +201,13 @@ export const ForgotPasswordScreen = ({ navigation }) => {
               <Ionicons name="keypad-outline" size={22} color="#94A3B8" style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, styles.otpInput]}
-                placeholder="000000"
+                placeholder="00000000"
                 placeholderTextColor="#64748B"
                 value={otpCode}
-                onChangeText={(text) => setOtpCode(text.replace(/[^0-9]/g, '').slice(0, 6))}
+                onChangeText={(text) => setOtpCode(text.replace(/[^0-9]/g, '').slice(0, 8))}
                 keyboardType="number-pad"
                 autoFocus
-                maxLength={6}
+                maxLength={8}
                 returnKeyType="next"
               />
             </View>
