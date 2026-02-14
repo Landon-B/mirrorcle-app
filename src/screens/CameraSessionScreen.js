@@ -1,38 +1,38 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, StatusBar, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { GradientBackground, PrimaryButton, GhostButton } from '../components/common';
 import { AffirmationHighlightText } from '../components/affirmation';
 import { PROMPTS } from '../constants';
+import { affirmationService } from '../services/affirmations';
+import { sessionService } from '../services/session';
 import { useStats } from '../hooks/useStats';
 import { useSpeechMatcher } from '../hooks/useSpeechMatcher';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { useApp } from '../context/AppContext';
 import { storageService } from '../services/storage';
 import { formatTime } from '../utils/dateUtils';
 
 const SESSION_AFFIRMATION_COUNT = 3;
 
-// Get random affirmations for the session
-const getSessionAffirmations = () => {
-  const shuffled = [...PROMPTS].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, SESSION_AFFIRMATION_COUNT);
-};
-
 export const CameraSessionScreen = ({ navigation }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraEnabled, setCameraEnabled] = useState(false);
-  const [sessionAffirmations] = useState(() => getSessionAffirmations());
+  const [sessionAffirmations, setSessionAffirmations] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
   const [sessionTime, setSessionTime] = useState(0);
   const [feeling, setFeeling] = useState('');
   const [sessionStarted, setSessionStarted] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
   const { recordSession } = useStats();
+  const { isPro, user } = useApp();
 
-  const currentAffirmation = sessionAffirmations[currentIndex] || '';
+  const currentAffirmation = sessionAffirmations[currentIndex]?.text || '';
   const { displayTokens, activeToken, isComplete, updateWithSpeech } = useSpeechMatcher(currentAffirmation);
 
   const {
@@ -49,11 +49,59 @@ export const CameraSessionScreen = ({ navigation }) => {
   const ignoredPartial = useRef('');
   const ignoredFinal = useRef('');
 
+  // Load feeling and prompts
   useEffect(() => {
-    storageService.getCurrentFeeling().then((value) => {
-      if (value) setFeeling(value);
-    });
+    loadSessionData();
   }, []);
+
+  const loadSessionData = async () => {
+    try {
+      const currentFeeling = await storageService.getCurrentFeeling();
+      if (currentFeeling) {
+        setFeeling(currentFeeling);
+      }
+
+      // Try to load feeling-based prompts from Supabase
+      try {
+        const prompts = await affirmationService.getPromptsForSession(
+          currentFeeling,
+          {
+            isPro,
+            userId: user?.id,
+            count: SESSION_AFFIRMATION_COUNT,
+          }
+        );
+
+        if (prompts && prompts.length > 0) {
+          // Shuffle the prompts for variety
+          const shuffled = [...prompts].sort(() => Math.random() - 0.5);
+          setSessionAffirmations(shuffled.slice(0, SESSION_AFFIRMATION_COUNT));
+        } else {
+          // Fallback to local prompts
+          useLocalPrompts();
+        }
+      } catch (error) {
+        console.log('Using local prompts:', error.message);
+        useLocalPrompts();
+      }
+    } catch (error) {
+      console.error('Error loading session data:', error);
+      useLocalPrompts();
+    } finally {
+      setIsLoadingPrompts(false);
+    }
+  };
+
+  const useLocalPrompts = () => {
+    const shuffled = [...PROMPTS].sort(() => Math.random() - 0.5);
+    setSessionAffirmations(
+      shuffled.slice(0, SESSION_AFFIRMATION_COUNT).map((text, index) => ({
+        id: `local-${index}`,
+        text,
+        colors: ['#A855F7', '#EC4899'],
+      }))
+    );
+  };
 
   // Update speech matcher with recognized speech - ignore stale data from previous affirmation
   useEffect(() => {
@@ -101,6 +149,16 @@ export const CameraSessionScreen = ({ navigation }) => {
       const newCompletedCount = completedCount + 1;
       setCompletedCount(newCompletedCount);
 
+      // Record affirmation engagement in Supabase
+      const currentAff = sessionAffirmations[currentIndex];
+      if (user && currentAff && !currentAff.id.startsWith('local-')) {
+        sessionService.recordAffirmationEngagement(
+          currentAff.id,
+          true, // engaged (spoken)
+          currentSessionId
+        ).catch(err => console.log('Failed to record engagement:', err));
+      }
+
       // Stop listening during transition
       if (isListening) {
         stopListening();
@@ -124,7 +182,7 @@ export const CameraSessionScreen = ({ navigation }) => {
         }, 1200);
       }
     }
-  }, [isComplete, isTransitioning, completedCount, isListening, stopListening, partial, finalText]);
+  }, [isComplete, isTransitioning, completedCount, isListening, stopListening, partial, finalText, sessionAffirmations, currentIndex, currentSessionId, user]);
 
   // Reset completion flag when affirmation changes
   useEffect(() => {
@@ -176,6 +234,19 @@ export const CameraSessionScreen = ({ navigation }) => {
   };
 
   const progress = (completedCount / SESSION_AFFIRMATION_COUNT) * 100;
+
+  if (isLoadingPrompts) {
+    return (
+      <GradientBackground>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#A855F7" />
+            <Text style={styles.loadingText}>Loading your personalized prompts...</Text>
+          </View>
+        </SafeAreaView>
+      </GradientBackground>
+    );
+  }
 
   return (
     <GradientBackground>
@@ -270,6 +341,16 @@ export const CameraSessionScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    color: '#CBD5F5',
+    fontSize: 16,
+  },
   sessionHeader: { alignItems: 'center', paddingHorizontal: 16, marginTop: 12 },
   sessionTitle: { color: '#fff', fontSize: 26, fontWeight: '700' },
   sessionSubtitle: { color: '#CBD5F5', marginTop: 6, fontSize: 14 },
@@ -284,13 +365,15 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     padding: 16,
+    paddingBottom: 24,
   },
   noCameraOverlay: {
     backgroundColor: 'rgba(30, 41, 59, 0.9)',
     borderRadius: 28,
     position: 'relative',
+    justifyContent: 'center',
   },
   promptCard: {
     backgroundColor: 'rgba(15, 23, 42, 0.8)',
