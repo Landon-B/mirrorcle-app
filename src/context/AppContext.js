@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { storageService } from '../services/storage';
 import { authService } from '../services/auth';
+import { userProfileService } from '../services/user';
+import { sessionService } from '../services/session';
 
 const AppContext = createContext(null);
 
@@ -8,6 +10,8 @@ const initialStats = {
   totalSessions: 0,
   totalAffirmations: 0,
   currentStreak: 0,
+  longestStreak: 0,
+  totalTimeSeconds: 0,
   lastSessionDate: null,
   feelingsHistory: [],
 };
@@ -34,31 +38,120 @@ export const AppProvider = ({ children }) => {
 
     // Listen for auth state changes
     const { data: { subscription } } = authService.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
+      const newUser = session?.user ?? null;
+      setUser(newUser);
+      if (newUser) {
         setHasCompletedOnboarding(true);
+        // Reload data from Supabase when user logs in
+        loadSupabaseData();
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const loadAppData = async () => {
+  // Load data from Supabase (when authenticated)
+  const loadSupabaseData = async () => {
     try {
-      const [loadedStats, loadedPrefs, loadedFavorites, loadedSessions, onboardingDone] = await Promise.all([
-        storageService.getStats(),
-        storageService.getPreferences(),
-        storageService.getFavorites(),
-        storageService.getSessions(),
-        storageService.hasCompletedOnboarding(),
+      const [profile, notificationSettings, userFavorites, userSessions] = await Promise.all([
+        userProfileService.getProfile(),
+        userProfileService.getNotificationSettings(),
+        userProfileService.getFavorites(),
+        sessionService.getSessions({ limit: 100 }),
       ]);
 
-      setStats(loadedStats);
-      setPreferences(loadedPrefs);
-      setFavorites(loadedFavorites);
-      setSessions(loadedSessions);
-      // For testing: always show login/signup flow
-      setHasCompletedOnboarding(false);
+      if (profile) {
+        // Calculate actual total affirmations from session history
+        const totalAffirmations = userSessions
+          ? userSessions.reduce((sum, s) => sum + (s.promptsCompleted || 0), 0)
+          : 0;
+
+        // Get last session date from actual sessions, not login time
+        const lastSessionDate = userSessions && userSessions.length > 0
+          ? userSessions[0].createdAt
+          : null;
+
+        setStats({
+          totalSessions: profile.totalSessions || 0,
+          totalAffirmations,
+          currentStreak: profile.currentStreak || 0,
+          longestStreak: profile.longestStreak || 0,
+          totalTimeSeconds: profile.totalTimeSeconds || 0,
+          lastSessionDate,
+          feelingsHistory: [],
+        });
+
+        setPreferences(prev => ({
+          ...prev,
+          isPro: profile.isPro || false,
+          themeId: profile.themeId || 'cosmic-purple',
+        }));
+      }
+
+      if (notificationSettings) {
+        setPreferences(prev => ({
+          ...prev,
+          notificationsEnabled: notificationSettings.enabled,
+          notificationTime: notificationSettings.time,
+        }));
+      }
+
+      if (userFavorites) {
+        // Transform to match expected format
+        setFavorites(userFavorites.map(fav => ({
+          affirmationId: fav.id,
+          ...fav,
+        })));
+      }
+
+      if (userSessions) {
+        setSessions(userSessions.map(s => ({
+          id: s.id,
+          feeling: s.feelingId,
+          completedPrompts: s.promptsCompleted,
+          duration: s.durationSeconds,
+          date: s.createdAt,
+        })));
+
+        // Update feelings history from sessions
+        const feelingsHistory = userSessions
+          .filter(s => s.feelingId)
+          .map(s => s.feelingId);
+        setStats(prev => ({ ...prev, feelingsHistory }));
+      }
+
+      // Update last login
+      await userProfileService.updateLastLogin();
+    } catch (error) {
+      console.error('Error loading Supabase data:', error);
+    }
+  };
+
+  // Load initial app data (local storage + check auth)
+  const loadAppData = async () => {
+    try {
+      // Check if user is already authenticated
+      const session = await authService.getSession();
+      if (session?.user) {
+        setUser(session.user);
+        setHasCompletedOnboarding(true);
+        await loadSupabaseData();
+      } else {
+        // Load from local storage for unauthenticated users
+        const [loadedStats, loadedPrefs, loadedFavorites, loadedSessions, onboardingDone] = await Promise.all([
+          storageService.getStats(),
+          storageService.getPreferences(),
+          storageService.getFavorites(),
+          storageService.getSessions(),
+          storageService.hasCompletedOnboarding(),
+        ]);
+
+        setStats(loadedStats);
+        setPreferences(loadedPrefs);
+        setFavorites(loadedFavorites);
+        setSessions(loadedSessions);
+        setHasCompletedOnboarding(false);
+      }
     } catch (error) {
       console.error('Error loading app data:', error);
     } finally {
@@ -69,20 +162,84 @@ export const AppProvider = ({ children }) => {
   const updateStats = useCallback(async (newStats) => {
     const updated = { ...stats, ...newStats };
     setStats(updated);
-    await storageService.saveStats(updated);
-  }, [stats]);
+
+    if (user) {
+      // Stats are updated automatically via sessionService
+    } else {
+      await storageService.saveStats(updated);
+    }
+  }, [stats, user]);
 
   const updatePreferences = useCallback(async (newPrefs) => {
     const updated = { ...preferences, ...newPrefs };
     setPreferences(updated);
-    await storageService.savePreferences(updated);
-  }, [preferences]);
+
+    if (user) {
+      try {
+        // Update profile for theme and isPro
+        if (newPrefs.themeId !== undefined || newPrefs.isPro !== undefined) {
+          await userProfileService.updateProfile({
+            themeId: newPrefs.themeId,
+            isPro: newPrefs.isPro,
+          });
+        }
+        // Update notification settings
+        if (newPrefs.notificationsEnabled !== undefined || newPrefs.notificationTime !== undefined) {
+          await userProfileService.updateNotificationSettings({
+            enabled: newPrefs.notificationsEnabled,
+            time: newPrefs.notificationTime,
+          });
+        }
+      } catch (error) {
+        console.error('Error updating preferences in Supabase:', error);
+      }
+    } else {
+      await storageService.savePreferences(updated);
+    }
+  }, [preferences, user]);
 
   const addSession = useCallback(async (sessionData) => {
-    const newSession = await storageService.saveSession(sessionData);
-    setSessions(prev => [...prev, newSession]);
-    return newSession;
-  }, []);
+    if (user) {
+      try {
+        const session = await sessionService.createSession({
+          feelingId: sessionData.feeling,
+          durationSeconds: sessionData.duration || 0,
+          promptsCompleted: sessionData.completedPrompts || 0,
+        });
+
+        const transformedSession = {
+          id: session.id,
+          feeling: session.feelingId,
+          completedPrompts: session.promptsCompleted,
+          duration: session.durationSeconds,
+          date: session.createdAt,
+        };
+
+        setSessions(prev => [...prev, transformedSession]);
+
+        // Refresh stats after session
+        const { currentStreak, longestStreak } = await sessionService.updateStreak();
+        setStats(prev => ({
+          ...prev,
+          totalSessions: prev.totalSessions + 1,
+          totalAffirmations: prev.totalAffirmations + (sessionData.completedPrompts || 0),
+          currentStreak,
+          longestStreak,
+          lastSessionDate: new Date().toISOString(),
+          feelingsHistory: [...prev.feelingsHistory, sessionData.feeling],
+        }));
+
+        return transformedSession;
+      } catch (error) {
+        console.error('Error creating session in Supabase:', error);
+        throw error;
+      }
+    } else {
+      const newSession = await storageService.saveSession(sessionData);
+      setSessions(prev => [...prev, newSession]);
+      return newSession;
+    }
+  }, [user]);
 
   const completeOnboarding = useCallback(async () => {
     setHasCompletedOnboarding(true);
@@ -93,6 +250,11 @@ export const AppProvider = ({ children }) => {
     await authService.signOut();
     setUser(null);
     setHasCompletedOnboarding(false);
+    // Reset to initial state
+    setStats(initialStats);
+    setPreferences(initialPreferences);
+    setFavorites([]);
+    setSessions([]);
   }, []);
 
   const value = {
@@ -113,7 +275,7 @@ export const AppProvider = ({ children }) => {
     setFavorites,
     completeOnboarding,
     signOut,
-    refreshData: loadAppData,
+    refreshData: user ? loadSupabaseData : loadAppData,
   };
 
   return (
