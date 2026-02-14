@@ -64,6 +64,28 @@ class AuthService {
     return data;
   }
 
+  async resetPassword({ email }) {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+    return data;
+  }
+
+  async verifyPasswordReset({ email, token, newPassword }) {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'recovery',
+    });
+    if (error) throw error;
+
+    const { data: updateData, error: updateError } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    if (updateError) throw updateError;
+
+    return updateData;
+  }
+
   onAuthStateChange(callback) {
     return supabase.auth.onAuthStateChange(callback);
   }

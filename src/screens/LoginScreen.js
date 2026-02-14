@@ -169,7 +169,7 @@ export const LoginScreen = ({ navigation }) => {
                   </Pressable>
                 </View>
 
-                <Pressable style={styles.forgotPassword}>
+                <Pressable style={styles.forgotPassword} onPress={() => navigation.navigate('ForgotPassword')}>
                   <Text style={styles.forgotPasswordText}>Forgot password?</Text>
                 </Pressable>
               </View>
