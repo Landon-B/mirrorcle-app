@@ -1,18 +1,78 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, StatusBar, Pressable } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, StatusBar, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GradientBackground, PrimaryButton, Card } from '../components/common';
 import { AFFIRMATIONS, getAffirmationById } from '../constants';
+import { userProfileService } from '../services/user';
 import { useFavorites } from '../hooks/useFavorites';
+import { useApp } from '../context/AppContext';
 
 export const FavoritesScreen = ({ navigation }) => {
   const { favorites, toggleFavorite } = useFavorites();
+  const { user } = useApp();
+  const [favoriteAffirmations, setFavoriteAffirmations] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const favoriteAffirmations = favorites
-    .map(f => getAffirmationById(f.affirmationId))
-    .filter(Boolean);
+  useEffect(() => {
+    loadFavorites();
+  }, [favorites, user]);
+
+  const loadFavorites = async () => {
+    try {
+      if (user) {
+        // For authenticated users, favorites from context already have full affirmation data
+        const supabaseFavorites = await userProfileService.getFavorites();
+        if (supabaseFavorites && supabaseFavorites.length > 0) {
+          setFavoriteAffirmations(supabaseFavorites);
+        } else {
+          setFavoriteAffirmations([]);
+        }
+      } else {
+        // For unauthenticated users, look up affirmations from local constants
+        const localFavorites = favorites
+          .map(f => getAffirmationById(f.affirmationId))
+          .filter(Boolean);
+        setFavoriteAffirmations(localFavorites);
+      }
+    } catch (error) {
+      console.log('Error loading favorites:', error.message);
+      // Fallback to local lookup
+      const localFavorites = favorites
+        .map(f => getAffirmationById(f.affirmationId))
+        .filter(Boolean);
+      setFavoriteAffirmations(localFavorites);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRemoveFavorite = async (affirmationId) => {
+    await toggleFavorite(affirmationId);
+    // Remove from local state immediately for responsive UI
+    setFavoriteAffirmations(prev => prev.filter(a => a.id !== affirmationId));
+  };
+
+  if (isLoading) {
+    return (
+      <GradientBackground>
+        <SafeAreaView style={styles.safeArea}>
+          <StatusBar barStyle="light-content" />
+          <View style={styles.header}>
+            <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </Pressable>
+            <Text style={styles.title}>Favorites</Text>
+            <View style={styles.placeholder} />
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#A855F7" />
+          </View>
+        </SafeAreaView>
+      </GradientBackground>
+    );
+  }
 
   return (
     <GradientBackground>
@@ -51,7 +111,7 @@ export const FavoritesScreen = ({ navigation }) => {
                   >
                     <Text style={styles.affirmationText}>"{affirmation.text}"</Text>
                     <Pressable
-                      onPress={() => toggleFavorite(affirmation.id)}
+                      onPress={() => handleRemoveFavorite(affirmation.id)}
                       style={styles.heartButton}
                     >
                       <Ionicons name="heart" size={20} color="#fff" />
@@ -87,6 +147,11 @@ const styles = StyleSheet.create({
   title: { color: '#fff', fontSize: 20, fontWeight: '600' },
   placeholder: { width: 40 },
   content: { padding: 20, flexGrow: 1 },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   emptyState: {
     flex: 1,
     alignItems: 'center',

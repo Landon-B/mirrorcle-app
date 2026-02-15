@@ -20,7 +20,7 @@ export const OverlaySheet = ({ visible, title, subtitle, items, onClose }) => (
             <Ionicons name="close" size={20} color="#fff" />
           </Pressable>
         </View>
-        <ScrollView contentContainerStyle={styles.overlayContent}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.overlayContent}>
           {items.map((item) => (
             <Pressable key={item.label} onPress={item.onPress} style={styles.overlayItem}>
               <LinearGradient colors={item.colors} style={styles.overlayIconWrap}>

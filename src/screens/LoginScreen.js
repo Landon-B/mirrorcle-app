@@ -43,7 +43,7 @@ export const LoginScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { updatePreferences, completeOnboarding } = useApp();
 
-  const randomQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+  const [randomQuote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)]);
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) return;

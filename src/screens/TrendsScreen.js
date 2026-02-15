@@ -1,11 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, StatusBar, Pressable, Dimensions } from 'react-native';
+import React, { useState, useMemo, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, StatusBar, Pressable, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GradientBackground, Card } from '../components/common';
 import { useApp } from '../context/AppContext';
 import { FEELINGS, getFeelingLabel } from '../constants';
+import { affirmationService } from '../services/affirmations';
+import { sessionService } from '../services/session';
 import { getStartOfWeek, getStartOfMonth } from '../utils/dateUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -17,36 +19,131 @@ const TIME_PERIODS = [
 ];
 
 export const TrendsScreen = ({ navigation }) => {
-  const { stats, sessions } = useApp();
+  const { stats, sessions, user } = useApp();
   const [selectedPeriod, setSelectedPeriod] = useState('week');
+  const [feelings, setFeelings] = useState(FEELINGS);
+  const [activityData, setActivityData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+  }, [user]);
+
+  const loadData = async () => {
+    try {
+      // Load feelings from Supabase
+      const supabaseFeelings = await affirmationService.getFeelings();
+      if (supabaseFeelings && supabaseFeelings.length > 0) {
+        setFeelings(supabaseFeelings);
+      }
+
+      // Load activity data for the calendar
+      if (user) {
+        const fourWeeksAgo = new Date();
+        fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+        const sessionsData = await sessionService.getSessionsInRange(fourWeeksAgo, new Date());
+
+        // Create a set of dates with activity
+        const activityDates = new Set(
+          sessionsData.map(s => new Date(s.createdAt).toISOString().split('T')[0])
+        );
+
+        // Generate 28 days of activity data
+        const activity = [];
+        for (let i = 27; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateStr = date.toISOString().split('T')[0];
+          activity.push({
+            date: dateStr,
+            hasActivity: activityDates.has(dateStr),
+          });
+        }
+        setActivityData(activity);
+      } else {
+        // For unauthenticated users, use local sessions
+        const activityDates = new Set(
+          sessions.map(s => {
+            const date = s.date || s.createdAt;
+            return date ? new Date(date).toISOString().split('T')[0] : null;
+          }).filter(Boolean)
+        );
+
+        const activity = [];
+        for (let i = 27; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateStr = date.toISOString().split('T')[0];
+          activity.push({
+            date: dateStr,
+            hasActivity: activityDates.has(dateStr),
+          });
+        }
+        setActivityData(activity);
+      }
+    } catch (error) {
+      console.log('Error loading trends data:', error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredSessions = useMemo(() => {
     if (selectedPeriod === 'all') return sessions;
 
     const startDate = selectedPeriod === 'week' ? getStartOfWeek() : getStartOfMonth();
-    return sessions.filter(s => s.date >= startDate);
+    return sessions.filter(s => {
+      const sessionDate = s.date || s.createdAt;
+      return sessionDate && sessionDate >= startDate;
+    });
   }, [sessions, selectedPeriod]);
 
   const feelingsDistribution = useMemo(() => {
     const counts = {};
     filteredSessions.forEach(session => {
-      if (session.feeling) {
-        counts[session.feeling] = (counts[session.feeling] || 0) + 1;
+      const feeling = session.feeling || session.feelingId;
+      if (feeling) {
+        counts[feeling] = (counts[feeling] || 0) + 1;
       }
     });
     return Object.entries(counts)
       .map(([feeling, count]) => ({
         feeling,
         count,
-        percentage: (count / filteredSessions.length) * 100,
+        percentage: filteredSessions.length > 0 ? (count / filteredSessions.length) * 100 : 0,
       }))
       .sort((a, b) => b.count - a.count);
   }, [filteredSessions]);
 
   const getFeelingColor = (feelingId) => {
-    const feeling = FEELINGS.find(f => f.id === feelingId);
+    const feeling = feelings.find(f => f.id === feelingId);
     return feeling?.colors || ['#A855F7', '#EC4899'];
   };
+
+  const getFeelingLabelFromData = (feelingId) => {
+    const feeling = feelings.find(f => f.id === feelingId);
+    return feeling?.label || getFeelingLabel(feelingId);
+  };
+
+  if (isLoading) {
+    return (
+      <GradientBackground>
+        <SafeAreaView style={styles.safeArea}>
+          <StatusBar barStyle="light-content" />
+          <View style={styles.header}>
+            <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </Pressable>
+            <Text style={styles.title}>Trends</Text>
+            <View style={styles.placeholder} />
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#A855F7" />
+          </View>
+        </SafeAreaView>
+      </GradientBackground>
+    );
+  }
 
   return (
     <GradientBackground>
@@ -113,7 +210,7 @@ export const TrendsScreen = ({ navigation }) => {
               <View style={styles.barsContainer}>
                 {feelingsDistribution.map((item) => (
                   <View key={item.feeling} style={styles.barRow}>
-                    <Text style={styles.barLabel}>{getFeelingLabel(item.feeling)}</Text>
+                    <Text style={styles.barLabel}>{getFeelingLabelFromData(item.feeling)}</Text>
                     <View style={styles.barTrack}>
                       <LinearGradient
                         colors={getFeelingColor(item.feeling)}
@@ -129,7 +226,7 @@ export const TrendsScreen = ({ navigation }) => {
             )}
           </Card>
 
-          {/* Activity Calendar Placeholder */}
+          {/* Activity Calendar */}
           <Card style={styles.chartCard}>
             <View style={styles.cardHeader}>
               <Ionicons name="calendar" size={18} color="#22D3EE" />
@@ -137,18 +234,15 @@ export const TrendsScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.activityGrid}>
-              {Array.from({ length: 28 }, (_, i) => {
-                const hasActivity = Math.random() > 0.5;
-                return (
-                  <View
-                    key={i}
-                    style={[
-                      styles.activityCell,
-                      hasActivity && styles.activityCellActive,
-                    ]}
-                  />
-                );
-              })}
+              {activityData.map((day, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.activityCell,
+                    day.hasActivity && styles.activityCellActive,
+                  ]}
+                />
+              ))}
             </View>
             <Text style={styles.activityHint}>Last 4 weeks</Text>
           </Card>
@@ -178,6 +272,11 @@ const styles = StyleSheet.create({
   title: { color: '#fff', fontSize: 20, fontWeight: '600' },
   placeholder: { width: 40 },
   content: { padding: 20, gap: 16 },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   periodSelector: {
     flexDirection: 'row',
     backgroundColor: 'rgba(30, 41, 59, 0.6)',

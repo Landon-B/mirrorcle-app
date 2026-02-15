@@ -7,18 +7,9 @@ import { GradientBackground, PrimaryButton, GhostButton } from '../components/co
 import { FEELINGS } from '../constants';
 import { affirmationService } from '../services/affirmations';
 import { storageService } from '../services/storage';
-import { useApp } from '../context/AppContext';
-
-const SESSION_LENGTH_OPTIONS = [
-  { value: 3, label: 'Quick 3' },
-  { value: 5, label: 'Standard 5' },
-  { value: 7, label: 'Deep 7' },
-];
 
 export const FeelingsScreen = ({ navigation }) => {
-  const { preferences, updatePreferences } = useApp();
   const [selected, setSelected] = useState(null);
-  const [sessionLength, setSessionLength] = useState(preferences.preferredSessionLength || 3);
   const [feelings, setFeelings] = useState(FEELINGS); // Fallback to local constants
   const [isLoading, setIsLoading] = useState(true);
 
@@ -38,11 +29,6 @@ export const FeelingsScreen = ({ navigation }) => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSessionLengthChange = (value) => {
-    setSessionLength(value);
-    updatePreferences({ preferredSessionLength: value });
   };
 
   const handleContinue = async () => {
@@ -97,29 +83,6 @@ export const FeelingsScreen = ({ navigation }) => {
             ))}
           </View>
 
-          <View style={styles.sessionLengthContainer}>
-            <Text style={styles.sessionLengthLabel}>Session Length</Text>
-            <View style={styles.sessionLengthPills}>
-              {SESSION_LENGTH_OPTIONS.map((option) => (
-                <Pressable
-                  key={option.value}
-                  onPress={() => handleSessionLengthChange(option.value)}
-                  style={[
-                    styles.sessionLengthPill,
-                    sessionLength === option.value && styles.sessionLengthPillActive,
-                  ]}
-                >
-                  <Text style={[
-                    styles.sessionLengthPillText,
-                    sessionLength === option.value && styles.sessionLengthPillTextActive,
-                  ]}>
-                    {option.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
           <View style={styles.rowButtons}>
             <GhostButton title="Back" onPress={() => navigation.goBack()} style={styles.flexButton} />
             <PrimaryButton
@@ -162,23 +125,6 @@ const styles = StyleSheet.create({
   },
   feelingText: { color: '#CBD5F5', fontSize: 16 },
   feelingTextActive: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  sessionLengthContainer: { width: '100%', marginTop: 20, alignItems: 'center' },
-  sessionLengthLabel: { color: '#CBD5F5', fontSize: 14, marginBottom: 10 },
-  sessionLengthPills: { flexDirection: 'row', gap: 10 },
-  sessionLengthPill: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 999,
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
-    borderWidth: 1,
-    borderColor: 'rgba(71, 85, 105, 0.6)',
-  },
-  sessionLengthPillActive: {
-    backgroundColor: 'rgba(168, 85, 247, 0.25)',
-    borderColor: '#A855F7',
-  },
-  sessionLengthPillText: { color: '#94A3B8', fontSize: 14, fontWeight: '500' },
-  sessionLengthPillTextActive: { color: '#C084FC', fontWeight: '600' },
   rowButtons: { flexDirection: 'row', gap: 12, marginTop: 20, width: '100%' },
   flexButton: { flex: 1 },
   buttonPressed: { transform: [{ scale: 0.98 }] },

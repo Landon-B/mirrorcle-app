@@ -1,32 +1,49 @@
 import { useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { storageService } from '../services/storage';
+import { userProfileService } from '../services/user';
 
 export const useFavorites = () => {
-  const { favorites, setFavorites } = useApp();
+  const { favorites, setFavorites, user } = useApp();
 
   const isFavorite = useCallback((affirmationId) => {
-    return favorites.some(f => f.affirmationId === affirmationId);
+    return favorites.some(f => f.affirmationId === affirmationId || f.id === affirmationId);
   }, [favorites]);
 
   const toggleFavorite = useCallback(async (affirmationId) => {
     const isCurrentlyFavorite = isFavorite(affirmationId);
 
-    if (isCurrentlyFavorite) {
-      // Remove from favorites
-      await storageService.removeFavorite(affirmationId);
-      setFavorites(prev => prev.filter(f => f.affirmationId !== affirmationId));
+    if (user) {
+      // Use Supabase for authenticated users
+      try {
+        if (isCurrentlyFavorite) {
+          await userProfileService.removeFavorite(affirmationId);
+          setFavorites(prev => prev.filter(f => f.affirmationId !== affirmationId && f.id !== affirmationId));
+        } else {
+          await userProfileService.addFavorite(affirmationId);
+          setFavorites(prev => [...prev, { affirmationId, id: affirmationId }]);
+        }
+      } catch (error) {
+        console.error('Error toggling favorite in Supabase:', error);
+        // Don't update local state if Supabase fails
+        return isCurrentlyFavorite;
+      }
     } else {
-      // Add to favorites
-      const newFavorite = await storageService.saveFavorite(affirmationId);
-      setFavorites(prev => [...prev, newFavorite]);
+      // Use local storage for unauthenticated users
+      if (isCurrentlyFavorite) {
+        await storageService.removeFavorite(affirmationId);
+        setFavorites(prev => prev.filter(f => f.affirmationId !== affirmationId));
+      } else {
+        const newFavorite = await storageService.saveFavorite(affirmationId);
+        setFavorites(prev => [...prev, newFavorite]);
+      }
     }
 
     return !isCurrentlyFavorite;
-  }, [isFavorite, setFavorites]);
+  }, [isFavorite, setFavorites, user]);
 
   const getFavoriteAffirmations = useCallback(() => {
-    return favorites.map(f => f.affirmationId);
+    return favorites.map(f => f.affirmationId || f.id);
   }, [favorites]);
 
   return {

@@ -24,6 +24,7 @@ const initialPreferences = {
   notificationTime: '09:00',
   audioAutoPlay: false,
   preferredSessionLength: 3,
+  repeatAffirmations: false,
 };
 
 export const AppProvider = ({ children }) => {

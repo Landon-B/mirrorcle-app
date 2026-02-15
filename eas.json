@@ -12,7 +12,11 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "SUPABASE_URL": "https://xfvdyqkqgeeqnyhnwzvf.supabase.co",
+        "SUPABASE_API_KEY": "@SUPABASE_API_KEY"
+      }
     }
   },
   "submit": {

@@ -35,8 +35,9 @@ export const CameraSessionScreen = ({ navigation }) => {
   const { streakEncouragement, timeOfDay } = usePersonalization();
 
   const sessionAffirmationCount = preferences.preferredSessionLength || 3;
+  const totalCount = preferences.repeatAffirmations ? sessionAffirmationCount * 2 : sessionAffirmationCount;
 
-  const currentAffirmation = sessionAffirmations[currentIndex]?.text || '';
+  const currentAffirmation = sessionAffirmations[currentIndex % sessionAffirmations.length]?.text || '';
   const { displayTokens, activeToken, isComplete, updateWithSpeech } = useSpeechMatcher(currentAffirmation);
 
   const {
@@ -158,7 +159,7 @@ export const CameraSessionScreen = ({ navigation }) => {
         : null;
 
       // Record affirmation engagement in Supabase
-      const currentAff = sessionAffirmations[currentIndex];
+      const currentAff = sessionAffirmations[currentIndex % sessionAffirmations.length];
       if (user && currentAff && !currentAff.id.startsWith('local-')) {
         sessionService.recordAffirmationEngagement(
           currentAff.id,
@@ -181,7 +182,7 @@ export const CameraSessionScreen = ({ navigation }) => {
       }
 
       // Check if session is complete (3 affirmations done)
-      if (newCompletedCount >= sessionAffirmationCount) {
+      if (newCompletedCount >= totalCount) {
         // Session complete - navigate to reflection after delay
         setTimeout(() => {
           handleComplete();
@@ -239,9 +240,7 @@ export const CameraSessionScreen = ({ navigation }) => {
       duration: sessionTime,
       timeOfDay,
     });
-    setCameraEnabled(false);
-    setSessionStarted(false);
-    navigation.navigate('Reflection', {
+    navigation.replace('Reflection', {
       sessionDuration: sessionTime,
       completedCount,
     });
@@ -251,12 +250,19 @@ export const CameraSessionScreen = ({ navigation }) => {
     if (isListening) {
       await stopListening();
     }
-    setCameraEnabled(false);
-    setSessionStarted(false);
-    navigation.navigate('AffirmationHome');
+    await recordSession({
+      feeling,
+      completedPrompts: completedCount,
+      duration: sessionTime,
+      timeOfDay,
+    });
+    navigation.replace('Reflection', {
+      sessionDuration: sessionTime,
+      completedCount,
+    });
   };
 
-  const progress = sessionAffirmationCount > 0 ? (completedCount / sessionAffirmationCount) * 100 : 0;
+  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   if (isLoadingPrompts) {
     return (
@@ -292,7 +298,7 @@ export const CameraSessionScreen = ({ navigation }) => {
                     <View style={styles.completedIndicator}>
                       <Ionicons name="checkmark-circle" size={48} color="#34D399" />
                       <Text style={styles.completedText}>
-                        {completedCount >= sessionAffirmationCount
+                        {completedCount >= totalCount
                           ? "Session Complete!"
                           : "Great job!"}
                       </Text>
@@ -300,7 +306,7 @@ export const CameraSessionScreen = ({ navigation }) => {
                   ) : (
                     <>
                       <Text style={styles.affirmationCounter}>
-                        {currentIndex + 1} of {sessionAffirmationCount}
+                        {completedCount + 1} of {totalCount}
                       </Text>
                       <AffirmationHighlightText
                         tokens={displayTokens}
@@ -330,7 +336,7 @@ export const CameraSessionScreen = ({ navigation }) => {
               <Ionicons name="camera" size={48} color="#94A3B8" />
               <Text style={styles.placeholderTitle}>{streakEncouragement}</Text>
               <Text style={styles.placeholderSubtitle}>
-                Speak {sessionAffirmationCount} affirmations while looking at yourself in the mirror.
+                Speak {totalCount} affirmations while looking at yourself in the mirror.
               </Text>
               <View style={styles.placeholderButtons}>
                 <PrimaryButton title="Enable Camera" icon="camera" onPress={() => startSession(true)} />
@@ -343,7 +349,7 @@ export const CameraSessionScreen = ({ navigation }) => {
         <View style={styles.progressWrap}>
           <View style={styles.progressRow}>
             <Text style={styles.progressText}>
-              {completedCount} of {sessionAffirmationCount} affirmations
+              {completedCount} of {totalCount} affirmations
             </Text>
             <Text style={styles.progressText}>{Math.round(progress)}%</Text>
           </View>

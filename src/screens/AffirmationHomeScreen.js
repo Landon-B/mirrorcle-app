@@ -36,7 +36,7 @@ export const AffirmationHomeScreen = ({ navigation }) => {
   const [affirmations, setAffirmations] = useState(AFFIRMATIONS); // Fallback to local
   const [isLoading, setIsLoading] = useState(true);
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { isPro } = useApp();
+  const { isPro, preferences, updatePreferences } = useApp();
 
   // Shared values for gesture-driven animations
   const translateY = useSharedValue(0);
@@ -199,7 +199,33 @@ export const AffirmationHomeScreen = ({ navigation }) => {
     },
   ];
 
+  const sessionLengthOptions = [3, 5, 7];
+  const cycleSessionLength = () => {
+    const current = preferences.preferredSessionLength || 3;
+    const idx = sessionLengthOptions.indexOf(current);
+    const next = sessionLengthOptions[(idx + 1) % sessionLengthOptions.length];
+    updatePreferences({ preferredSessionLength: next });
+  };
+
+  const toggleRepeatAffirmations = () => {
+    updatePreferences({ repeatAffirmations: !preferences.repeatAffirmations });
+  };
+
   const settingsItems = [
+    {
+      icon: 'timer-outline',
+      label: 'Session Length',
+      subtitle: `${preferences.preferredSessionLength || 3} affirmations`,
+      colors: ['#8B5CF6', '#6366F1'],
+      onPress: cycleSessionLength,
+    },
+    {
+      icon: 'repeat',
+      label: 'Repeat Affirmations',
+      subtitle: preferences.repeatAffirmations ? 'On' : 'Off',
+      colors: ['#14B8A6', '#06B6D4'],
+      onPress: toggleRepeatAffirmations,
+    },
     {
       icon: 'diamond',
       label: 'Upgrade to Pro',
