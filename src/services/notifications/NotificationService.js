@@ -1,77 +1,146 @@
 import { Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
 
-// This service will be fully implemented when expo-notifications is installed
-// For now, it provides the interface and placeholder implementations
+// Personalized notification templates
+const NOTIFICATION_TEMPLATES = {
+  streakActive: (streak, name) => ({
+    title: 'Keep Your Streak Going',
+    body: name
+      ? `Day ${streak + 1} awaits, ${name}. Keep your mirror momentum going.`
+      : `Day ${streak + 1} awaits. Keep your mirror momentum going.`,
+  }),
+  streakAtRisk: (streak) => ({
+    title: "Don't Break Your Streak",
+    body: `Don't let your ${streak}-day streak slip. Your mirror is waiting.`,
+  }),
+  noStreak: () => ({
+    title: 'Your Mirror Awaits',
+    body: 'Your mirror is waiting. Take a moment for yourself today.',
+  }),
+  afterFeeling: (feeling) => ({
+    title: 'Check In With Yourself',
+    body: `Last time you felt ${feeling}. How are you today?`,
+  }),
+};
 
 class NotificationServiceClass {
   async requestPermission() {
-    // Will use Notifications.requestPermissionsAsync() from expo-notifications
-    console.log('Notification permission requested');
+    if (!Device.isDevice) {
+      console.log('Notifications require a physical device');
+      return false;
+    }
+
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== 'granted') {
+      return false;
+    }
+
+    // Configure notification channel for Android
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('daily-reminder', {
+        name: 'Daily Reminders',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+      });
+    }
+
     return true;
   }
 
   async getPermissionStatus() {
-    // Will use Notifications.getPermissionsAsync()
-    return { status: 'undetermined' };
+    const { status } = await Notifications.getPermissionsAsync();
+    return { status };
   }
 
-  async scheduleDailyReminder(time = '09:00') {
-    // Will use Notifications.scheduleNotificationAsync()
+  /**
+   * Schedule a personalized daily reminder
+   * @param {string} time - Time in HH:MM format
+   * @param {Object} context - Personalization context
+   * @param {number} context.streak - Current streak
+   * @param {string} context.lastFeeling - Last feeling selected
+   * @param {string} context.userName - User's name
+   */
+  async scheduleDailyReminder(time = '09:00', context = {}) {
     const [hours, minutes] = time.split(':').map(Number);
+    const { streak = 0, lastFeeling = null, userName = null } = context;
 
-    console.log(`Scheduling daily reminder at ${hours}:${minutes}`);
+    // Cancel existing reminders first
+    await this.cancelAllScheduled();
 
-    // Example implementation with expo-notifications:
-    // await Notifications.scheduleNotificationAsync({
-    //   content: {
-    //     title: "Time for Your Affirmation 🌟",
-    //     body: "Take a moment to affirm yourself today",
-    //     data: { screen: 'Feelings' },
-    //   },
-    //   trigger: {
-    //     hour: hours,
-    //     minute: minutes,
-    //     repeats: true,
-    //   },
-    // });
+    // Choose template based on context
+    let content;
+    if (streak > 3) {
+      content = NOTIFICATION_TEMPLATES.streakAtRisk(streak);
+    } else if (streak > 0) {
+      content = NOTIFICATION_TEMPLATES.streakActive(streak, userName);
+    } else if (lastFeeling) {
+      content = NOTIFICATION_TEMPLATES.afterFeeling(lastFeeling);
+    } else {
+      content = NOTIFICATION_TEMPLATES.noStreak();
+    }
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        ...content,
+        data: { screen: 'Feelings' },
+        sound: true,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: hours,
+        minute: minutes,
+      },
+    });
 
     return true;
   }
 
   async cancelAllScheduled() {
-    // Will use Notifications.cancelAllScheduledNotificationsAsync()
-    console.log('Cancelling all scheduled notifications');
+    await Notifications.cancelAllScheduledNotificationsAsync();
     return true;
   }
 
   async getScheduledNotifications() {
-    // Will use Notifications.getAllScheduledNotificationsAsync()
-    return [];
+    return await Notifications.getAllScheduledNotificationsAsync();
   }
 
   setupNotificationHandler(navigationRef) {
-    // Will set up notification response handlers
-    // Notifications.setNotificationHandler({
-    //   handleNotification: async () => ({
-    //     shouldShowAlert: true,
-    //     shouldPlaySound: true,
-    //     shouldSetBadge: false,
-    //   }),
-    // });
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
 
     // Handle notification tap to navigate
-    // Notifications.addNotificationResponseReceivedListener(response => {
-    //   const screen = response.notification.request.content.data.screen;
-    //   if (screen && navigationRef.current) {
-    //     navigationRef.current.navigate(screen);
-    //   }
-    // });
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      const screen = response.notification.request.content.data?.screen;
+      if (screen && navigationRef?.current) {
+        navigationRef.current.navigate(screen);
+      }
+    });
+
+    return () => subscription.remove();
   }
 
   async getExpoPushToken() {
-    // For remote push notifications (future feature)
-    // Will use Notifications.getExpoPushTokenAsync()
-    return null;
+    if (!Device.isDevice) return null;
+    try {
+      const { data } = await Notifications.getExpoPushTokenAsync();
+      return data;
+    } catch (error) {
+      console.log('Error getting push token:', error);
+      return null;
+    }
   }
 }
 

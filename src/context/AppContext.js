@@ -3,6 +3,7 @@ import { storageService } from '../services/storage';
 import { authService } from '../services/auth';
 import { userProfileService } from '../services/user';
 import { sessionService } from '../services/session';
+import { personalizationService } from '../services/personalization';
 
 const AppContext = createContext(null);
 
@@ -22,6 +23,7 @@ const initialPreferences = {
   notificationsEnabled: false,
   notificationTime: '09:00',
   audioAutoPlay: false,
+  preferredSessionLength: 3,
 };
 
 export const AppProvider = ({ children }) => {
@@ -32,6 +34,7 @@ export const AppProvider = ({ children }) => {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [unlockedThemes, setUnlockedThemes] = useState([]);
 
   useEffect(() => {
     loadAppData();
@@ -85,7 +88,16 @@ export const AppProvider = ({ children }) => {
           ...prev,
           isPro: profile.isPro || false,
           themeId: profile.themeId || 'cosmic-purple',
+          preferredSessionLength: profile.preferredSessionLength || 3,
         }));
+
+        // Check theme unlocks
+        try {
+          const themeUnlocks = await personalizationService.checkThemeUnlocks(profile.id);
+          setUnlockedThemes(themeUnlocks);
+        } catch (e) {
+          console.log('Error checking theme unlocks:', e);
+        }
       }
 
       if (notificationSettings) {
@@ -176,11 +188,12 @@ export const AppProvider = ({ children }) => {
 
     if (user) {
       try {
-        // Update profile for theme and isPro
-        if (newPrefs.themeId !== undefined || newPrefs.isPro !== undefined) {
+        // Update profile for theme, isPro, and session length
+        if (newPrefs.themeId !== undefined || newPrefs.isPro !== undefined || newPrefs.preferredSessionLength !== undefined) {
           await userProfileService.updateProfile({
             themeId: newPrefs.themeId,
             isPro: newPrefs.isPro,
+            preferredSessionLength: newPrefs.preferredSessionLength,
           });
         }
         // Update notification settings
@@ -205,6 +218,7 @@ export const AppProvider = ({ children }) => {
           feelingId: sessionData.feeling,
           durationSeconds: sessionData.duration || 0,
           promptsCompleted: sessionData.completedPrompts || 0,
+          timeOfDay: sessionData.timeOfDay || null,
         });
 
         const transformedSession = {
@@ -267,6 +281,7 @@ export const AppProvider = ({ children }) => {
     isLoading,
     isPro: preferences.isPro,
     user,
+    unlockedThemes,
 
     // Actions
     updateStats,

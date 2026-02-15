@@ -1,44 +1,154 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, StatusBar, Pressable, Share, Dimensions, PanResponder } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, StatusBar, Pressable, Share, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  runOnJS,
+  interpolate,
+  Extrapolation,
+} from 'react-native-reanimated';
 import { GradientBackground, PrimaryButton, OverlaySheet, IconButton } from '../components/common';
 import { AFFIRMATIONS } from '../constants';
+import { affirmationService } from '../services/affirmations';
 import { useFavorites } from '../hooks/useFavorites';
 import { useApp } from '../context/AppContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+// Animation constants
+const SNAP_THRESHOLD = 100;
+const CARD_EXIT_DISTANCE = SCREEN_HEIGHT * 0.6;
+const SPRING_CONFIG = {
+  damping: 20,
+  stiffness: 200,
+  mass: 0.5,
+};
+
 export const AffirmationHomeScreen = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [affirmations, setAffirmations] = useState(AFFIRMATIONS); // Fallback to local
+  const [isLoading, setIsLoading] = useState(true);
   const { isFavorite, toggleFavorite } = useFavorites();
   const { isPro } = useApp();
 
-  const current = AFFIRMATIONS[currentIndex];
-  const isLiked = isFavorite(current.id);
+  // Shared values for gesture-driven animations
+  const translateY = useSharedValue(0);
+  const cardScale = useSharedValue(1);
 
-  const panResponder = useMemo(() =>
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 20,
-      onPanResponderRelease: (_, gesture) => {
-        if (gesture.dy < -50 && currentIndex < AFFIRMATIONS.length - 1) {
-          setCurrentIndex((prev) => prev + 1);
-        }
-        if (gesture.dy > 50 && currentIndex > 0) {
-          setCurrentIndex((prev) => prev - 1);
-        }
-      },
-    }), [currentIndex]
-  );
+  useEffect(() => {
+    loadAffirmations();
+  }, [isPro]);
+
+  const loadAffirmations = async () => {
+    try {
+      const supabaseAffirmations = await affirmationService.getAll({
+        isPrompt: false, // Get display affirmations, not prompts
+        isPro,
+        shuffle: true, // Randomize the order each time
+      });
+      if (supabaseAffirmations && supabaseAffirmations.length > 0) {
+        setAffirmations(supabaseAffirmations);
+      }
+    } catch (error) {
+      console.log('Using local affirmations:', error.message);
+      // Keep using local AFFIRMATIONS constant as fallback
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const current = affirmations[currentIndex];
+  const isLiked = current ? isFavorite(current.id) : false;
+
+  // Update index and animate new card in
+  const goToNext = () => {
+    // Set starting position for new card
+    translateY.value = CARD_EXIT_DISTANCE;
+    cardScale.value = 0.9;
+    // Update index
+    setCurrentIndex((prev) => (prev + 1) % affirmations.length);
+    // Animate in after a frame
+    setTimeout(() => {
+      translateY.value = withSpring(0, SPRING_CONFIG);
+      cardScale.value = withSpring(1, SPRING_CONFIG);
+    }, 16);
+  };
+
+  const goToPrev = () => {
+    // Set starting position for new card
+    translateY.value = -CARD_EXIT_DISTANCE;
+    cardScale.value = 0.9;
+    // Update index
+    setCurrentIndex((prev) => (prev - 1 + affirmations.length) % affirmations.length);
+    // Animate in after a frame
+    setTimeout(() => {
+      translateY.value = withSpring(0, SPRING_CONFIG);
+      cardScale.value = withSpring(1, SPRING_CONFIG);
+    }, 16);
+  };
+
+  // Pan gesture for swiping cards
+  const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      translateY.value = event.translationY;
+      // Scale down slightly as card moves away from center
+      const progress = Math.abs(event.translationY) / CARD_EXIT_DISTANCE;
+      cardScale.value = interpolate(progress, [0, 1], [1, 0.9], Extrapolation.CLAMP);
+    })
+    .onEnd((event) => {
+      const shouldSnapNext = event.translationY < -SNAP_THRESHOLD;
+      const shouldSnapPrev = event.translationY > SNAP_THRESHOLD;
+
+      if (shouldSnapNext) {
+        // Animate card off screen upward, then switch
+        translateY.value = withSpring(-CARD_EXIT_DISTANCE, SPRING_CONFIG, (finished) => {
+          if (finished) {
+            runOnJS(goToNext)();
+          }
+        });
+      } else if (shouldSnapPrev) {
+        // Animate card off screen downward, then switch
+        translateY.value = withSpring(CARD_EXIT_DISTANCE, SPRING_CONFIG, (finished) => {
+          if (finished) {
+            runOnJS(goToPrev)();
+          }
+        });
+      } else {
+        // Snap back to center
+        translateY.value = withSpring(0, SPRING_CONFIG);
+        cardScale.value = withSpring(1, SPRING_CONFIG);
+      }
+    });
+
+  // Animated style for the card
+  const animatedCardStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: translateY.value },
+      { scale: cardScale.value },
+    ],
+    opacity: interpolate(
+      Math.abs(translateY.value),
+      [0, CARD_EXIT_DISTANCE],
+      [1, 0.5],
+      Extrapolation.CLAMP
+    ),
+  }));
 
   const handleToggleLike = () => {
-    toggleFavorite(current.id);
+    if (current) {
+      toggleFavorite(current.id);
+    }
   };
 
   const handleShare = async () => {
+    if (!current) return;
     try {
       await Share.share({ message: `"${current.text}" - From my Mirrorcle practice` });
     } catch (error) {
@@ -77,6 +187,16 @@ export const AffirmationHomeScreen = ({ navigation }) => {
         navigation.navigate('Trends');
       },
     },
+    {
+      icon: 'create',
+      label: 'My Affirmations',
+      subtitle: 'Create your own affirmations',
+      colors: ['#F59E0B', '#F97316'],
+      onPress: () => {
+        setShowProfile(false);
+        navigation.navigate('CustomAffirmations');
+      },
+    },
   ];
 
   const settingsItems = [
@@ -109,6 +229,30 @@ export const AffirmationHomeScreen = ({ navigation }) => {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <GradientBackground>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#A855F7" />
+          </View>
+        </SafeAreaView>
+      </GradientBackground>
+    );
+  }
+
+  if (!current) {
+    return (
+      <GradientBackground>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.errorText}>No affirmations available</Text>
+          </View>
+        </SafeAreaView>
+      </GradientBackground>
+    );
+  }
+
   return (
     <GradientBackground>
       <SafeAreaView style={styles.safeArea}>
@@ -118,35 +262,27 @@ export const AffirmationHomeScreen = ({ navigation }) => {
           <IconButton icon="settings" onPress={() => setShowSettings(true)} />
         </View>
 
-        <View style={styles.body} {...panResponder.panHandlers}>
-          <LinearGradient colors={current.colors} style={styles.affirmationGradientLarge}>
-            <View style={styles.affirmationCardLarge}>
-              <Text style={styles.affirmationTextLarge}>"{current.text}"</Text>
-              <View style={styles.affirmationActions}>
-                <Pressable
-                  onPress={handleToggleLike}
-                  style={[styles.roundAction, isLiked && styles.roundActionActive]}
-                >
-                  <Ionicons name={isLiked ? 'heart' : 'heart-outline'} size={22} color="#fff" />
-                </Pressable>
-                <Pressable onPress={handleShare} style={styles.roundAction}>
-                  <Ionicons name="share-social" size={22} color="#fff" />
-                </Pressable>
-              </View>
-            </View>
-          </LinearGradient>
-
-          <View style={styles.swipeIndicator}>
-            <View style={styles.dotsRow}>
-              {AFFIRMATIONS.map((_, idx) => (
-                <View
-                  key={idx}
-                  style={[styles.dot, idx === currentIndex ? styles.dotActive : null]}
-                />
-              ))}
-            </View>
-            <Text style={styles.swipeText}>Swipe up or down</Text>
-          </View>
+        <View style={styles.body}>
+          <GestureDetector gesture={panGesture}>
+            <Animated.View style={[styles.cardContainer, animatedCardStyle]}>
+              <LinearGradient colors={current.colors} style={styles.affirmationGradientLarge}>
+                <View style={styles.affirmationCardLarge}>
+                  <Text style={styles.affirmationTextLarge}>"{current.text}"</Text>
+                  <View style={styles.affirmationActions}>
+                    <Pressable
+                      onPress={handleToggleLike}
+                      style={[styles.roundAction, isLiked && styles.roundActionActive]}
+                    >
+                      <Ionicons name={isLiked ? 'heart' : 'heart-outline'} size={22} color="#fff" />
+                    </Pressable>
+                    <Pressable onPress={handleShare} style={styles.roundAction}>
+                      <Ionicons name="share-social" size={22} color="#fff" />
+                    </Pressable>
+                  </View>
+                </View>
+              </LinearGradient>
+            </Animated.View>
+          </GestureDetector>
         </View>
 
         <View style={styles.bottomButtonWrap}>
@@ -178,6 +314,15 @@ export const AffirmationHomeScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorText: {
+    color: '#94A3B8',
+    fontSize: 16,
+  },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -189,6 +334,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
+  },
+  cardContainer: {
+    width: '100%',
   },
   affirmationGradientLarge: { width: '100%', borderRadius: 28, padding: 2 },
   affirmationCardLarge: {
@@ -210,10 +358,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   roundActionActive: { backgroundColor: '#EF4444' },
-  swipeIndicator: { alignItems: 'center', marginTop: 18 },
-  dotsRow: { flexDirection: 'row', gap: 6 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#475569' },
-  dotActive: { width: 22, backgroundColor: '#C084FC' },
-  swipeText: { color: '#94A3B8', fontSize: 12, marginTop: 6 },
   bottomButtonWrap: { paddingHorizontal: 20, paddingBottom: 18 },
 });

@@ -30,6 +30,7 @@ export const THEMES = {
     gradient: ["#0F172A", "#7C2D12", "#0F172A"],
     primary: ["#F97316", "#FACC15"],
     accent: "#FB923C",
+    unlockRequirement: { type: 'streak', value: 7, label: '7-day streak' },
   },
   roseGarden: {
     id: 'rose-garden',
@@ -38,6 +39,7 @@ export const THEMES = {
     gradient: ["#0F172A", "#881337", "#0F172A"],
     primary: ["#F43F5E", "#EC4899"],
     accent: "#FB7185",
+    unlockRequirement: { type: 'streak', value: 30, label: '30-day streak' },
   },
   midnightBlue: {
     id: 'midnight-blue',
@@ -46,6 +48,7 @@ export const THEMES = {
     gradient: ["#0F172A", "#312E81", "#0F172A"],
     primary: ["#6366F1", "#A855F7"],
     accent: "#818CF8",
+    unlockRequirement: { type: 'sessions', value: 100, label: '100 sessions' },
   },
 };
 

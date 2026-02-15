@@ -1,23 +1,65 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GradientBackground, PrimaryButton, GhostButton, Card } from '../components/common';
+import { MilestoneCard, PowerPhraseCard, GrowthNudgeCard, MoodJourneyCard } from '../components/personalization';
 import { useApp } from '../context/AppContext';
+import { usePersonalization } from '../hooks/usePersonalization';
+import { quotesService } from '../services/quotes';
+import { formatTime } from '../utils/dateUtils';
 
-const encouragementMessages = [
-  "You're showing up for yourself!",
-  "Every affirmation is a step forward",
-  "Your commitment to growth is inspiring",
-  "Keep reflecting, keep growing",
-  "You're building a beautiful practice",
-];
+const defaultQuote = {
+  text: "The mirror reflects what we show it, but affirmations shape what we become.",
+  author: null,
+};
 
-export const ReflectionScreen = ({ navigation }) => {
-  const { stats } = useApp();
+export const ReflectionScreen = ({ navigation, route }) => {
+  const { stats, isPro } = useApp();
+  const {
+    streakEncouragement,
+    milestones,
+    powerPhrase,
+    growthNudge,
+    checkNewMilestones,
+    dismissMilestone,
+    getSessionComparison,
+  } = usePersonalization();
 
-  const randomMessage = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
+  const [quote, setQuote] = useState(defaultQuote);
+  const [sessionComparison, setSessionComparison] = useState(null);
+  const [dismissedNudge, setDismissedNudge] = useState(false);
+
+  const sessionDuration = route?.params?.sessionDuration || 0;
+  const completedCount = route?.params?.completedCount || 0;
+
+  useEffect(() => {
+    loadQuote();
+    checkNewMilestones();
+    loadSessionComparison();
+  }, []);
+
+  const loadQuote = async () => {
+    try {
+      const randomQuote = await quotesService.getRandomForScreen({
+        screen: 'reflection',
+        isPro,
+      });
+      if (randomQuote) {
+        setQuote(randomQuote);
+      }
+    } catch (error) {
+      console.log('Using default quote:', error.message);
+    }
+  };
+
+  const loadSessionComparison = async () => {
+    if (sessionDuration > 0) {
+      const comparison = await getSessionComparison(sessionDuration);
+      setSessionComparison(comparison);
+    }
+  };
 
   const statCards = [
     { label: 'Total Sessions', value: stats.totalSessions, colors: ['#A855F7', '#EC4899'], icon: 'sparkles' },
@@ -36,8 +78,26 @@ export const ReflectionScreen = ({ navigation }) => {
               <Ionicons name="trophy" size={28} color="#fff" />
             </LinearGradient>
             <Text style={styles.sectionTitle}>Reflection Room</Text>
-            <Text style={styles.sectionSubtitle}>{randomMessage}</Text>
+            <Text style={styles.sectionSubtitle}>{streakEncouragement}</Text>
           </View>
+
+          {/* Session Insights */}
+          {sessionComparison && (
+            <Card style={styles.insightsCard}>
+              <View style={styles.insightsHeader}>
+                <Ionicons name="analytics" size={18} color="#60A5FA" />
+                <Text style={styles.insightsTitle}>Session Insights</Text>
+              </View>
+              <Text style={styles.insightsText}>
+                {sessionComparison.durationDiff > 0
+                  ? `This session was ${formatTime(sessionComparison.durationDiff)} longer than your average`
+                  : sessionComparison.durationDiff < 0
+                    ? `This session was ${formatTime(Math.abs(sessionComparison.durationDiff))} shorter than your average`
+                    : 'Right on pace with your average session'}
+                {completedCount > 0 && ` — you spoke ${completedCount} affirmations.`}
+              </Text>
+            </Card>
+          )}
 
           <View style={styles.statsGrid}>
             {statCards.map((stat) => (
@@ -55,26 +115,49 @@ export const ReflectionScreen = ({ navigation }) => {
             ))}
           </View>
 
-          {stats.feelingsHistory.length > 0 && (
-            <Card style={styles.feelingsCard}>
-              <View style={styles.feelingsHeader}>
-                <Ionicons name="heart" size={18} color="#F472B6" />
-                <Text style={styles.feelingsTitle}>Your Feelings Journey</Text>
-              </View>
-              <View style={styles.feelingsChips}>
-                {stats.feelingsHistory.slice(-10).map((feeling, index) => (
-                  <View key={`${feeling}-${index}`} style={styles.feelingChip}>
-                    <Text style={styles.feelingChipText}>{feeling}</Text>
-                  </View>
+          {/* Milestones */}
+          {milestones.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.milestonesScroll}>
+              <View style={styles.milestonesRow}>
+                {milestones.map((milestone) => (
+                  <MilestoneCard
+                    key={milestone.key}
+                    title={milestone.title}
+                    description={milestone.description}
+                    onDismiss={() => dismissMilestone(milestone.key)}
+                  />
                 ))}
               </View>
-            </Card>
+            </ScrollView>
+          )}
+
+          {/* Mood Journey */}
+          <MoodJourneyCard />
+
+          {/* Growth Nudge */}
+          {growthNudge && !dismissedNudge && (
+            <GrowthNudgeCard
+              message={growthNudge.message}
+              onDismiss={() => setDismissedNudge(true)}
+            />
+          )}
+
+          {/* Power Phrase */}
+          {powerPhrase && (
+            <PowerPhraseCard
+              text={powerPhrase.text}
+              count={powerPhrase.count}
+              colors={powerPhrase.colors}
+            />
           )}
 
           <Card style={styles.quoteCard}>
             <Text style={styles.quoteText}>
-              "The mirror reflects what we show it, but affirmations shape what we become."
+              "{quote.text}"
             </Text>
+            {quote.author && (
+              <Text style={styles.quoteAuthor}>— {quote.author}</Text>
+            )}
           </Card>
 
           <View style={styles.rowButtons}>
@@ -104,26 +187,20 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { color: '#fff', fontSize: 30, fontWeight: '700', textAlign: 'center' },
   sectionSubtitle: { color: '#CBD5F5', marginTop: 8, textAlign: 'center' },
+  insightsCard: { gap: 8 },
+  insightsHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  insightsTitle: { color: '#60A5FA', fontSize: 14, fontWeight: '600' },
+  insightsText: { color: '#CBD5F5', fontSize: 13, lineHeight: 18 },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   statCard: { width: '48%' },
   statCardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   statLabel: { color: '#94A3B8', fontSize: 12 },
   statValue: { color: '#fff', fontSize: 18, fontWeight: '600', marginTop: 6 },
   statIconWrap: { padding: 8, borderRadius: 12 },
-  feelingsCard: { gap: 12 },
-  feelingsHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  feelingsTitle: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  feelingsChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  feelingChip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.4)',
-    backgroundColor: 'rgba(168, 85, 247, 0.15)',
-  },
-  feelingChipText: { color: '#E9D5FF', fontSize: 12, textTransform: 'capitalize' },
+  milestonesScroll: { marginHorizontal: -20 },
+  milestonesRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 20 },
   quoteCard: { paddingVertical: 22 },
   quoteText: { color: '#fff', fontSize: 16, fontStyle: 'italic', textAlign: 'center', lineHeight: 24 },
+  quoteAuthor: { color: '#94A3B8', fontSize: 14, textAlign: 'center', marginTop: 8 },
   rowButtons: { gap: 12, marginTop: 8 },
 });

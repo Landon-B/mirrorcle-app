@@ -10,13 +10,32 @@ import { useApp } from '../context/AppContext';
 
 export const ThemesScreen = ({ navigation }) => {
   const { theme, changeTheme } = useTheme();
-  const { isPro } = useApp();
+  const { isPro, unlockedThemes, stats } = useApp();
 
   const freeThemes = getFreeThemes();
   const premiumThemes = getPremiumThemes();
 
+  const isThemeUnlocked = (themeOption) => {
+    if (!themeOption.isPremium) return true;
+    if (isPro) return true;
+    return unlockedThemes.includes(themeOption.id);
+  };
+
+  const getUnlockProgress = (themeOption) => {
+    if (!themeOption.unlockRequirement) return null;
+    const { type, value } = themeOption.unlockRequirement;
+
+    if (type === 'streak') {
+      return Math.min(1, stats.currentStreak / value);
+    }
+    if (type === 'sessions') {
+      return Math.min(1, stats.totalSessions / value);
+    }
+    return 0;
+  };
+
   const handleThemeSelect = (selectedTheme) => {
-    if (selectedTheme.isPremium && !isPro) {
+    if (selectedTheme.isPremium && !isPro && !unlockedThemes.includes(selectedTheme.id)) {
       navigation.navigate('Paywall');
       return;
     }
@@ -25,7 +44,10 @@ export const ThemesScreen = ({ navigation }) => {
 
   const renderThemeCard = (themeOption) => {
     const isSelected = theme.id === themeOption.id;
-    const isLocked = themeOption.isPremium && !isPro;
+    const unlocked = isThemeUnlocked(themeOption);
+    const isLocked = themeOption.isPremium && !unlocked;
+    const progress = getUnlockProgress(themeOption);
+    const isMilestoneUnlocked = !isPro && unlocked && themeOption.isPremium;
 
     return (
       <Pressable
@@ -46,6 +68,11 @@ export const ThemesScreen = ({ navigation }) => {
               <Ionicons name="lock-closed" size={14} color="#fff" />
             </View>
           )}
+          {isMilestoneUnlocked && (
+            <View style={styles.unlockedBadge}>
+              <Ionicons name="trophy" size={14} color="#F59E0B" />
+            </View>
+          )}
           {isSelected && (
             <View style={styles.checkBadge}>
               <Ionicons name="checkmark" size={14} color="#fff" />
@@ -53,7 +80,20 @@ export const ThemesScreen = ({ navigation }) => {
           )}
         </LinearGradient>
         <Text style={styles.themeName}>{themeOption.name}</Text>
-        {isLocked && <Text style={styles.proBadge}>PRO</Text>}
+        {isLocked && themeOption.unlockRequirement && (
+          <View style={styles.unlockInfo}>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${(progress || 0) * 100}%` }]} />
+            </View>
+            <Text style={styles.unlockLabel}>{themeOption.unlockRequirement.label}</Text>
+          </View>
+        )}
+        {isMilestoneUnlocked && (
+          <Text style={styles.unlockedLabel}>Earned</Text>
+        )}
+        {isLocked && !themeOption.unlockRequirement && (
+          <Text style={styles.proBadge}>PRO</Text>
+        )}
       </Pressable>
     );
   };
@@ -95,7 +135,7 @@ export const ThemesScreen = ({ navigation }) => {
                 <Ionicons name="diamond" size={24} color="#fff" />
                 <View style={styles.upgradeText}>
                   <Text style={styles.upgradeTitle}>Unlock Premium Themes</Text>
-                  <Text style={styles.upgradeSubtitle}>Get access to all themes and more</Text>
+                  <Text style={styles.upgradeSubtitle}>Or earn them through milestones</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={24} color="#fff" />
               </LinearGradient>
@@ -161,6 +201,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  unlockedBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(245, 158, 11, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   checkBadge: {
     position: 'absolute',
     top: 8,
@@ -174,6 +225,28 @@ const styles = StyleSheet.create({
   },
   themeName: { color: '#fff', fontSize: 14, fontWeight: '500' },
   proBadge: {
+    color: '#F59E0B',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  unlockInfo: { width: '100%', gap: 4 },
+  progressTrack: {
+    height: 4,
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#A855F7',
+    borderRadius: 2,
+  },
+  unlockLabel: {
+    color: '#94A3B8',
+    fontSize: 10,
+    textAlign: 'center',
+  },
+  unlockedLabel: {
     color: '#F59E0B',
     fontSize: 10,
     fontWeight: '700',

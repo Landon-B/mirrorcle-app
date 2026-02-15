@@ -16,6 +16,7 @@ import {
   CreateAccountScreen,
   LoginScreen,
   ForgotPasswordScreen,
+  CustomAffirmationsScreen,
 } from '../screens';
 import { useApp } from '../context/AppContext';
 
@@ -51,6 +52,7 @@ export const AppNavigator = () => {
       <Stack.Screen name="Favorites" component={FavoritesScreen} />
       <Stack.Screen name="Trends" component={TrendsScreen} />
       <Stack.Screen name="Themes" component={ThemesScreen} />
+      <Stack.Screen name="CustomAffirmations" component={CustomAffirmationsScreen} />
 
       {/* Settings Screens */}
       <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />

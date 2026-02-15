@@ -13,3 +13,4 @@ export { WelcomeScreen } from './WelcomeScreen';
 export { CreateAccountScreen } from './CreateAccountScreen';
 export { LoginScreen } from './LoginScreen';
 export { ForgotPasswordScreen } from './ForgotPasswordScreen';
+export { CustomAffirmationsScreen } from './CustomAffirmationsScreen';

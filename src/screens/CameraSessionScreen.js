@@ -8,14 +8,14 @@ import { AffirmationHighlightText } from '../components/affirmation';
 import { PROMPTS } from '../constants';
 import { affirmationService } from '../services/affirmations';
 import { sessionService } from '../services/session';
+import { personalizationService } from '../services/personalization';
 import { useStats } from '../hooks/useStats';
 import { useSpeechMatcher } from '../hooks/useSpeechMatcher';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useApp } from '../context/AppContext';
+import { usePersonalization } from '../hooks/usePersonalization';
 import { storageService } from '../services/storage';
 import { formatTime } from '../utils/dateUtils';
-
-const SESSION_AFFIRMATION_COUNT = 3;
 
 export const CameraSessionScreen = ({ navigation }) => {
   const [permission, requestPermission] = useCameraPermissions();
@@ -29,8 +29,12 @@ export const CameraSessionScreen = ({ navigation }) => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
   const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [affirmationStartTime, setAffirmationStartTime] = useState(null);
   const { recordSession } = useStats();
-  const { isPro, user } = useApp();
+  const { isPro, user, preferences } = useApp();
+  const { streakEncouragement, timeOfDay } = usePersonalization();
+
+  const sessionAffirmationCount = preferences.preferredSessionLength || 3;
 
   const currentAffirmation = sessionAffirmations[currentIndex]?.text || '';
   const { displayTokens, activeToken, isComplete, updateWithSpeech } = useSpeechMatcher(currentAffirmation);
@@ -61,21 +65,20 @@ export const CameraSessionScreen = ({ navigation }) => {
         setFeeling(currentFeeling);
       }
 
-      // Try to load feeling-based prompts from Supabase
+      // Try to load personalized prompts from Supabase
       try {
-        const prompts = await affirmationService.getPromptsForSession(
+        const prompts = await affirmationService.getPersonalizedForSession(
           currentFeeling,
           {
             isPro,
             userId: user?.id,
-            count: SESSION_AFFIRMATION_COUNT,
+            count: sessionAffirmationCount,
+            timeOfDay,
           }
         );
 
         if (prompts && prompts.length > 0) {
-          // Shuffle the prompts for variety
-          const shuffled = [...prompts].sort(() => Math.random() - 0.5);
-          setSessionAffirmations(shuffled.slice(0, SESSION_AFFIRMATION_COUNT));
+          setSessionAffirmations(prompts.slice(0, sessionAffirmationCount));
         } else {
           // Fallback to local prompts
           useLocalPrompts();
@@ -95,7 +98,7 @@ export const CameraSessionScreen = ({ navigation }) => {
   const useLocalPrompts = () => {
     const shuffled = [...PROMPTS].sort(() => Math.random() - 0.5);
     setSessionAffirmations(
-      shuffled.slice(0, SESSION_AFFIRMATION_COUNT).map((text, index) => ({
+      shuffled.slice(0, sessionAffirmationCount).map((text, index) => ({
         id: `local-${index}`,
         text,
         colors: ['#A855F7', '#EC4899'],
@@ -149,14 +152,27 @@ export const CameraSessionScreen = ({ navigation }) => {
       const newCompletedCount = completedCount + 1;
       setCompletedCount(newCompletedCount);
 
+      // Calculate completion time for voice pacing
+      const completionTimeSeconds = affirmationStartTime
+        ? (Date.now() - affirmationStartTime) / 1000
+        : null;
+
       // Record affirmation engagement in Supabase
       const currentAff = sessionAffirmations[currentIndex];
       if (user && currentAff && !currentAff.id.startsWith('local-')) {
         sessionService.recordAffirmationEngagement(
           currentAff.id,
           true, // engaged (spoken)
-          currentSessionId
+          currentSessionId,
+          completionTimeSeconds
         ).catch(err => console.log('Failed to record engagement:', err));
+
+        // Update voice pacing
+        if (completionTimeSeconds && currentAff.text) {
+          const wordCount = currentAff.text.split(/\s+/).length;
+          personalizationService.updateVoicePacing(user.id, wordCount, completionTimeSeconds)
+            .catch(err => console.log('Failed to update voice pacing:', err));
+        }
       }
 
       // Stop listening during transition
@@ -165,7 +181,7 @@ export const CameraSessionScreen = ({ navigation }) => {
       }
 
       // Check if session is complete (3 affirmations done)
-      if (newCompletedCount >= SESSION_AFFIRMATION_COUNT) {
+      if (newCompletedCount >= sessionAffirmationCount) {
         // Session complete - navigate to reflection after delay
         setTimeout(() => {
           handleComplete();
@@ -184,10 +200,13 @@ export const CameraSessionScreen = ({ navigation }) => {
     }
   }, [isComplete, isTransitioning, completedCount, isListening, stopListening, partial, finalText, sessionAffirmations, currentIndex, currentSessionId, user]);
 
-  // Reset completion flag when affirmation changes
+  // Reset completion flag and start time when affirmation changes
   useEffect(() => {
     hasHandledCompletion.current = false;
-  }, [currentIndex]);
+    if (sessionStarted) {
+      setAffirmationStartTime(Date.now());
+    }
+  }, [currentIndex, sessionStarted]);
 
   // Session timer
   useEffect(() => {
@@ -218,10 +237,14 @@ export const CameraSessionScreen = ({ navigation }) => {
       feeling,
       completedPrompts: completedCount,
       duration: sessionTime,
+      timeOfDay,
     });
     setCameraEnabled(false);
     setSessionStarted(false);
-    navigation.navigate('Reflection');
+    navigation.navigate('Reflection', {
+      sessionDuration: sessionTime,
+      completedCount,
+    });
   };
 
   const handleExit = async () => {
@@ -233,7 +256,7 @@ export const CameraSessionScreen = ({ navigation }) => {
     navigation.navigate('AffirmationHome');
   };
 
-  const progress = (completedCount / SESSION_AFFIRMATION_COUNT) * 100;
+  const progress = sessionAffirmationCount > 0 ? (completedCount / sessionAffirmationCount) * 100 : 0;
 
   if (isLoadingPrompts) {
     return (
@@ -269,7 +292,7 @@ export const CameraSessionScreen = ({ navigation }) => {
                     <View style={styles.completedIndicator}>
                       <Ionicons name="checkmark-circle" size={48} color="#34D399" />
                       <Text style={styles.completedText}>
-                        {completedCount >= SESSION_AFFIRMATION_COUNT
+                        {completedCount >= sessionAffirmationCount
                           ? "Session Complete!"
                           : "Great job!"}
                       </Text>
@@ -277,7 +300,7 @@ export const CameraSessionScreen = ({ navigation }) => {
                   ) : (
                     <>
                       <Text style={styles.affirmationCounter}>
-                        {currentIndex + 1} of {SESSION_AFFIRMATION_COUNT}
+                        {currentIndex + 1} of {sessionAffirmationCount}
                       </Text>
                       <AffirmationHighlightText
                         tokens={displayTokens}
@@ -305,9 +328,9 @@ export const CameraSessionScreen = ({ navigation }) => {
           ) : (
             <View style={styles.cameraPlaceholder}>
               <Ionicons name="camera" size={48} color="#94A3B8" />
-              <Text style={styles.placeholderTitle}>Ready for Your Mirror Session?</Text>
+              <Text style={styles.placeholderTitle}>{streakEncouragement}</Text>
               <Text style={styles.placeholderSubtitle}>
-                Speak {SESSION_AFFIRMATION_COUNT} affirmations while looking at yourself in the mirror.
+                Speak {sessionAffirmationCount} affirmations while looking at yourself in the mirror.
               </Text>
               <View style={styles.placeholderButtons}>
                 <PrimaryButton title="Enable Camera" icon="camera" onPress={() => startSession(true)} />
@@ -320,7 +343,7 @@ export const CameraSessionScreen = ({ navigation }) => {
         <View style={styles.progressWrap}>
           <View style={styles.progressRow}>
             <Text style={styles.progressText}>
-              {completedCount} of {SESSION_AFFIRMATION_COUNT} affirmations
+              {completedCount} of {sessionAffirmationCount} affirmations
             </Text>
             <Text style={styles.progressText}>{Math.round(progress)}%</Text>
           </View>
