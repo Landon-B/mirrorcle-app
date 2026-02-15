@@ -7,13 +7,14 @@ export const useStats = () => {
 
   const recordSession = useCallback(async (sessionData) => {
     const today = getToday();
-    const { feeling, completedPrompts = 0, duration = 0 } = sessionData;
+    const { feeling, completedPrompts = 0, duration = 0, timeOfDay } = sessionData;
 
     // Add session to sessions list
     await addSession({
       feeling,
       completedPrompts,
       duration,
+      timeOfDay,
     });
 
     // Calculate new streak

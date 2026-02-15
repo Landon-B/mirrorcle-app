@@ -232,14 +232,18 @@ export const CameraSessionScreen = ({ navigation }) => {
 
   const handleComplete = async () => {
     if (isListening) {
-      await stopListening();
+      try { await stopListening(); } catch (e) { /* ignore */ }
     }
-    await recordSession({
-      feeling,
-      completedPrompts: completedCount,
-      duration: sessionTime,
-      timeOfDay,
-    });
+    try {
+      await recordSession({
+        feeling,
+        completedPrompts: completedCount,
+        duration: sessionTime,
+        timeOfDay,
+      });
+    } catch (e) {
+      console.log('Failed to record session:', e);
+    }
     navigation.replace('Reflection', {
       sessionDuration: sessionTime,
       completedCount,
@@ -248,14 +252,18 @@ export const CameraSessionScreen = ({ navigation }) => {
 
   const handleExit = async () => {
     if (isListening) {
-      await stopListening();
+      try { await stopListening(); } catch (e) { /* ignore */ }
     }
-    await recordSession({
-      feeling,
-      completedPrompts: completedCount,
-      duration: sessionTime,
-      timeOfDay,
-    });
+    try {
+      await recordSession({
+        feeling,
+        completedPrompts: completedCount,
+        duration: sessionTime,
+        timeOfDay,
+      });
+    } catch (e) {
+      console.log('Failed to record session:', e);
+    }
     navigation.replace('Reflection', {
       sessionDuration: sessionTime,
       completedCount,
