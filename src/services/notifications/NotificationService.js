@@ -132,6 +132,32 @@ class NotificationServiceClass {
     return () => subscription.remove();
   }
 
+  async sendTestNotification(context = {}) {
+    const { streak = 0, lastFeeling = null, userName = null } = context;
+
+    let content;
+    if (streak > 3) {
+      content = NOTIFICATION_TEMPLATES.streakAtRisk(streak);
+    } else if (streak > 0) {
+      content = NOTIFICATION_TEMPLATES.streakActive(streak, userName);
+    } else if (lastFeeling) {
+      content = NOTIFICATION_TEMPLATES.afterFeeling(lastFeeling);
+    } else {
+      content = NOTIFICATION_TEMPLATES.noStreak();
+    }
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        ...content,
+        data: { screen: 'Feelings' },
+        sound: true,
+      },
+      trigger: null,
+    });
+
+    return true;
+  }
+
   async getExpoPushToken() {
     if (!Device.isDevice) return null;
     try {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, StatusBar, Pressable, Switch } from 'react-native';
+import { View, Text, StyleSheet, StatusBar, Pressable, Switch, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { GradientBackground, Card, PrimaryButton } from '../components/common';
@@ -20,10 +20,14 @@ export const NotificationSettingsScreen = ({ navigation }) => {
   const {
     isEnabled,
     notificationTime,
+    permissionStatus,
     enableNotifications,
     disableNotifications,
     updateNotificationTime,
+    sendTestNotification,
   } = useNotifications();
+
+  const [sendingTest, setSendingTest] = useState(false);
 
   const handleToggle = async (value) => {
     if (value) {
@@ -37,6 +41,17 @@ export const NotificationSettingsScreen = ({ navigation }) => {
     await updateNotificationTime(time);
     if (!isEnabled) {
       await enableNotifications(time);
+    }
+  };
+
+  const handleSendTest = async () => {
+    setSendingTest(true);
+    try {
+      await sendTestNotification();
+    } catch (error) {
+      console.log('Error sending test notification:', error);
+    } finally {
+      setSendingTest(false);
     }
   };
 
@@ -103,6 +118,23 @@ export const NotificationSettingsScreen = ({ navigation }) => {
             </Card>
           )}
 
+          {isEnabled && permissionStatus === 'granted' && (
+            <Pressable
+              onPress={handleSendTest}
+              disabled={sendingTest}
+              style={[styles.testButton, sendingTest && styles.testButtonDisabled]}
+            >
+              {sendingTest ? (
+                <ActivityIndicator size="small" color="#A855F7" />
+              ) : (
+                <Ionicons name="paper-plane" size={18} color="#A855F7" />
+              )}
+              <Text style={styles.testButtonText}>
+                {sendingTest ? 'Sending...' : 'Send Test Notification'}
+              </Text>
+            </Pressable>
+          )}
+
           <Card style={styles.infoCard}>
             <Ionicons name="information-circle" size={20} color="#3B82F6" />
             <Text style={styles.infoText}>
@@ -166,6 +198,19 @@ const styles = StyleSheet.create({
   },
   timeButtonText: { color: '#94A3B8', fontSize: 14 },
   timeButtonTextActive: { color: '#fff', fontWeight: '600' },
+  testButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(168, 85, 247, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(168, 85, 247, 0.3)',
+  },
+  testButtonDisabled: { opacity: 0.6 },
+  testButtonText: { color: '#A855F7', fontSize: 15, fontWeight: '600' },
   infoCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',

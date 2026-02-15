@@ -105,6 +105,10 @@ export const useNotifications = () => {
     }
   }, [updatePreferences, isEnabled]);
 
+  const sendTestNotification = useCallback(async () => {
+    await NotificationService.sendTestNotification(getNotificationContext());
+  }, []);
+
   return {
     isEnabled,
     notificationTime,
@@ -112,5 +116,6 @@ export const useNotifications = () => {
     enableNotifications,
     disableNotifications,
     updateNotificationTime,
+    sendTestNotification,
   };
 };
