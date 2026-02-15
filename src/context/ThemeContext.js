@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { storageService } from '../services/storage';
+import { widgetDataService } from '../services/widget';
 import { DEFAULT_THEME, getThemeById } from '../constants';
 
 const ThemeContext = createContext(null);
@@ -30,6 +31,7 @@ export const ThemeProvider = ({ children }) => {
     const newTheme = getThemeById(themeId);
     setTheme(newTheme);
     await storageService.saveTheme(themeId);
+    widgetDataService.syncWidget(newTheme);
   };
 
   return (

@@ -30,11 +30,12 @@ npx supabase migration new <name>  # Create new migration
 This is a React Native/Expo managed app for guided self-affirmation mirror sessions.
 
 ### Tech Stack
-- React Native 0.81.5 + Expo 54
+- React Native 0.83.1 + Expo 55
 - React Navigation 7 (native-stack)
 - Supabase (auth, database, RLS) — primary data store for authenticated users
 - AsyncStorage — fallback for unauthenticated users
 - expo-camera, expo-speech, expo-notifications, expo-linear-gradient
+- expo-widgets + @expo/ui — iOS home screen widget
 - @react-native-voice/voice — speech recognition
 - react-native-reanimated + react-native-gesture-handler — animations
 
@@ -51,7 +52,7 @@ Context Providers → Custom Hooks → Services → Supabase / AsyncStorage
 
 ### Key Directories
 - `src/context/` — AppContext (stats, sessions, preferences, unlockedThemes), ThemeContext
-- `src/hooks/` — useStats, useFavorites, useNotifications, useAudio, useStorage, useSpeechRecognition, useSpeechMatcher, usePersonalization
+- `src/hooks/` — useStats, useFavorites, useNotifications, useAudio, useStorage, useSpeechRecognition, useSpeechMatcher, usePersonalization, useWidgetSync
 - `src/services/` — Service singletons organized by domain:
   - `affirmations/` — AffirmationService (tag-weighted selection, personalized sessions)
   - `session/` — SessionService (sessions, mood history, streaks, affirmation engagement)
@@ -63,6 +64,8 @@ Context Providers → Custom Hooks → Services → Supabase / AsyncStorage
   - `storage/` — StorageService adapter pattern (AsyncStorage)
   - `audio/` — AudioService (expo-speech stub)
   - `speech/` — SpeechRecognitionService (@react-native-voice/voice + Web Speech API)
+  - `widget/` — WidgetDataService (syncs affirmation + theme to iOS widget via expo-widgets)
+- `src/widgets/` — AffirmationWidget (SwiftUI widget component using @expo/ui)
 - `src/constants/` — Affirmations, feelings, prompts, themes (with unlockRequirements), storage keys
 - `src/components/` — common/ (GradientBackground, Card, PrimaryButton, GhostButton, OverlaySheet, IconButton), affirmation/, pro/ (FeatureGate), personalization/ (MilestoneCard, PowerPhraseCard, GrowthNudgeCard, MoodJourneyCard), stats/, onboarding/
 - `src/utils/` — dateUtils, statsUtils, speech/SessionSpeechMatcher
@@ -132,3 +135,22 @@ All AsyncStorage keys prefixed with `mirrorcle-`: feeling, stats, preferences, f
 - Current streak: consecutive days from today/yesterday backward
 - Stats: totalSessions, totalTimeSeconds, totalAffirmations, currentStreak, longestStreak, feelingsHistory
 - `dateUtils.js` — formatTime, getToday, isToday, isYesterday, getDaysBetween
+
+## iOS Widget
+
+The app includes an iOS home screen widget (`AffirmationWidget`) that shows a random affirmation styled with the user's selected theme colors.
+
+### Architecture
+- `src/widgets/AffirmationWidget.js` — SwiftUI widget UI using `@expo/ui/swift-ui` (Text, VStack, ZStack)
+- `src/services/widget/WidgetDataService.js` — Picks random affirmation + syncs to widget via `updateWidgetSnapshot()`
+- `src/hooks/useWidgetSync.js` — Syncs widget on mount, theme change, and app foreground
+- `ThemeContext.changeTheme()` also triggers a widget sync
+
+### Configuration
+`expo-widgets` plugin in `app.config.js` with `groupIdentifier: "group.com.anonymous.mirrorcleios"`. Supports `systemSmall`, `systemMedium`, and `systemLarge` families.
+
+### Notes
+- Widgets require a dev build (`npx expo prebuild -p ios && npx expo run:ios`), not Expo Go
+- Widget data is passed via App Groups shared storage (managed by expo-widgets)
+- Deep link `mirrorcle://home` opens the app from widget tap
+- `expo-widgets` is alpha — API may evolve

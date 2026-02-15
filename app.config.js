@@ -9,7 +9,6 @@ export default {
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "dark",
-    newArchEnabled: true,
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
@@ -59,6 +58,20 @@ export default {
         {
           microphonePermission: "Mirrorcle needs microphone access to listen during affirmation sessions.",
           speechRecognitionPermission: "Mirrorcle uses speech recognition to highlight your affirmations."
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          groupIdentifier: "group.com.anonymous.mirrorcleios",
+          widgets: [
+            {
+              name: "AffirmationWidget",
+              displayName: "Daily Affirmation",
+              description: "A new affirmation to inspire you every time you check your phone",
+              supportedFamilies: ["systemSmall", "systemMedium", "systemLarge"]
+            }
+          ]
         }
       ]
     ],

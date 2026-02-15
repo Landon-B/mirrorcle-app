@@ -10,3 +10,4 @@ export { userProfileService } from './user';
 export { sessionService } from './session';
 export { quotesService } from './quotes';
 export { personalizationService, customAffirmationService } from './personalization';
+export { widgetDataService } from './widget';
