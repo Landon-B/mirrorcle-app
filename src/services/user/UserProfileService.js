@@ -27,6 +27,22 @@ class UserProfileService {
   }
 
   /**
+   * Ensure a profile row exists for the current user.
+   * Creates one with defaults if the signup trigger didn't fire.
+   * @returns {Promise<void>}
+   */
+  async ensureProfile() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('user_profiles')
+      .upsert({ id: user.id }, { onConflict: 'id', ignoreDuplicates: true });
+
+    if (error) throw error;
+  }
+
+  /**
    * Update the current user's profile
    * @param {Object} updates - Profile fields to update
    * @returns {Promise<Object>}

@@ -1,4 +1,5 @@
 import { supabase } from '../../config/supabase';
+import { userProfileService } from '../user/UserProfileService';
 
 /**
  * Service for recording and retrieving session data, mood history,
@@ -16,6 +17,9 @@ class SessionService {
   async createSession({ feelingId, durationSeconds = 0, promptsCompleted = 0, timeOfDay = null }) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
+
+    // Ensure profile exists (handles missing trigger case)
+    await userProfileService.ensureProfile();
 
     // Create the session
     const { data: session, error: sessionError } = await supabase
