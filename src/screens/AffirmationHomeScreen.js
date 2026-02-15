@@ -8,6 +8,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  withTiming,
   runOnJS,
   interpolate,
   Extrapolation,
@@ -67,31 +68,20 @@ export const AffirmationHomeScreen = ({ navigation }) => {
   const current = affirmations[currentIndex];
   const isLiked = current ? isFavorite(current.id) : false;
 
-  // Update index and animate new card in
-  const goToNext = () => {
-    // Set starting position for new card
-    translateY.value = CARD_EXIT_DISTANCE;
-    cardScale.value = 0.9;
-    // Update index
-    setCurrentIndex((prev) => (prev + 1) % affirmations.length);
-    // Animate in after a frame
-    setTimeout(() => {
-      translateY.value = withSpring(0, SPRING_CONFIG);
-      cardScale.value = withSpring(1, SPRING_CONFIG);
-    }, 16);
-  };
-
-  const goToPrev = () => {
-    // Set starting position for new card
-    translateY.value = -CARD_EXIT_DISTANCE;
-    cardScale.value = 0.9;
-    // Update index
-    setCurrentIndex((prev) => (prev - 1 + affirmations.length) % affirmations.length);
-    // Animate in after a frame
-    setTimeout(() => {
-      translateY.value = withSpring(0, SPRING_CONFIG);
-      cardScale.value = withSpring(1, SPRING_CONFIG);
-    }, 16);
+  // Swap card and animate in from the given direction
+  const swapCard = (direction) => {
+    // direction: 1 = next (entering from below), -1 = prev (entering from above)
+    setCurrentIndex((prev) =>
+      direction === 1
+        ? (prev + 1) % affirmations.length
+        : (prev - 1 + affirmations.length) % affirmations.length
+    );
+    // Set entry position (opposite of swipe direction)
+    translateY.value = direction * 120;
+    cardScale.value = 0.95;
+    // Animate to center
+    translateY.value = withSpring(0, SPRING_CONFIG);
+    cardScale.value = withSpring(1, SPRING_CONFIG);
   };
 
   // Pan gesture for swiping cards
@@ -107,19 +97,9 @@ export const AffirmationHomeScreen = ({ navigation }) => {
       const shouldSnapPrev = event.translationY > SNAP_THRESHOLD;
 
       if (shouldSnapNext) {
-        // Animate card off screen upward, then switch
-        translateY.value = withSpring(-CARD_EXIT_DISTANCE, SPRING_CONFIG, (finished) => {
-          if (finished) {
-            runOnJS(goToNext)();
-          }
-        });
+        runOnJS(swapCard)(1);
       } else if (shouldSnapPrev) {
-        // Animate card off screen downward, then switch
-        translateY.value = withSpring(CARD_EXIT_DISTANCE, SPRING_CONFIG, (finished) => {
-          if (finished) {
-            runOnJS(goToPrev)();
-          }
-        });
+        runOnJS(swapCard)(-1);
       } else {
         // Snap back to center
         translateY.value = withSpring(0, SPRING_CONFIG);
