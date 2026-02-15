@@ -294,21 +294,21 @@ export const AffirmationHomeScreen = ({ navigation }) => {
               <LinearGradient colors={current.colors} style={styles.affirmationGradientLarge}>
                 <View style={styles.affirmationCardLarge}>
                   <Text style={styles.affirmationTextLarge}>"{current.text}"</Text>
-                  <View style={styles.affirmationActions}>
-                    <Pressable
-                      onPress={handleToggleLike}
-                      style={[styles.roundAction, isLiked && styles.roundActionActive]}
-                    >
-                      <Ionicons name={isLiked ? 'heart' : 'heart-outline'} size={22} color="#fff" />
-                    </Pressable>
-                    <Pressable onPress={handleShare} style={styles.roundAction}>
-                      <Ionicons name="share-social" size={22} color="#fff" />
-                    </Pressable>
-                  </View>
                 </View>
               </LinearGradient>
             </Animated.View>
           </GestureDetector>
+          <View style={styles.affirmationActions}>
+            <Pressable
+              onPress={handleToggleLike}
+              style={[styles.roundAction, isLiked && styles.roundActionActive]}
+            >
+              <Ionicons name={isLiked ? 'heart' : 'heart-outline'} size={22} color="#fff" />
+            </Pressable>
+            <Pressable onPress={handleShare} style={styles.roundAction}>
+              <Ionicons name="share-social" size={22} color="#fff" />
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.bottomButtonWrap}>
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   affirmationTextLarge: { color: '#fff', fontSize: 26, textAlign: 'center', lineHeight: 34 },
-  affirmationActions: { flexDirection: 'row', gap: 16, marginTop: 28 },
+  affirmationActions: { flexDirection: 'row', gap: 16, marginTop: 20, justifyContent: 'center' },
   roundAction: {
     width: 56,
     height: 56,
