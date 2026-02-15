@@ -114,15 +114,14 @@ class UserProfileService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const dbUpdates = {};
+    const dbUpdates = { user_id: user.id };
     if (settings.enabled !== undefined) dbUpdates.enabled = settings.enabled;
     if (settings.time !== undefined) dbUpdates.time = settings.time;
     if (settings.timezone !== undefined) dbUpdates.timezone = settings.timezone;
 
     const { data, error } = await supabase
       .from('user_notification_settings')
-      .update(dbUpdates)
-      .eq('user_id', user.id)
+      .upsert(dbUpdates, { onConflict: 'user_id' })
       .select()
       .single();
 
