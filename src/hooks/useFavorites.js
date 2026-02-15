@@ -14,28 +14,38 @@ export const useFavorites = () => {
     const isCurrentlyFavorite = isFavorite(affirmationId);
 
     if (user) {
-      // Use Supabase for authenticated users
+      // Optimistic UI — update heart immediately
+      if (isCurrentlyFavorite) {
+        setFavorites(prev => prev.filter(f => f.affirmationId !== affirmationId && f.id !== affirmationId));
+      } else {
+        setFavorites(prev => [...prev, { affirmationId, id: affirmationId }]);
+      }
+
+      // Sync to Supabase in background, revert on failure
       try {
         if (isCurrentlyFavorite) {
           await userProfileService.removeFavorite(affirmationId);
-          setFavorites(prev => prev.filter(f => f.affirmationId !== affirmationId && f.id !== affirmationId));
         } else {
           await userProfileService.addFavorite(affirmationId);
-          setFavorites(prev => [...prev, { affirmationId, id: affirmationId }]);
         }
       } catch (error) {
         console.error('Error toggling favorite in Supabase:', error);
-        // Don't update local state if Supabase fails
+        // Revert optimistic update
+        if (isCurrentlyFavorite) {
+          setFavorites(prev => [...prev, { affirmationId, id: affirmationId }]);
+        } else {
+          setFavorites(prev => prev.filter(f => f.affirmationId !== affirmationId && f.id !== affirmationId));
+        }
         return isCurrentlyFavorite;
       }
     } else {
       // Use local storage for unauthenticated users
       if (isCurrentlyFavorite) {
-        await storageService.removeFavorite(affirmationId);
         setFavorites(prev => prev.filter(f => f.affirmationId !== affirmationId));
+        await storageService.removeFavorite(affirmationId);
       } else {
+        setFavorites(prev => [...prev, { affirmationId, id: affirmationId }]);
         const newFavorite = await storageService.saveFavorite(affirmationId);
-        setFavorites(prev => [...prev, newFavorite]);
       }
     }
 
