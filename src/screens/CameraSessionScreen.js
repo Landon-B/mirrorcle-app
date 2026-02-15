@@ -333,44 +333,35 @@ export const CameraSessionScreen = ({ navigation }) => {
           {sessionStarted ? (
             <View style={styles.cameraWrapper}>
               {cameraEnabled && <CameraView style={styles.cameraView} facing="front" />}
-              <View style={[styles.cameraOverlay, !cameraEnabled && styles.noCameraOverlay]}>
-                <View style={styles.promptCard}>
-                  {isComplete && isTransitioning ? (
-                    <View style={styles.completedIndicator}>
-                      <Ionicons name="checkmark-circle" size={48} color="#34D399" />
-                      <Text style={styles.completedText}>
-                        {completedCount >= totalCount
-                          ? "Session Complete!"
-                          : "Great job!"}
-                      </Text>
-                    </View>
-                  ) : (
-                    <>
-                      <Text style={styles.affirmationCounter}>
-                        {completedCount + 1} of {totalCount}
-                      </Text>
-                      <AffirmationHighlightText
-                        tokens={displayTokens}
-                        activeToken={activeToken}
-                        style={styles.promptText}
-                        spokenStyle={styles.promptSpoken}
-                        currentStyle={styles.promptCurrent}
-                        pendingStyle={styles.promptPending}
-                        showQuotes
-                      />
-                      {isListening && (
-                        <View style={styles.listeningIndicator}>
-                          <Ionicons name="mic" size={16} color="#A7F3D0" />
-                          <Text style={styles.listeningBadge}>Listening...</Text>
-                        </View>
-                      )}
-                      {speechError && (
-                        <Text style={styles.speechNote}>Speech recognition error</Text>
-                      )}
-                    </>
-                  )}
+              {isComplete && isTransitioning ? (
+                <View style={[styles.cameraOverlay, !cameraEnabled && styles.noCameraOverlay, styles.completionOverlay]}>
+                  <View style={styles.completedIndicator}>
+                    <Ionicons name="checkmark-circle" size={48} color="#34D399" />
+                    <Text style={styles.completedText}>
+                      {completedCount >= totalCount
+                        ? "Session Complete!"
+                        : "Great job!"}
+                    </Text>
+                  </View>
                 </View>
-              </View>
+              ) : (
+                <View style={[styles.cameraOverlay, !cameraEnabled && styles.noCameraOverlay]}>
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.7)']}
+                    style={styles.promptGradient}
+                  >
+                    <AffirmationHighlightText
+                      tokens={displayTokens}
+                      activeToken={activeToken}
+                      style={styles.promptText}
+                      spokenStyle={styles.promptSpoken}
+                      currentStyle={styles.promptCurrent}
+                      pendingStyle={styles.promptPending}
+                      showQuotes
+                    />
+                  </LinearGradient>
+                </View>
+              )}
             </View>
           ) : (
             <View style={styles.cameraPlaceholder}>
@@ -389,9 +380,14 @@ export const CameraSessionScreen = ({ navigation }) => {
 
         <View style={styles.progressWrap}>
           <View style={styles.progressRow}>
-            <Text style={styles.progressText}>
-              {completedCount} of {totalCount} affirmations
-            </Text>
+            {isListening ? (
+              <View style={styles.listeningIndicator}>
+                <Ionicons name="mic" size={14} color="#A7F3D0" />
+                <Text style={styles.listeningBadge}>Listening...</Text>
+              </View>
+            ) : (
+              <View />
+            )}
             <Text style={styles.progressText}>{Math.round(progress)}%</Text>
           </View>
           <View style={styles.progressTrack}>
@@ -430,33 +426,29 @@ const styles = StyleSheet.create({
   cameraView: { flex: 1 },
   cameraOverlay: {
     position: 'absolute',
-    top: 0,
     bottom: 0,
     left: 0,
     right: 0,
-    alignItems: 'center',
     justifyContent: 'flex-end',
-    padding: 16,
-    paddingBottom: 24,
+  },
+  completionOverlay: {
+    top: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   noCameraOverlay: {
+    top: 0,
     backgroundColor: 'rgba(30, 41, 59, 0.9)',
     borderRadius: 28,
-    position: 'relative',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
   },
-  promptCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.8)',
-    borderRadius: 20,
-    paddingVertical: 24,
+  promptGradient: {
     paddingHorizontal: 20,
+    paddingTop: 40,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
     alignItems: 'center',
-    minWidth: 280,
-  },
-  affirmationCounter: {
-    color: '#94A3B8',
-    fontSize: 14,
-    marginBottom: 12,
   },
   promptText: { color: '#fff', fontSize: 24, textAlign: 'center', lineHeight: 34 },
   promptSpoken: { color: '#34D399' },
@@ -474,11 +466,9 @@ const styles = StyleSheet.create({
   listeningIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
-    gap: 6,
+    gap: 4,
   },
-  listeningBadge: { color: '#A7F3D0', fontSize: 14 },
-  speechNote: { color: '#FCA5A5', fontSize: 12, textAlign: 'center', marginTop: 12 },
+  listeningBadge: { color: '#A7F3D0', fontSize: 12 },
   cameraPlaceholder: {
     flex: 1,
     backgroundColor: 'rgba(30, 41, 59, 0.7)',
