@@ -12,7 +12,9 @@ export const HomeScreen = ({ navigation }) => {
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
   const autoAdvanceRef = useRef(null);
+  const resumeTimerRef = useRef(null);
   const indexRef = useRef(currentIndex);
+  const goToNextRef = useRef(null);
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -23,7 +25,6 @@ export const HomeScreen = ({ navigation }) => {
 
   // Smooth transition animation
   const animateTransition = useCallback((direction, newIndex) => {
-    // Slide and fade out
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 0,
@@ -37,9 +38,7 @@ export const HomeScreen = ({ navigation }) => {
       }),
     ]).start(() => {
       setCurrentIndex(newIndex);
-      // Reset position for incoming card
       slideAnim.setValue(direction * 30);
-      // Slide and fade in
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -68,14 +67,19 @@ export const HomeScreen = ({ navigation }) => {
     animateTransition(-1, prevIndex);
   }, [animateTransition]);
 
+  // Keep ref updated so PanResponder always has latest function
+  useEffect(() => {
+    goToNextRef.current = goToNext;
+  }, [goToNext]);
+
   const startAutoAdvance = useCallback(() => {
     if (autoAdvanceRef.current) {
       clearInterval(autoAdvanceRef.current);
     }
     autoAdvanceRef.current = setInterval(() => {
-      goToNext();
+      if (goToNextRef.current) goToNextRef.current();
     }, 5000);
-  }, [goToNext]);
+  }, []);
 
   // Pan responder for swipe gestures
   const panResponder = useRef(
@@ -85,13 +89,18 @@ export const HomeScreen = ({ navigation }) => {
         // Pause auto-advance when user starts swiping
         if (autoAdvanceRef.current) {
           clearInterval(autoAdvanceRef.current);
+          autoAdvanceRef.current = null;
+        }
+        if (resumeTimerRef.current) {
+          clearTimeout(resumeTimerRef.current);
+          resumeTimerRef.current = null;
         }
       },
       onPanResponderRelease: (_, gesture) => {
         if (gesture.dy < -SWIPE_THRESHOLD) {
           const idx = indexRef.current;
           const nextIndex = idx < AFFIRMATIONS.length - 1 ? idx + 1 : 0;
-          // Inline animation to avoid stale closure
+          // Use refs to access latest animation functions
           Animated.parallel([
             Animated.timing(fadeAnim, {
               toValue: 0,
@@ -123,7 +132,6 @@ export const HomeScreen = ({ navigation }) => {
         } else if (gesture.dy > SWIPE_THRESHOLD) {
           const idx = indexRef.current;
           const prevIndex = idx > 0 ? idx - 1 : AFFIRMATIONS.length - 1;
-          // Inline animation to avoid stale closure
           Animated.parallel([
             Animated.timing(fadeAnim, {
               toValue: 0,
@@ -153,42 +161,13 @@ export const HomeScreen = ({ navigation }) => {
             ]).start();
           });
         }
-        // Resume auto-advance after a delay
-        setTimeout(() => {
+        // Resume auto-advance after a delay, reusing startAutoAdvance
+        resumeTimerRef.current = setTimeout(() => {
           if (autoAdvanceRef.current) {
             clearInterval(autoAdvanceRef.current);
           }
           autoAdvanceRef.current = setInterval(() => {
-            const idx = indexRef.current;
-            const nextIndex = idx < AFFIRMATIONS.length - 1 ? idx + 1 : 0;
-            Animated.parallel([
-              Animated.timing(fadeAnim, {
-                toValue: 0,
-                duration: 200,
-                useNativeDriver: true,
-              }),
-              Animated.timing(slideAnim, {
-                toValue: -30,
-                duration: 200,
-                useNativeDriver: true,
-              }),
-            ]).start(() => {
-              setCurrentIndex(nextIndex);
-              slideAnim.setValue(30);
-              Animated.parallel([
-                Animated.timing(fadeAnim, {
-                  toValue: 1,
-                  duration: 250,
-                  useNativeDriver: true,
-                }),
-                Animated.spring(slideAnim, {
-                  toValue: 0,
-                  friction: 8,
-                  tension: 40,
-                  useNativeDriver: true,
-                }),
-              ]).start();
-            });
+            if (goToNextRef.current) goToNextRef.current();
           }, 5000);
         }, 500);
       },
@@ -200,6 +179,9 @@ export const HomeScreen = ({ navigation }) => {
     return () => {
       if (autoAdvanceRef.current) {
         clearInterval(autoAdvanceRef.current);
+      }
+      if (resumeTimerRef.current) {
+        clearTimeout(resumeTimerRef.current);
       }
     };
   }, [startAutoAdvance]);

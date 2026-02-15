@@ -145,17 +145,16 @@ class PersonalizationService {
       { key: 'custom_affirmation_created', condition: customCount >= 1 },
     ];
 
-    for (const { key, condition } of checks) {
-      if (condition && !existingKeys.has(key)) {
-        const { error } = await supabase
-          .from('user_milestones')
-          .insert({ user_id: userId, milestone_key: key });
+    const qualified = checks.filter(({ key, condition }) => condition && !existingKeys.has(key));
 
-        if (!error) {
-          newMilestones.push({
-            key,
-            ...MILESTONE_DEFINITIONS[key],
-          });
+    if (qualified.length > 0) {
+      const { error } = await supabase
+        .from('user_milestones')
+        .insert(qualified.map(({ key }) => ({ user_id: userId, milestone_key: key })));
+
+      if (!error) {
+        for (const { key } of qualified) {
+          newMilestones.push({ key, ...MILESTONE_DEFINITIONS[key] });
         }
       }
     }

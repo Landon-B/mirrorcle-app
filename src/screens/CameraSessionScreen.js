@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, StatusBar, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { GradientBackground, PrimaryButton, GhostButton } from '../components/common';
 import { AffirmationHighlightText } from '../components/affirmation';
-import { PROMPTS } from '../constants';
+import { FALLBACK_AFFIRMATIONS } from '../constants';
 import { affirmationService } from '../services/affirmations';
 import { sessionService } from '../services/session';
 import { personalizationService } from '../services/personalization';
@@ -53,11 +53,25 @@ export const CameraSessionScreen = ({ navigation }) => {
   const hasHandledCompletion = useRef(false);
   const ignoredPartial = useRef('');
   const ignoredFinal = useRef('');
+  const transitionTimerRef = useRef(null);
+  const innerTransitionTimerRef = useRef(null);
+  const isMountedRef = useRef(true);
+  const partialRef = useRef('');
+  const finalTextRef = useRef('');
+
+  // Cleanup all timers on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+      if (innerTransitionTimerRef.current) clearTimeout(innerTransitionTimerRef.current);
+    };
+  }, []);
 
   // Load feeling and prompts
   useEffect(() => {
     loadSessionData();
-  }, []);
+  }, [isPro, user?.id, sessionAffirmationCount, timeOfDay]);
 
   const loadSessionData = async () => {
     try {
@@ -97,7 +111,7 @@ export const CameraSessionScreen = ({ navigation }) => {
   };
 
   const useLocalPrompts = () => {
-    const shuffled = [...PROMPTS].sort(() => Math.random() - 0.5);
+    const shuffled = [...FALLBACK_AFFIRMATIONS].sort(() => Math.random() - 0.5);
     setSessionAffirmations(
       shuffled.slice(0, sessionAffirmationCount).map((text, index) => ({
         id: `local-${index}`,
@@ -106,6 +120,10 @@ export const CameraSessionScreen = ({ navigation }) => {
       }))
     );
   };
+
+  // Keep refs in sync for use in completion effect without triggering it
+  useEffect(() => { partialRef.current = partial; }, [partial]);
+  useEffect(() => { finalTextRef.current = finalText; }, [finalText]);
 
   // Update speech matcher with recognized speech - ignore stale data from previous affirmation
   useEffect(() => {
@@ -147,8 +165,8 @@ export const CameraSessionScreen = ({ navigation }) => {
       setIsTransitioning(true);
 
       // Capture current speech values IMMEDIATELY to ignore them for next affirmation
-      ignoredPartial.current = partial;
-      ignoredFinal.current = finalText;
+      ignoredPartial.current = partialRef.current;
+      ignoredFinal.current = finalTextRef.current;
 
       const newCompletedCount = completedCount + 1;
       setCompletedCount(newCompletedCount);
@@ -184,22 +202,23 @@ export const CameraSessionScreen = ({ navigation }) => {
       // Check if session is complete (3 affirmations done)
       if (newCompletedCount >= totalCount) {
         // Session complete - navigate to reflection after delay
-        setTimeout(() => {
-          handleComplete();
+        transitionTimerRef.current = setTimeout(() => {
+          if (isMountedRef.current) handleComplete();
         }, 1200);
       } else {
         // Transition to next affirmation
-        setTimeout(() => {
+        transitionTimerRef.current = setTimeout(() => {
+          if (!isMountedRef.current) return;
           hasHandledCompletion.current = false;
           setCurrentIndex((prev) => prev + 1);
           // Small delay before allowing new speech processing
-          setTimeout(() => {
-            setIsTransitioning(false);
+          innerTransitionTimerRef.current = setTimeout(() => {
+            if (isMountedRef.current) setIsTransitioning(false);
           }, 100);
         }, 1200);
       }
     }
-  }, [isComplete, isTransitioning, completedCount, isListening, stopListening, partial, finalText, sessionAffirmations, currentIndex, currentSessionId, user]);
+  }, [isComplete, isTransitioning, completedCount, isListening, stopListening, sessionAffirmations, currentIndex, currentSessionId, user]);
 
   // Reset completion flag and start time when affirmation changes
   useEffect(() => {
@@ -223,7 +242,17 @@ export const CameraSessionScreen = ({ navigation }) => {
       const status = permission?.status;
       if (status !== 'granted') {
         const result = await requestPermission();
-        if (!result.granted) return;
+        if (!result.granted) {
+          Alert.alert(
+            'Camera Permission Required',
+            'Camera access is needed to see yourself during the session. You can enable it in Settings, or continue without camera.',
+            [
+              { text: 'Continue Without Camera', onPress: () => setSessionStarted(true) },
+              { text: 'Cancel', style: 'cancel' },
+            ]
+          );
+          return;
+        }
       }
       setCameraEnabled(true);
     }

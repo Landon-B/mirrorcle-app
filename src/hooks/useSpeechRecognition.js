@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SpeechRecognitionService } from '../services/speech';
 
 export const useSpeechRecognition = () => {
+  const isListeningRef = useRef(false);
   const [isListening, setIsListening] = useState(false);
   const [partial, setPartial] = useState('');
   const [finalText, setFinalText] = useState('');
@@ -21,6 +22,7 @@ export const useSpeechRecognition = () => {
       ...options,
       onStart: () => {
         setIsListening(true);
+        isListeningRef.current = true;
         if (options.onStart) options.onStart();
       },
       onPartial: (text) => {
@@ -37,6 +39,7 @@ export const useSpeechRecognition = () => {
       },
       onEnd: () => {
         setIsListening(false);
+        isListeningRef.current = false;
         if (options.onEnd) options.onEnd();
       },
     });
@@ -51,6 +54,16 @@ export const useSpeechRecognition = () => {
   const stopListening = useCallback(async () => {
     await SpeechRecognitionService.stopListening();
     setIsListening(false);
+    isListeningRef.current = false;
+  }, []);
+
+  // Cleanup: stop listening on unmount
+  useEffect(() => {
+    return () => {
+      if (isListeningRef.current) {
+        SpeechRecognitionService.stopListening().catch(() => {});
+      }
+    };
   }, []);
 
   return {

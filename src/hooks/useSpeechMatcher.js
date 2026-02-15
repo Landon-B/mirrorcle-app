@@ -25,6 +25,7 @@ export const useSpeechMatcher = (text) => {
     const changed = matcher.updateWithSpokenTokens(tokens);
 
     if (changed) {
+      setDisplayTokens([...matcher.displayTokens]);
       setActiveToken(matcher.activeToken);
       setIsComplete(matcher.isComplete);
     }

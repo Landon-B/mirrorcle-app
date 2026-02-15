@@ -1,23 +1,40 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { NotificationService } from '../services/notifications';
 
 export const useNotifications = () => {
   const { preferences, updatePreferences, stats, user } = useApp();
   const [permissionStatus, setPermissionStatus] = useState('undetermined');
+  const scheduleTimerRef = useRef(null);
+  const statsRef = useRef(stats);
 
   const isEnabled = preferences.notificationsEnabled;
   const notificationTime = preferences.notificationTime;
+
+  // Keep stats ref current for use in callbacks without re-creating them
+  useEffect(() => {
+    statsRef.current = stats;
+  }, [stats]);
 
   useEffect(() => {
     checkPermission();
   }, []);
 
-  // Reschedule when context changes (streak, feeling, etc.)
+  // Reschedule when context changes, debounced to prevent rapid-fire calls
   useEffect(() => {
     if (isEnabled) {
-      scheduleWithContext();
+      if (scheduleTimerRef.current) {
+        clearTimeout(scheduleTimerRef.current);
+      }
+      scheduleTimerRef.current = setTimeout(() => {
+        scheduleWithContext();
+      }, 500);
     }
+    return () => {
+      if (scheduleTimerRef.current) {
+        clearTimeout(scheduleTimerRef.current);
+      }
+    };
   }, [stats.currentStreak, stats.feelingsHistory.length]);
 
   const checkPermission = async () => {
@@ -30,12 +47,13 @@ export const useNotifications = () => {
   };
 
   const getNotificationContext = () => {
-    const lastFeeling = stats.feelingsHistory.length > 0
-      ? stats.feelingsHistory[stats.feelingsHistory.length - 1]
+    const currentStats = statsRef.current;
+    const lastFeeling = currentStats.feelingsHistory.length > 0
+      ? currentStats.feelingsHistory[currentStats.feelingsHistory.length - 1]
       : null;
 
     return {
-      streak: stats.currentStreak,
+      streak: currentStats.currentStreak,
       lastFeeling,
       userName: user?.user_metadata?.name || null,
     };
@@ -73,7 +91,7 @@ export const useNotifications = () => {
       await NotificationService.scheduleDailyReminder(time, getNotificationContext());
     }
     return granted;
-  }, [requestPermission, updatePreferences, stats]);
+  }, [requestPermission, updatePreferences]);
 
   const disableNotifications = useCallback(async () => {
     await updatePreferences({ notificationsEnabled: false });
@@ -85,7 +103,7 @@ export const useNotifications = () => {
     if (isEnabled) {
       await NotificationService.scheduleDailyReminder(time, getNotificationContext());
     }
-  }, [updatePreferences, isEnabled, stats]);
+  }, [updatePreferences, isEnabled]);
 
   return {
     isEnabled,

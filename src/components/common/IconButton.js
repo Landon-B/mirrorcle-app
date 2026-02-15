@@ -2,9 +2,12 @@ import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export const IconButton = ({ icon, size = 20, onPress, style, active }) => (
+export const IconButton = ({ icon, size = 20, onPress, style, active, accessibilityLabel }) => (
   <Pressable
     onPress={onPress}
+    accessibilityRole="button"
+    accessibilityLabel={accessibilityLabel || icon}
+    accessibilityState={{ selected: !!active }}
     style={({ pressed }) => [
       styles.iconCircleButton,
       active && styles.iconCircleButtonActive,

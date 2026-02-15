@@ -1,4 +1,4 @@
-export const PROMPTS = [
+export const FALLBACK_AFFIRMATIONS = [
   "I am enough",
   "I am worthy of love",
   "I believe in myself",

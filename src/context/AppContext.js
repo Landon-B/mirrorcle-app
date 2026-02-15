@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { storageService } from '../services/storage';
 import { authService } from '../services/auth';
 import { userProfileService } from '../services/user';
@@ -173,23 +173,26 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateStats = useCallback(async (newStats) => {
-    const updated = { ...stats, ...newStats };
-    setStats(updated);
-
-    if (user) {
-      // Stats are updated automatically via sessionService
-    } else {
-      await storageService.saveStats(updated);
-    }
-  }, [stats, user]);
+    setStats(prev => {
+      const updated = { ...prev, ...newStats };
+      if (!user) {
+        storageService.saveStats(updated);
+      }
+      return updated;
+    });
+  }, [user]);
 
   const updatePreferences = useCallback(async (newPrefs) => {
-    const updated = { ...preferences, ...newPrefs };
-    setPreferences(updated);
+    setPreferences(prev => {
+      const updated = { ...prev, ...newPrefs };
+      if (!user) {
+        storageService.savePreferences(updated);
+      }
+      return updated;
+    });
 
     if (user) {
       try {
-        // Update profile for theme, isPro, and session length
         if (newPrefs.themeId !== undefined || newPrefs.isPro !== undefined || newPrefs.preferredSessionLength !== undefined) {
           await userProfileService.updateProfile({
             themeId: newPrefs.themeId,
@@ -197,7 +200,6 @@ export const AppProvider = ({ children }) => {
             preferredSessionLength: newPrefs.preferredSessionLength,
           });
         }
-        // Update notification settings
         if (newPrefs.notificationsEnabled !== undefined || newPrefs.notificationTime !== undefined) {
           await userProfileService.updateNotificationSettings({
             enabled: newPrefs.notificationsEnabled,
@@ -207,10 +209,8 @@ export const AppProvider = ({ children }) => {
       } catch (error) {
         console.error('Error updating preferences in Supabase:', error);
       }
-    } else {
-      await storageService.savePreferences(updated);
     }
-  }, [preferences, user]);
+  }, [user]);
 
   const addSession = useCallback(async (sessionData) => {
     if (user) {
@@ -244,6 +244,14 @@ export const AppProvider = ({ children }) => {
           feelingsHistory: [...prev.feelingsHistory, sessionData.feeling],
         }));
 
+        // Refresh theme unlocks after session (milestones may have been earned)
+        try {
+          const themeUnlocks = await personalizationService.checkThemeUnlocks(session.userId || user.id);
+          setUnlockedThemes(themeUnlocks);
+        } catch (e) {
+          // Non-critical, continue
+        }
+
         return transformedSession;
       } catch (error) {
         console.error('Error creating session in Supabase:', error);
@@ -272,27 +280,31 @@ export const AppProvider = ({ children }) => {
     setSessions([]);
   }, []);
 
-  const value = {
-    // State
+  const isPro = preferences.isPro;
+  const refreshData = user ? loadSupabaseData : loadAppData;
+
+  const value = useMemo(() => ({
     stats,
     preferences,
     favorites,
     sessions,
     hasCompletedOnboarding,
     isLoading,
-    isPro: preferences.isPro,
+    isPro,
     user,
     unlockedThemes,
-
-    // Actions
     updateStats,
     updatePreferences,
     addSession,
     setFavorites,
     completeOnboarding,
     signOut,
-    refreshData: user ? loadSupabaseData : loadAppData,
-  };
+    refreshData,
+  }), [
+    stats, preferences, favorites, sessions, hasCompletedOnboarding,
+    isLoading, isPro, user, unlockedThemes,
+    updateStats, updatePreferences, addSession, completeOnboarding, signOut,
+  ]);
 
   return (
     <AppContext.Provider value={value}>

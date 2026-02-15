@@ -4,3 +4,4 @@ export { GhostButton } from './GhostButton';
 export { Card } from './Card';
 export { OverlaySheet } from './OverlaySheet';
 export { IconButton } from './IconButton';
+export { ErrorBoundary } from './ErrorBoundary';

@@ -19,6 +19,7 @@ import {
   CustomAffirmationsScreen,
 } from '../screens';
 import { useApp } from '../context/AppContext';
+import { ErrorBoundary } from '../components/common';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,37 +31,39 @@ export const AppNavigator = () => {
   }
 
   return (
-    <Stack.Navigator
-      screenOptions={{ headerShown: false }}
-      initialRouteName={hasCompletedOnboarding ? 'Home' : 'Welcome'}
-    >
-      {/* Auth Flow */}
-      <Stack.Screen name="Welcome" component={WelcomeScreen} />
-      <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+    <ErrorBoundary>
+      <Stack.Navigator
+        screenOptions={{ headerShown: false }}
+        initialRouteName={hasCompletedOnboarding ? 'Home' : 'Welcome'}
+      >
+        {/* Auth Flow */}
+        <Stack.Screen name="Welcome" component={WelcomeScreen} />
+        <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
 
-      {/* Main Flow */}
-      <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="AffirmationHome" component={AffirmationHomeScreen} />
-      <Stack.Screen name="Feelings" component={FeelingsScreen} />
-      <Stack.Screen name="Session" component={CameraSessionScreen} />
-      <Stack.Screen name="Reflection" component={ReflectionScreen} />
+        {/* Main Flow */}
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="AffirmationHome" component={AffirmationHomeScreen} />
+        <Stack.Screen name="Feelings" component={FeelingsScreen} />
+        <Stack.Screen name="Session" component={CameraSessionScreen} />
+        <Stack.Screen name="Reflection" component={ReflectionScreen} />
 
-      {/* Profile Screens */}
-      <Stack.Screen name="Favorites" component={FavoritesScreen} />
-      <Stack.Screen name="Trends" component={TrendsScreen} />
-      <Stack.Screen name="Themes" component={ThemesScreen} />
-      <Stack.Screen name="CustomAffirmations" component={CustomAffirmationsScreen} />
+        {/* Profile Screens */}
+        <Stack.Screen name="Favorites" component={FavoritesScreen} />
+        <Stack.Screen name="Trends" component={TrendsScreen} />
+        <Stack.Screen name="Themes" component={ThemesScreen} />
+        <Stack.Screen name="CustomAffirmations" component={CustomAffirmationsScreen} />
 
-      {/* Settings Screens */}
-      <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
-      <Stack.Screen
-        name="Paywall"
-        component={PaywallScreen}
-        options={{ presentation: 'modal' }}
-      />
-    </Stack.Navigator>
+        {/* Settings Screens */}
+        <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+        <Stack.Screen
+          name="Paywall"
+          component={PaywallScreen}
+          options={{ presentation: 'modal' }}
+        />
+      </Stack.Navigator>
+    </ErrorBoundary>
   );
 };

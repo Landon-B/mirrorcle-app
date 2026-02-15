@@ -4,19 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../common';
 import { sessionService } from '../../services/session';
 import { useApp } from '../../context/AppContext';
-
-const FEELING_COLORS = {
-  happy: '#FACC15',
-  confident: '#F97316',
-  grateful: '#34D399',
-  anxious: '#60A5FA',
-  struggling: '#A78BFA',
-  lonely: '#F472B6',
-  angry: '#EF4444',
-  sad: '#818CF8',
-};
-
-const DEFAULT_COLOR = '#94A3B8';
+import { getFeelingColor } from '../../constants/feelings';
 
 export const MoodJourneyCard = () => {
   const { user } = useApp();
@@ -59,7 +47,7 @@ export const MoodJourneyCard = () => {
       <View style={styles.timeline}>
         {moods.slice().reverse().slice(-14).map((mood, index) => {
           const feelingId = mood.feeling?.id || '';
-          const color = FEELING_COLORS[feelingId] || DEFAULT_COLOR;
+          const color = getFeelingColor(feelingId);
           return (
             <View key={mood.id || index} style={styles.dotWrap}>
               <View style={[styles.dot, { backgroundColor: color }]} />

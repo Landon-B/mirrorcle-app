@@ -34,9 +34,17 @@ class CustomAffirmationService {
    * Create a custom affirmation
    */
   async create(userId, text) {
+    const trimmed = text?.trim();
+    if (!trimmed || trimmed.length < 3) {
+      throw new Error('Affirmation must be at least 3 characters');
+    }
+    if (trimmed.length > 500) {
+      throw new Error('Affirmation must be 500 characters or less');
+    }
+
     const { data, error } = await supabase
       .from('user_custom_affirmations')
-      .insert({ user_id: userId, text })
+      .insert({ user_id: userId, text: trimmed })
       .select()
       .single();
 
@@ -49,7 +57,16 @@ class CustomAffirmationService {
    */
   async update(id, userId, updates) {
     const dbUpdates = {};
-    if (updates.text !== undefined) dbUpdates.text = updates.text;
+    if (updates.text !== undefined) {
+      const trimmed = updates.text?.trim();
+      if (!trimmed || trimmed.length < 3) {
+        throw new Error('Affirmation must be at least 3 characters');
+      }
+      if (trimmed.length > 500) {
+        throw new Error('Affirmation must be 500 characters or less');
+      }
+      dbUpdates.text = trimmed;
+    }
     if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
 
     const { data, error } = await supabase

@@ -45,6 +45,11 @@ class SpeechRecognitionServiceClass {
   async _startNativeListening(voice, options) {
     if (!voice) return false;
 
+    // Clean up any previous session before starting a new one
+    if (this.isListening) {
+      await this.stopListening();
+    }
+
     const { language = 'en-US', onStart, onPartial, onFinal, onError, onEnd } = options;
 
     this.voice = voice;
@@ -136,6 +141,12 @@ class SpeechRecognitionServiceClass {
     if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
       console.warn('Speech recognition is not available in this browser.');
       return false;
+    }
+
+    // Clean up any previous web recognizer before starting a new one
+    if (this.recognizer) {
+      try { this.recognizer.stop(); } catch (e) { /* ignore */ }
+      this.recognizer = null;
     }
 
     const {

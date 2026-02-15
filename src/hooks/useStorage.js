@@ -1,26 +1,37 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { storageService } from '../services/storage';
 
 export const useStorage = (key, initialValue = null) => {
   const [value, setValue] = useState(initialValue);
   const [isLoading, setIsLoading] = useState(true);
+  const currentKeyRef = useRef(key);
 
   useEffect(() => {
+    currentKeyRef.current = key;
+    setIsLoading(true);
+
+    const loadValue = async () => {
+      try {
+        const stored = await storageService.get(key);
+        // Only update if this is still the current key (prevents race condition)
+        if (currentKeyRef.current === key) {
+          if (stored !== null) {
+            setValue(stored);
+          } else {
+            setValue(initialValue);
+          }
+        }
+      } catch (error) {
+        console.error(`Error loading ${key}:`, error);
+      } finally {
+        if (currentKeyRef.current === key) {
+          setIsLoading(false);
+        }
+      }
+    };
+
     loadValue();
   }, [key]);
-
-  const loadValue = async () => {
-    try {
-      const stored = await storageService.get(key);
-      if (stored !== null) {
-        setValue(stored);
-      }
-    } catch (error) {
-      console.error(`Error loading ${key}:`, error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const updateValue = useCallback(async (newValue) => {
     try {

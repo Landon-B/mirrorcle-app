@@ -253,18 +253,25 @@ class AffirmationService {
     const { data: affirmationTags, error: affError } = await query;
     if (affError) throw affError;
 
-    // Get resonance scores and difficulty
+    // Fetch user-specific data in parallel
     let resonanceScores = new Map();
     let totalSessions = 0;
+    const engagedIds = new Set();
+    let customAffirmations = [];
+
     if (userId) {
       try {
-        resonanceScores = await personalizationService.getResonanceScores(userId);
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('total_sessions')
-          .eq('id', userId)
-          .single();
-        totalSessions = profile?.total_sessions || 0;
+        const [resonanceResult, profileResult, historyResult, customsResult] = await Promise.all([
+          personalizationService.getResonanceScores(userId).catch(() => new Map()),
+          supabase.from('user_profiles').select('total_sessions').eq('id', userId).single(),
+          supabase.from('user_affirmation_history').select('affirmation_id').eq('user_id', userId).eq('engaged', true),
+          supabase.from('user_custom_affirmations').select('*').eq('user_id', userId).eq('is_active', true),
+        ]);
+
+        resonanceScores = resonanceResult;
+        totalSessions = profileResult.data?.total_sessions || 0;
+        for (const h of historyResult.data || []) engagedIds.add(h.affirmation_id);
+        customAffirmations = customsResult.data || [];
       } catch (e) {
         // Gracefully continue without personalization
       }
@@ -274,17 +281,6 @@ class AffirmationService {
 
     // Build scored candidates
     const affirmationMap = new Map();
-    const engagedIds = new Set();
-
-    // Exclude already-engaged
-    if (userId) {
-      const { data: history } = await supabase
-        .from('user_affirmation_history')
-        .select('affirmation_id')
-        .eq('user_id', userId)
-        .eq('engaged', true);
-      for (const h of history || []) engagedIds.add(h.affirmation_id);
-    }
 
     for (const at of affirmationTags || []) {
       const aff = at.affirmations;
@@ -315,31 +311,19 @@ class AffirmationService {
       }
     }
 
-    // Merge in custom affirmations
-    if (userId) {
-      try {
-        const { data: customs } = await supabase
-          .from('user_custom_affirmations')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('is_active', true);
-
-        for (const custom of customs || []) {
-          affirmationMap.set(`custom-${custom.id}`, {
-            affirmation: {
-              id: `custom-${custom.id}`,
-              text: custom.text,
-              gradient_start: '#A855F7',
-              gradient_end: '#EC4899',
-              is_prompt: true,
-              is_premium: false,
-            },
-            score: (tagWeightMap.values().next().value || 3) + 0.3,
-          });
-        }
-      } catch (e) {
-        // Continue without custom affirmations
-      }
+    // Merge in custom affirmations (already fetched in parallel above)
+    for (const custom of customAffirmations) {
+      affirmationMap.set(`custom-${custom.id}`, {
+        affirmation: {
+          id: `custom-${custom.id}`,
+          text: custom.text,
+          gradient_start: '#A855F7',
+          gradient_end: '#EC4899',
+          is_prompt: true,
+          is_premium: false,
+        },
+        score: (tagWeightMap.values().next().value || 3) + 0.3,
+      });
     }
 
     // Weighted random sampling
@@ -380,9 +364,7 @@ class AffirmationService {
    * @private
    */
   _getDifficultyLevel(totalSessions) {
-    if (totalSessions < 10) return { level: 'beginner', maxLength: 60 };
-    if (totalSessions < 50) return { level: 'intermediate', maxLength: 100 };
-    return { level: 'advanced', maxLength: Infinity };
+    return personalizationService.getDifficultyLevel(totalSessions);
   }
 
   /**

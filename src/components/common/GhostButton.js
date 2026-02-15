@@ -1,9 +1,11 @@
 import React from 'react';
 import { Pressable, Text, StyleSheet } from 'react-native';
 
-export const GhostButton = ({ title, onPress, style }) => (
+export const GhostButton = ({ title, onPress, style, accessibilityLabel }) => (
   <Pressable
     onPress={onPress}
+    accessibilityRole="button"
+    accessibilityLabel={accessibilityLabel || title}
     style={({ pressed }) => [styles.ghostButton, pressed && styles.buttonPressed, style]}
   >
     <Text style={styles.ghostButtonText}>{title}</Text>

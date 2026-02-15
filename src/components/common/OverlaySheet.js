@@ -9,20 +9,20 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 export const OverlaySheet = ({ visible, title, subtitle, items, onClose }) => (
   <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
     <View style={styles.overlayBackdrop}>
-      <Pressable style={styles.overlayBackdropPress} onPress={onClose} />
+      <Pressable style={styles.overlayBackdropPress} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close overlay" />
       <View style={styles.overlaySheet}>
         <View style={styles.overlayHeader}>
           <View>
             <Text style={styles.overlayTitle}>{title}</Text>
             <Text style={styles.overlaySubtitle}>{subtitle}</Text>
           </View>
-          <Pressable onPress={onClose} style={styles.overlayCloseButton}>
+          <Pressable onPress={onClose} style={styles.overlayCloseButton} accessibilityRole="button" accessibilityLabel="Close">
             <Ionicons name="close" size={20} color="#fff" />
           </Pressable>
         </View>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.overlayContent}>
           {items.map((item) => (
-            <Pressable key={item.label} onPress={item.onPress} style={styles.overlayItem}>
+            <Pressable key={item.label} onPress={item.onPress} style={styles.overlayItem} accessibilityRole="button" accessibilityLabel={item.label}>
               <LinearGradient colors={item.colors} style={styles.overlayIconWrap}>
                 <Ionicons name={item.icon} size={20} color="#fff" />
               </LinearGradient>

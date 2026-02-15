@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, StatusBar, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, StatusBar, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -86,42 +86,45 @@ export const FavoritesScreen = ({ navigation }) => {
           <View style={styles.placeholder} />
         </View>
 
-        <ScrollView contentContainerStyle={styles.content}>
-          {favoriteAffirmations.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="heart-outline" size={64} color="#475569" />
-              <Text style={styles.emptyTitle}>No favorites yet</Text>
-              <Text style={styles.emptySubtitle}>
-                Tap the heart icon on affirmations to save them here
-              </Text>
-              <PrimaryButton
-                title="Browse Affirmations"
-                onPress={() => navigation.navigate('AffirmationHome')}
-              />
-            </View>
-          ) : (
-            <View style={styles.grid}>
-              {favoriteAffirmations.map((affirmation) => (
-                <Card key={affirmation.id} style={styles.affirmationCard}>
-                  <LinearGradient
-                    colors={affirmation.colors}
-                    style={styles.cardGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
+        {favoriteAffirmations.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="heart-outline" size={64} color="#475569" />
+            <Text style={styles.emptyTitle}>No favorites yet</Text>
+            <Text style={styles.emptySubtitle}>
+              Tap the heart icon on affirmations to save them here
+            </Text>
+            <PrimaryButton
+              title="Browse Affirmations"
+              onPress={() => navigation.navigate('AffirmationHome')}
+            />
+          </View>
+        ) : (
+          <FlatList
+            data={favoriteAffirmations}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.content}
+            renderItem={({ item: affirmation }) => (
+              <Card style={styles.affirmationCard}>
+                <LinearGradient
+                  colors={affirmation.colors}
+                  style={styles.cardGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={styles.affirmationText}>"{affirmation.text}"</Text>
+                  <Pressable
+                    onPress={() => handleRemoveFavorite(affirmation.id)}
+                    style={styles.heartButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="Remove from favorites"
                   >
-                    <Text style={styles.affirmationText}>"{affirmation.text}"</Text>
-                    <Pressable
-                      onPress={() => handleRemoveFavorite(affirmation.id)}
-                      style={styles.heartButton}
-                    >
-                      <Ionicons name="heart" size={20} color="#fff" />
-                    </Pressable>
-                  </LinearGradient>
-                </Card>
-              ))}
-            </View>
-          )}
-        </ScrollView>
+                    <Ionicons name="heart" size={20} color="#fff" />
+                  </Pressable>
+                </LinearGradient>
+              </Card>
+            )}
+          />
+        )}
       </SafeAreaView>
     </GradientBackground>
   );
@@ -146,7 +149,7 @@ const styles = StyleSheet.create({
   },
   title: { color: '#fff', fontSize: 20, fontWeight: '600' },
   placeholder: { width: 40 },
-  content: { padding: 20, flexGrow: 1 },
+  content: { padding: 20, gap: 16 },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
@@ -161,7 +164,6 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { color: '#fff', fontSize: 20, fontWeight: '600' },
   emptySubtitle: { color: '#94A3B8', textAlign: 'center', maxWidth: 250 },
-  grid: { gap: 16 },
   affirmationCard: { padding: 0, overflow: 'hidden' },
   cardGradient: { padding: 20, borderRadius: 20 },
   affirmationText: { color: '#fff', fontSize: 18, lineHeight: 26, marginBottom: 12 },

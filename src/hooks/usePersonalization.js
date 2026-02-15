@@ -7,7 +7,6 @@ export const usePersonalization = () => {
   const [milestones, setMilestones] = useState([]);
   const [powerPhrase, setPowerPhrase] = useState(null);
   const [growthNudge, setGrowthNudge] = useState(null);
-  const [unlockedThemes, setUnlockedThemes] = useState([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   const timeOfDay = personalizationService.getTimeOfDay();
@@ -27,17 +26,15 @@ export const usePersonalization = () => {
     if (!user?.id) return;
 
     try {
-      const [milestonesData, phraseData, nudgeData, themeUnlocks] = await Promise.all([
+      const [milestonesData, phraseData, nudgeData] = await Promise.all([
         personalizationService.getUndismissedMilestones(user.id),
         personalizationService.getPowerPhrase(user.id),
         personalizationService.getGrowthNudge(user.id),
-        personalizationService.checkThemeUnlocks(user.id),
       ]);
 
       setMilestones(milestonesData);
       setPowerPhrase(phraseData);
       setGrowthNudge(nudgeData);
-      setUnlockedThemes(themeUnlocks);
     } catch (error) {
       console.error('Error loading personalization data:', error);
     } finally {
@@ -90,7 +87,6 @@ export const usePersonalization = () => {
     growthNudge,
     timeOfDay,
     difficultyLevel,
-    unlockedThemes,
     isLoaded,
     checkNewMilestones,
     dismissMilestone,

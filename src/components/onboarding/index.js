@@ -1,1 +1,1 @@
-export { OnboardingSlide, OnboardingDots } from './OnboardingSlide';
+export { OnboardingSlide } from './OnboardingSlide';

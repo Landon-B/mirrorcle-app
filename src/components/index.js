@@ -8,14 +8,11 @@ export {
   IconButton,
 } from './common';
 
-// Affirmation components
-export { AffirmationCard } from './affirmation';
-
 // Stats components
 export { StatCard } from './stats';
 
 // Onboarding components
-export { OnboardingSlide, OnboardingDots } from './onboarding';
+export { OnboardingSlide } from './onboarding';
 
 // Pro components
-export { PaywallModal, FeatureGate, useFeatureGate } from './pro';
+export { PaywallModal, FeatureGate } from './pro';

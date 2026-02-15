@@ -4,13 +4,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 
-export const PrimaryButton = ({ title, icon, onPress, disabled, style }) => {
+export const PrimaryButton = ({ title, icon, onPress, disabled, style, accessibilityLabel }) => {
   const { theme } = useTheme();
 
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => [
         styles.primaryButton,
         disabled && styles.primaryButtonDisabled,
