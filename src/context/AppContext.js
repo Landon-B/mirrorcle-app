@@ -238,6 +238,7 @@ export const AppProvider = ({ children }) => {
           ...prev,
           totalSessions: prev.totalSessions + 1,
           totalAffirmations: prev.totalAffirmations + (sessionData.completedPrompts || 0),
+          totalTimeSeconds: prev.totalTimeSeconds + (sessionData.duration || 0),
           currentStreak,
           longestStreak,
           lastSessionDate: new Date().toISOString(),

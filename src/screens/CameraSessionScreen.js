@@ -58,6 +58,7 @@ export const CameraSessionScreen = ({ navigation }) => {
   const isMountedRef = useRef(true);
   const partialRef = useRef('');
   const finalTextRef = useRef('');
+  const completedCountRef = useRef(0);
 
   // Cleanup all timers on unmount
   useEffect(() => {
@@ -169,6 +170,7 @@ export const CameraSessionScreen = ({ navigation }) => {
       ignoredFinal.current = finalTextRef.current;
 
       const newCompletedCount = completedCount + 1;
+      completedCountRef.current = newCompletedCount;
       setCompletedCount(newCompletedCount);
 
       // Calculate completion time for voice pacing
@@ -263,10 +265,11 @@ export const CameraSessionScreen = ({ navigation }) => {
     if (isListening) {
       try { await stopListening(); } catch (e) { /* ignore */ }
     }
+    const count = completedCountRef.current;
     try {
       await recordSession({
         feeling,
-        completedPrompts: completedCount,
+        completedPrompts: count,
         duration: sessionTime,
         timeOfDay,
       });
@@ -275,7 +278,7 @@ export const CameraSessionScreen = ({ navigation }) => {
     }
     navigation.replace('Reflection', {
       sessionDuration: sessionTime,
-      completedCount,
+      completedCount: count,
     });
   };
 
@@ -283,10 +286,11 @@ export const CameraSessionScreen = ({ navigation }) => {
     if (isListening) {
       try { await stopListening(); } catch (e) { /* ignore */ }
     }
+    const count = completedCountRef.current;
     try {
       await recordSession({
         feeling,
-        completedPrompts: completedCount,
+        completedPrompts: count,
         duration: sessionTime,
         timeOfDay,
       });
@@ -295,7 +299,7 @@ export const CameraSessionScreen = ({ navigation }) => {
     }
     navigation.replace('Reflection', {
       sessionDuration: sessionTime,
-      completedCount,
+      completedCount: count,
     });
   };
 
