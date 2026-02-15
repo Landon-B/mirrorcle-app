@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, StatusBar, Animated, PanResponder, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, StatusBar, Animated, PanResponder, Dimensions, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GradientBackground, PrimaryButton } from '../components/common';
@@ -238,7 +238,12 @@ export const HomeScreen = ({ navigation }) => {
             />
           </View>
 
-          <Text style={styles.helperText}>Show up for yourself today</Text>
+          <Pressable
+            onPress={() => navigation.navigate('AffirmationHome')}
+            style={styles.skipButton}
+          >
+            <Text style={styles.skipButtonText}>Skip Affirmation</Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     </GradientBackground>
@@ -277,5 +282,6 @@ const styles = StyleSheet.create({
   dotActive: { width: 20, backgroundColor: '#C084FC' },
   swipeHint: { color: '#64748B', fontSize: 12, marginTop: 10 },
   buttonWrapper: { width: '100%' },
-  helperText: { marginTop: 20, color: '#94A3B8', fontSize: 14 },
+  skipButton: { marginTop: 20, paddingVertical: 8, paddingHorizontal: 16, opacity: 0.5 },
+  skipButtonText: { color: '#fff', fontSize: 14 },
 });
