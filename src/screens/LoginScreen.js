@@ -59,7 +59,7 @@ export const LoginScreen = ({ navigation }) => {
       const userName = user?.user_metadata?.name || 'Friend';
       await updatePreferences({ userName });
       await completeOnboarding();
-      navigation.replace('Home');
+      navigation.replace('MainTabs');
     } catch (error) {
       Alert.alert('Sign In Error', error.message);
     } finally {

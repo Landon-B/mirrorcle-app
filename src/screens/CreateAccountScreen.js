@@ -134,7 +134,7 @@ export const CreateAccountScreen = ({ navigation }) => {
       animateTransition(() => setStep(step + 1));
     } else {
       await completeOnboarding();
-      navigation.replace('Home');
+      navigation.replace('MainTabs');
     }
   };
 

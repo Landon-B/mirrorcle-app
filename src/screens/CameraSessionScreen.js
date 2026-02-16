@@ -18,7 +18,7 @@ import { usePersonalization } from '../hooks/usePersonalization';
 import { storageService } from '../services/storage';
 import { formatTime } from '../utils/dateUtils';
 
-export const CameraSessionScreen = ({ navigation }) => {
+export const CameraSessionScreen = ({ navigation, route }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraError, setCameraError] = useState(null);
@@ -78,7 +78,9 @@ export const CameraSessionScreen = ({ navigation }) => {
 
   const loadSessionData = async () => {
     try {
-      const currentFeeling = await storageService.getCurrentFeeling();
+      // Prefer mood from v2 route params, fall back to AsyncStorage (v1 flow)
+      const routeMood = route.params?.mood;
+      const currentFeeling = routeMood?.id || await storageService.getCurrentFeeling();
       if (currentFeeling) {
         setFeeling(currentFeeling);
       }
@@ -285,9 +287,11 @@ export const CameraSessionScreen = ({ navigation }) => {
     } catch (e) {
       console.log('Failed to record session:', e);
     }
-    navigation.replace('Reflection', {
-      sessionDuration: sessionTime,
-      completedCount: count,
+    navigation.replace('PostMoodReflection', {
+      completedPrompts: count,
+      duration: sessionTime,
+      feeling,
+      preMood: feeling,
     });
   };
 
@@ -306,9 +310,11 @@ export const CameraSessionScreen = ({ navigation }) => {
     } catch (e) {
       console.log('Failed to record session:', e);
     }
-    navigation.replace('Reflection', {
-      sessionDuration: sessionTime,
-      completedCount: count,
+    navigation.replace('PostMoodReflection', {
+      completedPrompts: count,
+      duration: sessionTime,
+      feeling,
+      preMood: feeling,
     });
   };
 

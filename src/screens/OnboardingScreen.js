@@ -52,12 +52,12 @@ export const OnboardingScreen = ({ navigation }) => {
 
   const handleSkip = async () => {
     await completeOnboarding();
-    navigation.replace('Home');
+    navigation.replace('MainTabs');
   };
 
   const handleGetStarted = async () => {
     await completeOnboarding();
-    navigation.replace('Home');
+    navigation.replace('MainTabs');
   };
 
   const renderSlide = ({ item }) => (
