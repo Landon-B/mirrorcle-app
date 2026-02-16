@@ -69,7 +69,7 @@ export default {
             {
               name: "AffirmationWidget",
               displayName: "Daily Affirmation",
-              description: "A new affirmation to inspire you every time you check your phone",
+              description: "A gentle reminder to pause, breathe, and reflect",
               supportedFamilies: ["systemSmall", "systemMedium", "systemLarge"]
             }
           ]
