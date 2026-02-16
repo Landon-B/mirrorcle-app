@@ -4,7 +4,7 @@ export default {
   expo: {
     name: "mirrorcle-ios",
     slug: "mirrorcle-ios",
-    version: "1.0.0",
+    version: "2.0.0",
     scheme: "mirrorcle",
     orientation: "portrait",
     icon: "./assets/icon.png",
