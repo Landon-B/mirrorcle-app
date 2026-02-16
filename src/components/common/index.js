@@ -6,3 +6,4 @@ export { OverlaySheet } from './OverlaySheet';
 export { IconButton } from './IconButton';
 export { ScreenHeader } from './ScreenHeader';
 export { ErrorBoundary } from './ErrorBoundary';
+export { FloatingParticles } from './FloatingParticles';

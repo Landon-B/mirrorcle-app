@@ -6,24 +6,15 @@ import {
   ScrollView,
   StyleSheet,
   Share,
-  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  withDelay,
-  withRepeat,
-  withSequence,
-  Easing,
   FadeIn,
   FadeInDown,
   FadeInUp,
 } from 'react-native-reanimated';
 import { useApp } from '../context/AppContext';
-import { PrimaryButton } from '../components/common';
+import { PrimaryButton, FloatingParticles } from '../components/common';
 import { PowerPhraseCard } from '../components/personalization/PowerPhraseCard';
 import { GrowthNudgeCard } from '../components/personalization/GrowthNudgeCard';
 import { typography } from '../styles/typography';
@@ -31,11 +22,6 @@ import { shadows } from '../styles/spacing';
 import { useHaptics } from '../hooks/useHaptics';
 import { getMoodById, getMoodEmoji, FEELING_COLORS } from '../constants/feelings';
 import { personalizationService } from '../services/personalization';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-const PARTICLE_COUNT = 14;
-const PARTICLE_COLORS = ['#C17666', '#E8A090', '#D4A574', '#C9956B', '#E0BCA8'];
 
 const formatDuration = (seconds) => {
   if (!seconds || seconds < 60) return `${seconds || 0} seconds`;
@@ -45,92 +31,14 @@ const formatDuration = (seconds) => {
   return secs > 0 ? `${mins} minutes` : `${mins} minutes`;
 };
 
-const getStreakMessage = (streak) => {
+const getStreakMessage = (streak, totalSessions) => {
+  if ((!streak || streak === 0) && totalSessions > 0) return 'Life happens. What matters is you came back.';
   if (!streak || streak <= 1) return 'Every session is a step forward.';
   if (streak < 7) return `${streak} days of showing up for yourself.`;
   if (streak < 14) return `${streak} days of choosing yourself \u2014 that takes real courage.`;
   if (streak < 30) return `${streak} days strong. This practice is becoming part of who you are.`;
   return `${streak} days. You\u2019ve made self-reflection a way of life.`;
 };
-
-// --- Floating Particles ---
-const Particle = ({ index }) => {
-  const startX = useMemo(() => Math.random() * SCREEN_WIDTH, []);
-  const size = useMemo(() => 4 + Math.random() * 4, []);
-  const color = useMemo(() => PARTICLE_COLORS[index % PARTICLE_COLORS.length], [index]);
-  const duration = useMemo(() => 4000 + Math.random() * 3000, []);
-  const swayAmount = useMemo(() => 20 + Math.random() * 30, []);
-  const delay = useMemo(() => Math.random() * 3000, []);
-
-  const translateY = useSharedValue(0);
-  const translateX = useSharedValue(0);
-  const opacity = useSharedValue(0);
-
-  useEffect(() => {
-    // Vertical float upward
-    translateY.value = withDelay(
-      delay,
-      withRepeat(
-        withTiming(-SCREEN_HEIGHT * 0.8, { duration, easing: Easing.linear }),
-        -1,
-        false
-      )
-    );
-    // Horizontal sway
-    translateX.value = withDelay(
-      delay,
-      withRepeat(
-        withSequence(
-          withTiming(swayAmount, { duration: duration / 2, easing: Easing.inOut(Easing.ease) }),
-          withTiming(-swayAmount, { duration: duration / 2, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        true
-      )
-    );
-    // Fade in then stay
-    opacity.value = withDelay(delay, withTiming(0.4, { duration: 800 }));
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    // Fade out as particle rises (based on translateY progress)
-    const progress = Math.abs(translateY.value) / (SCREEN_HEIGHT * 0.8);
-    const fadedOpacity = opacity.value * (1 - progress);
-
-    return {
-      transform: [
-        { translateY: translateY.value },
-        { translateX: translateX.value },
-      ],
-      opacity: Math.max(0, fadedOpacity),
-    };
-  });
-
-  return (
-    <Animated.View
-      style={[
-        {
-          position: 'absolute',
-          bottom: -20,
-          left: startX,
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor: color,
-        },
-        animatedStyle,
-      ]}
-    />
-  );
-};
-
-const FloatingParticles = () => (
-  <View style={styles.particlesContainer} pointerEvents="none">
-    {Array.from({ length: PARTICLE_COUNT }, (_, i) => (
-      <Particle key={i} index={i} />
-    ))}
-  </View>
-);
 
 // --- Mood Shift Visualization ---
 const MoodShiftSection = ({ preMood, postMood }) => {
@@ -249,7 +157,7 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
     }
   };
 
-  const streakMessage = getStreakMessage(stats.currentStreak);
+  const streakMessage = getStreakMessage(stats.currentStreak, stats.totalSessions);
 
   return (
     <View style={styles.container}>
@@ -361,12 +269,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 80,
     paddingBottom: 24,
-  },
-
-  // --- Particles ---
-  particlesContainer: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: 'hidden',
   },
 
   // --- Mood shift ---

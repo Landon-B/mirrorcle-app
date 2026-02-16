@@ -6,3 +6,5 @@ export { useTheme } from '../context/ThemeContext';
 export { useSpeechRecognition } from './useSpeechRecognition';
 export { useSpeechMatcher } from './useSpeechMatcher';
 export { usePersonalization } from './usePersonalization';
+export { useJourney } from './useJourney';
+export { useTrial } from './useTrial';

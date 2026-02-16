@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { PrimaryButton, Card } from '../components/common';
+import { useTrial } from '../hooks/useTrial';
 import { MOODS } from '../constants/feelings';
 import { FOCUS_AREAS } from '../constants/focusAreas';
 import { AFFIRMATIONS, FALLBACK_AFFIRMATIONS } from '../constants';
@@ -172,19 +173,48 @@ const StreakProgressBar = ({ weeklyActivity }) => {
   );
 };
 
+const TrialDayCard = ({ dayContent, trialDay, daysRemaining, onPress }) => {
+  if (!dayContent) return null;
+  return (
+    <Card style={styles.trialCard}>
+      <View style={styles.trialHeader}>
+        <View style={styles.trialIconCircle}>
+          <Ionicons name={dayContent.icon} size={20} color={RUST} />
+        </View>
+        <View style={styles.trialBadge}>
+          <Text style={styles.trialBadgeText}>
+            Day {trialDay} · {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} left
+          </Text>
+        </View>
+      </View>
+      <Text style={styles.trialTitle}>{dayContent.title}</Text>
+      <Text style={styles.trialMessage}>{dayContent.message}</Text>
+      {dayContent.cta && (
+        <Pressable style={styles.trialCta} onPress={onPress}>
+          <Text style={styles.trialCtaText}>{dayContent.cta}</Text>
+          <Ionicons name="arrow-forward" size={14} color={RUST} />
+        </Pressable>
+      )}
+    </Card>
+  );
+};
+
 const ReturningUserDashboard = ({ navigation, name, stats, sessions }) => {
   const weeklyActivity = useMemo(() => getWeeklyActivity(sessions), [sessions]);
   const activeDays = weeklyActivity.filter(Boolean).length;
   const dailyAffirmation = useMemo(() => getDailyAffirmation(), []);
+  const { trialStatus, dayContent } = useTrial();
 
-  // Rough consistency percentile
+  // Compassionate rhythm label
   const consistencyLabel = activeDays >= 5
-    ? 'TOP 5% CONSISTENCY THIS WEEK'
+    ? 'BEAUTIFUL RHYTHM THIS WEEK'
     : activeDays >= 3
-      ? 'TOP 20% CONSISTENCY THIS WEEK'
+      ? 'STEADY PRESENCE THIS WEEK'
       : activeDays >= 1
-        ? 'BUILDING MOMENTUM THIS WEEK'
-        : 'START YOUR WEEK STRONG';
+        ? 'YOUR RHYTHM IS BUILDING'
+        : 'A NEW WEEK AWAITS';
+
+  const isReturning = stats.currentStreak === 0 && stats.totalSessions > 0;
 
   return (
     <>
@@ -199,16 +229,43 @@ const ReturningUserDashboard = ({ navigation, name, stats, sessions }) => {
         </Text>
       </View>
 
-      {/* Active Momentum Card */}
-      <Card style={styles.momentumCard}>
-        <Text style={styles.momentumTitle}>Active Momentum</Text>
-        <View style={styles.streakRow}>
-          <Text style={styles.streakNumber}>{stats.currentStreak}</Text>
-          <Text style={styles.streakUnit}>days</Text>
-        </View>
-        <StreakProgressBar weeklyActivity={weeklyActivity} />
-        <Text style={styles.consistencyLabel}>{consistencyLabel}</Text>
-      </Card>
+      {/* Your Rhythm Card */}
+      {isReturning ? (
+        <Card style={styles.momentumCard}>
+          <Text style={styles.momentumTitle}>Welcome Back</Text>
+          <Text style={styles.welcomeBackMessage}>
+            Life happens. What matters is you came back.
+          </Text>
+          <StreakProgressBar weeklyActivity={weeklyActivity} />
+          <Text style={styles.consistencyLabel}>READY WHEN YOU ARE</Text>
+        </Card>
+      ) : (
+        <Card style={styles.momentumCard}>
+          <Text style={styles.momentumTitle}>Your Rhythm</Text>
+          <View style={styles.streakRow}>
+            <Text style={styles.streakNumber}>{stats.currentStreak}</Text>
+            <Text style={styles.streakUnit}>days</Text>
+          </View>
+          <StreakProgressBar weeklyActivity={weeklyActivity} />
+          <Text style={styles.consistencyLabel}>{consistencyLabel}</Text>
+        </Card>
+      )}
+
+      {/* Trial Day Card */}
+      {trialStatus.isInTrial && dayContent && (
+        <TrialDayCard
+          dayContent={dayContent}
+          trialDay={trialStatus.trialDay}
+          daysRemaining={trialStatus.daysRemaining}
+          onPress={() => {
+            if (dayContent.feature) {
+              navigation.navigate('Paywall');
+            } else {
+              navigation.navigate('AffirmTab', { screen: 'FocusSelection' });
+            }
+          }}
+        />
+      )}
 
       {/* Begin CTA */}
       <View style={styles.ctaSection}>
@@ -442,6 +499,14 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 8,
   },
+  welcomeBackMessage: {
+    fontSize: 17,
+    fontStyle: 'italic',
+    color: TEXT_PRIMARY,
+    lineHeight: 26,
+    marginBottom: 16,
+    fontFamily: 'serif',
+  },
   streakRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -553,6 +618,62 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.8,
+    color: RUST,
+  },
+
+  // Trial Day Card
+  trialCard: {
+    marginBottom: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    borderLeftWidth: 3,
+    borderLeftColor: RUST,
+  },
+  trialHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  trialIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FDF5F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trialBadge: {
+    backgroundColor: '#FDF5F2',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  trialBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: RUST,
+  },
+  trialTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
+    marginBottom: 4,
+  },
+  trialMessage: {
+    fontSize: 14,
+    color: TEXT_SECONDARY,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  trialCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  trialCtaText: {
+    fontSize: 13,
+    fontWeight: '700',
     color: RUST,
   },
 });

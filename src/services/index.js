@@ -12,3 +12,5 @@ export { quotesService } from './quotes';
 export { personalizationService, customAffirmationService } from './personalization';
 export { widgetDataService } from './widget';
 export { focusService } from './focus';
+export { journeyService } from './journey';
+export { trialService } from './trial';

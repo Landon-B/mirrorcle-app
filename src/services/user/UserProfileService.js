@@ -304,6 +304,8 @@ class UserProfileService {
       preferredSessionLength: row.preferred_session_length || 3,
       experienceLevel: row.experience_level || 0,
       avgSpeechSpeedWpm: row.avg_speech_speed_wpm,
+      trialStartedAt: row.trial_started_at,
+      trialEndedAt: row.trial_ended_at,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

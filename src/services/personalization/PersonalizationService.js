@@ -91,21 +91,21 @@ class PersonalizationService {
       return "Welcome to your first mirror session";
     }
     if (streak === 0) {
-      return "Welcome back. Every day is a fresh start";
+      return "Life happens. What matters is you came back";
     }
     if (streak === 1) {
-      return "Great start. Show up again tomorrow to build your streak";
+      return "A new day, a new beginning. You showed up";
     }
     if (streak < 7) {
-      return `${streak}-day streak! You're building momentum`;
+      return `${streak} days flowing. You're building a rhythm`;
     }
     if (streak < 14) {
-      return `${streak} days strong! This is becoming your practice`;
+      return `${streak} days of steady practice. This is becoming yours`;
     }
     if (streak < 30) {
-      return `${streak}-day streak! Your dedication is inspiring`;
+      return `${streak} days of presence. Your dedication inspires`;
     }
-    return `${streak} days! You've made affirmation a way of life`;
+    return `${streak} days. Self-reflection is woven into who you are`;
   }
 
   /**
@@ -193,6 +193,52 @@ class PersonalizationService {
       .eq('milestone_key', milestoneKey);
 
     if (error) throw error;
+  }
+
+  /**
+   * Get the top 3 unachieved milestones closest to completion.
+   * Returns array of { key, title, current, target, percentage }
+   */
+  async getNextMilestones(userId) {
+    const [profileRes, historyRes, favoritesRes, sessionsRes, customRes, feelingsRes, existingRes] = await Promise.all([
+      supabase.from('user_profiles').select('total_sessions, current_streak').eq('id', userId).single(),
+      supabase.from('user_affirmation_history').select('id').eq('user_id', userId).eq('engaged', true),
+      supabase.from('user_favorites').select('id').eq('user_id', userId),
+      supabase.from('user_sessions').select('feeling_id').eq('user_id', userId),
+      supabase.from('user_custom_affirmations').select('id').eq('user_id', userId),
+      supabase.from('feelings').select('id'),
+      supabase.from('user_milestones').select('milestone_key').eq('user_id', userId),
+    ]);
+
+    const existingKeys = new Set(existingRes.data?.map(m => m.milestone_key) || []);
+    const totalSessions = profileRes.data?.total_sessions || 0;
+    const streak = profileRes.data?.current_streak || 0;
+    const engagedCount = historyRes.data?.length || 0;
+    const favoritesCount = favoritesRes.data?.length || 0;
+    const customCount = customRes.data?.length || 0;
+    const uniqueFeelings = new Set(sessionsRes.data?.map(s => s.feeling_id).filter(Boolean) || []);
+    const totalFeelings = feelingsRes.data?.length || 0;
+
+    const milestones = [
+      { key: 'first_session', title: 'First Session', current: totalSessions, target: 1 },
+      { key: 'ten_sessions', title: 'Building Momentum', current: totalSessions, target: 10 },
+      { key: 'fifty_sessions', title: 'Dedicated Practitioner', current: totalSessions, target: 50 },
+      { key: 'hundred_affirmations', title: 'Words of Power', current: engagedCount, target: 100 },
+      { key: 'seven_day_streak', title: 'One Week Flow', current: streak, target: 7 },
+      { key: 'thirty_day_streak', title: 'Monthly Rhythm', current: streak, target: 30 },
+      { key: 'first_favorite', title: 'Found Your Words', current: favoritesCount, target: 1 },
+      { key: 'all_feelings_explored', title: 'Emotional Explorer', current: uniqueFeelings.size, target: totalFeelings || 6 },
+      { key: 'custom_affirmation_created', title: 'Your Own Words', current: customCount, target: 1 },
+    ];
+
+    return milestones
+      .filter(m => !existingKeys.has(m.key))
+      .map(m => ({
+        ...m,
+        percentage: Math.min(100, Math.round((m.current / m.target) * 100)),
+      }))
+      .sort((a, b) => b.percentage - a.percentage)
+      .slice(0, 3);
   }
 
   /**

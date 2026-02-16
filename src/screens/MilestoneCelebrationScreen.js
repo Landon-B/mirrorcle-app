@@ -1,80 +1,128 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { PrimaryButton } from '../components/common';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withDelay,
+  withTiming,
+  withRepeat,
+  withSequence,
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+} from 'react-native-reanimated';
+import { PrimaryButton, FloatingParticles } from '../components/common';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
+import { useHaptics } from '../hooks/useHaptics';
 
 const MILESTONE_CONFIG = {
   first_session: {
     icon: 'sparkles',
     title: 'First Step Taken',
-    message: 'You just completed your very first mirror session. This is the beginning of something beautiful.',
-    emoji: '',
+    message: 'You just did something most people never will \u2014 you looked at yourself and spoke truth. This is your beginning.',
   },
   ten_sessions: {
     icon: 'flame',
-    title: 'On Fire',
-    message: 'Ten sessions in. You are building a practice that will transform how you see yourself.',
-    emoji: '',
+    title: 'Finding Your Voice',
+    message: 'Ten sessions of showing up for yourself. You\u2019re not just trying anymore \u2014 you\u2019re practicing.',
   },
   fifty_sessions: {
     icon: 'trophy',
     title: 'Dedicated Practitioner',
-    message: 'Fifty sessions of speaking truth to yourself. Your consistency is inspiring.',
-    emoji: '',
+    message: 'Fifty times you chose yourself. That kind of dedication doesn\u2019t just build a habit \u2014 it builds a person.',
   },
   hundred_affirmations: {
     icon: 'diamond',
     title: 'Words of Power',
-    message: 'One hundred affirmations spoken with intention. Each one planted a seed of change.',
-    emoji: '',
+    message: 'One hundred truths spoken aloud. Each one a seed planted in the soil of who you\u2019re becoming.',
   },
   seven_day_streak: {
     icon: 'calendar',
     title: 'One Week Strong',
-    message: 'Seven days in a row. Habits are forming and your mirror is becoming a sanctuary.',
-    emoji: '',
+    message: 'Seven days in a row of choosing yourself. Your mirror is becoming a sanctuary.',
   },
   thirty_day_streak: {
     icon: 'medal',
-    title: 'Unstoppable',
-    message: 'Thirty consecutive days. Your dedication to self-reflection is extraordinary.',
-    emoji: '',
+    title: 'Look At You Now',
+    message: '30 days ago, you chose yourself for the first time. Look at you now \u2014 this practice is part of who you are.',
   },
   first_favorite: {
     icon: 'heart',
-    title: 'Found a Favorite',
-    message: 'You saved your first affirmation. Return to it whenever you need a reminder.',
-    emoji: '',
+    title: 'Found Your Words',
+    message: 'You saved the words that moved you. Return to them whenever you need a reminder of your truth.',
   },
   all_feelings_explored: {
     icon: 'color-palette',
     title: 'Emotional Explorer',
-    message: 'You have explored every emotion in Mirrorcle. Self-awareness is a superpower.',
-    emoji: '',
+    message: 'You\u2019ve met every part of yourself in the mirror. That kind of self-awareness is a superpower.',
   },
   custom_affirmation_created: {
     icon: 'create',
     title: 'Your Own Words',
-    message: 'You wrote your first custom affirmation. No one knows what you need to hear better than you.',
-    emoji: '',
+    message: 'You found the words that no one else could give you. No one knows what you need to hear better than you.',
   },
 };
 
 const DEFAULT_MILESTONE = {
   icon: 'star',
   title: 'Achievement Unlocked',
-  message: 'You reached a new milestone on your self-reflection journey.',
-  emoji: '',
+  message: 'You reached a new milestone on your journey of self-reflection.',
+};
+
+const BadgeIcon = ({ icon }) => {
+  const scale = useSharedValue(0);
+  const glowOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    scale.value = withDelay(
+      500,
+      withSpring(1, { damping: 10, stiffness: 80 })
+    );
+    glowOpacity.value = withDelay(
+      800,
+      withRepeat(
+        withSequence(
+          withTiming(0.6, { duration: 1200 }),
+          withTiming(0.2, { duration: 1200 })
+        ),
+        -1,
+        true
+      )
+    );
+  }, []);
+
+  const badgeStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+  }));
+
+  return (
+    <View style={styles.badgeWrapper}>
+      <Animated.View style={[styles.glowRing, glowStyle]} />
+      <Animated.View style={[styles.iconCircle, badgeStyle]}>
+        <Ionicons name={icon} size={36} color="#C17666" />
+      </Animated.View>
+    </View>
+  );
 };
 
 export const MilestoneCelebrationScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
   const { milestoneKey, themeUnlocked } = route.params || {};
+  const { celebrationBurst } = useHaptics();
 
   const config = MILESTONE_CONFIG[milestoneKey] || DEFAULT_MILESTONE;
+
+  useEffect(() => {
+    celebrationBurst();
+  }, []);
 
   const handleDismiss = () => {
     navigation.goBack();
@@ -82,28 +130,42 @@ export const MilestoneCelebrationScreen = ({ navigation, route }) => {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 40 }]}>
+      <FloatingParticles count={16} opacity={0.35} />
+
       <View style={styles.content}>
-        {/* Decorative circle */}
-        <View style={styles.iconCircle}>
-          <Ionicons name={config.icon} size={36} color="#C17666" />
-        </View>
+        <BadgeIcon icon={config.icon} />
 
-        <Text style={styles.emoji}>{config.emoji}</Text>
+        <Animated.Text
+          entering={FadeInDown.delay(800).springify().damping(12)}
+          style={styles.title}
+        >
+          {config.title}
+        </Animated.Text>
 
-        <Text style={styles.title}>{config.title}</Text>
-        <Text style={styles.message}>{config.message}</Text>
+        <Animated.Text
+          entering={FadeIn.delay(1200).duration(600)}
+          style={styles.message}
+        >
+          {config.message}
+        </Animated.Text>
 
         {themeUnlocked && (
-          <View style={styles.unlockBadge}>
+          <Animated.View
+            entering={FadeInUp.delay(1600).duration(500)}
+            style={styles.unlockBadge}
+          >
             <Ionicons name="color-palette" size={16} color="#C17666" />
             <Text style={styles.unlockText}>
               New theme unlocked: {themeUnlocked}
             </Text>
-          </View>
+          </Animated.View>
         )}
       </View>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 24 }]}>
+      <Animated.View
+        entering={FadeIn.delay(2000).duration(400)}
+        style={[styles.footer, { paddingBottom: insets.bottom + 24 }]}
+      >
         <PrimaryButton
           title="Keep Going"
           icon="arrow-forward"
@@ -113,7 +175,7 @@ export const MilestoneCelebrationScreen = ({ navigation, route }) => {
         <Pressable onPress={handleDismiss} style={styles.dismissButton}>
           <Text style={styles.dismissText}>DISMISS</Text>
         </Pressable>
-      </View>
+      </Animated.View>
     </View>
   );
 };
@@ -129,6 +191,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 32,
   },
+  badgeWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    width: 100,
+    height: 100,
+  },
+  glowRing: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#E8D0C6',
+  },
   iconCircle: {
     width: 80,
     height: 80,
@@ -136,11 +212,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8D0C6',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-  },
-  emoji: {
-    fontSize: 48,
-    marginBottom: 20,
   },
   title: {
     fontSize: 28,
@@ -150,11 +221,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   message: {
-    fontFamily: typography.fontFamily.serif,
+    fontFamily: typography.fontFamily.serifItalic,
     fontSize: 17,
+    fontStyle: 'italic',
     color: '#7A756E',
     textAlign: 'center',
     lineHeight: 26,
+    paddingHorizontal: 8,
   },
   unlockBadge: {
     flexDirection: 'row',

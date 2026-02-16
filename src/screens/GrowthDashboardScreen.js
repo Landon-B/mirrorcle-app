@@ -1,10 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { usePersonalization } from '../hooks/usePersonalization';
 import { Card } from '../components/common';
+import { MilestoneProgressCard } from '../components/personalization/MilestoneProgressCard';
+import { personalizationService } from '../services/personalization';
+import { quotesService } from '../services/quotes';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -13,6 +16,7 @@ const COLORS = {
   cardBg: '#FFFFFF',
   textPrimary: '#2D2A26',
   textSecondary: '#7A756E',
+  textMuted: '#B0AAA2',
   rust: '#C17666',
   peach: '#E8D0C6',
   heatmapHigh: '#C17666',
@@ -24,26 +28,32 @@ const COLORS = {
 const TIME_RANGES = ['Week', 'Month', 'Year'];
 const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-// Generate placeholder heatmap data (4 weeks x 7 days)
-const generateHeatmapData = (sessions, currentStreak) => {
+// --- Real heatmap from sessions ---
+const buildHeatmapFromSessions = (sessions) => {
+  // Build a map of date string → session count
+  const dateCounts = {};
+  for (const s of sessions || []) {
+    const d = new Date(s.createdAt || s.created_at || s.date);
+    if (isNaN(d.getTime())) continue;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    dateCounts[key] = (dateCounts[key] || 0) + 1;
+  }
+
+  // Build 4 weeks × 7 days grid (most recent 28 days)
   const grid = [];
+  const today = new Date();
   for (let week = 0; week < 4; week++) {
     const row = [];
     for (let day = 0; day < 7; day++) {
-      // Use a combination of streak and session count to create plausible activity
-      const index = week * 7 + day;
-      const daysAgo = 27 - index;
+      const daysAgo = (3 - week) * 7 + (6 - day);
+      const d = new Date(today);
+      d.setDate(d.getDate() - daysAgo);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const count = dateCounts[key] || 0;
       let level = 0;
-
-      if (daysAgo < currentStreak) {
-        // Within current streak: active days
-        level = 3;
-      } else if (daysAgo < currentStreak + 5 && Math.random() > 0.4) {
-        level = Math.floor(Math.random() * 3) + 1;
-      } else if (Math.random() > 0.6) {
-        level = Math.floor(Math.random() * 2) + 1;
-      }
-
+      if (count >= 3) level = 3;
+      else if (count === 2) level = 2;
+      else if (count === 1) level = 1;
       row.push(level);
     }
     grid.push(row);
@@ -60,99 +70,171 @@ const heatmapColor = (level) => {
   }
 };
 
+// --- Real sessions chart ---
+const getDateRange = (range) => {
+  const now = new Date();
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  let start;
+  if (range === 'Week') {
+    start = new Date(end);
+    start.setDate(start.getDate() - 6);
+    start.setHours(0, 0, 0, 0);
+  } else if (range === 'Month') {
+    start = new Date(end);
+    start.setDate(start.getDate() - 29);
+    start.setHours(0, 0, 0, 0);
+  } else {
+    start = new Date(end);
+    start.setFullYear(start.getFullYear() - 1);
+    start.setHours(0, 0, 0, 0);
+  }
+  return { start, end };
+};
+
+const buildChartData = (sessions, range) => {
+  if (!sessions?.length) return { labels: [], values: [], maxVal: 0 };
+
+  const { start, end } = getDateRange(range);
+  const filtered = sessions.filter(s => {
+    const d = new Date(s.createdAt || s.created_at || s.date);
+    return d >= start && d <= end;
+  });
+
+  if (range === 'Week') {
+    // 7 bars, one per day
+    const labels = [];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const values = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      labels.push(dayNames[d.getDay()]);
+      const count = filtered.filter(s => {
+        const sd = new Date(s.createdAt || s.created_at || s.date);
+        const sk = `${sd.getFullYear()}-${String(sd.getMonth() + 1).padStart(2, '0')}-${String(sd.getDate()).padStart(2, '0')}`;
+        return sk === key;
+      }).length;
+      values.push(count);
+    }
+    return { labels, values, maxVal: Math.max(...values, 1) };
+  }
+
+  if (range === 'Month') {
+    // 4 bars (weeks)
+    const labels = ['Wk 1', 'Wk 2', 'Wk 3', 'Wk 4'];
+    const values = [0, 0, 0, 0];
+    for (const s of filtered) {
+      const d = new Date(s.createdAt || s.created_at || s.date);
+      const dayDiff = Math.floor((end - d) / 86400000);
+      const weekIdx = Math.min(3, Math.floor(dayDiff / 7));
+      values[3 - weekIdx] += 1;
+    }
+    return { labels, values, maxVal: Math.max(...values, 1) };
+  }
+
+  // Year: 12 bars (months)
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const labels = [];
+  const values = [];
+  const now = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const m = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    labels.push(monthNames[m.getMonth()]);
+    const count = filtered.filter(s => {
+      const d = new Date(s.createdAt || s.created_at || s.date);
+      return d.getMonth() === m.getMonth() && d.getFullYear() === m.getFullYear();
+    }).length;
+    values.push(count);
+  }
+  return { labels, values, maxVal: Math.max(...values, 1) };
+};
+
+const computeTrendBadge = (sessions, range) => {
+  if (!sessions?.length) return null;
+  const { start: currentStart, end: currentEnd } = getDateRange(range);
+  const duration = currentEnd - currentStart;
+  const prevStart = new Date(currentStart.getTime() - duration);
+  const prevEnd = new Date(currentStart.getTime() - 1);
+
+  const currentCount = sessions.filter(s => {
+    const d = new Date(s.createdAt || s.created_at || s.date);
+    return d >= currentStart && d <= currentEnd;
+  }).length;
+
+  const prevCount = sessions.filter(s => {
+    const d = new Date(s.createdAt || s.created_at || s.date);
+    return d >= prevStart && d <= prevEnd;
+  }).length;
+
+  if (prevCount === 0 && currentCount === 0) return null;
+  if (prevCount === 0) return { text: 'New!', positive: true };
+
+  const pct = Math.round(((currentCount - prevCount) / prevCount) * 100);
+  if (pct === 0) return { text: 'Steady', positive: true };
+  return {
+    text: `${pct > 0 ? '+' : ''}${pct}% vs last ${range.toLowerCase()}`,
+    positive: pct >= 0,
+  };
+};
+
 const formatTotalTime = (totalSeconds) => {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
+  if (hours > 0) return `${hours}h ${minutes}m`;
   return `${minutes}m`;
 };
 
 const formatAvgPerDay = (totalSeconds, totalSessions) => {
   if (totalSessions === 0) return '0m';
-  const avgSecondsPerSession = totalSeconds / totalSessions;
-  const avgMinutes = Math.round(avgSecondsPerSession / 60);
-  return `Avg ${avgMinutes || 1}m/day`;
+  const avgMinutes = Math.round((totalSeconds / totalSessions) / 60);
+  return `Avg ${avgMinutes || 1}m/session`;
 };
 
-// Simple mock line chart rendered with Views
-const MockLineChart = () => {
-  const points = [40, 55, 45, 65, 60, 75, 70];
-  const maxVal = Math.max(...points);
-  const minVal = Math.min(...points);
-  const range = maxVal - minVal || 1;
+// --- Sessions bar chart ---
+const SessionsChart = ({ labels, values, maxVal }) => {
   const chartHeight = 120;
 
+  if (values.every(v => v === 0)) {
+    return (
+      <View style={chartStyles.emptyChart}>
+        <Ionicons name="bar-chart-outline" size={28} color={COLORS.heatmapLow} />
+        <Text style={chartStyles.emptyText}>Sessions will appear here</Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={mockChartStyles.container}>
-      <View style={mockChartStyles.chartArea}>
-        {points.map((point, index) => {
-          const height = ((point - minVal) / range) * (chartHeight - 20) + 20;
+    <View style={chartStyles.container}>
+      <View style={chartStyles.chartArea}>
+        {values.map((val, index) => {
+          const height = maxVal > 0 ? (val / maxVal) * (chartHeight - 20) + (val > 0 ? 20 : 4) : 4;
           return (
-            <View key={index} style={mockChartStyles.barColumn}>
+            <View key={index} style={chartStyles.barColumn}>
               <View
                 style={[
-                  mockChartStyles.bar,
+                  chartStyles.bar,
                   {
                     height,
-                    backgroundColor: COLORS.rust,
-                    opacity: 0.15 + (index / points.length) * 0.85,
-                  },
-                ]}
-              />
-              <View
-                style={[
-                  mockChartStyles.dot,
-                  {
-                    bottom: height - 4,
+                    backgroundColor: val > 0 ? COLORS.rust : COLORS.heatmapNone,
+                    opacity: val > 0 ? 0.3 + (val / maxVal) * 0.7 : 1,
                   },
                 ]}
               />
             </View>
           );
         })}
-        {/* Connecting line overlay */}
-        <View style={mockChartStyles.lineOverlay}>
-          {points.map((point, index) => {
-            if (index === points.length - 1) return null;
-            const currentHeight = ((point - minVal) / range) * (chartHeight - 20) + 20;
-            const nextHeight = ((points[index + 1] - minVal) / range) * (chartHeight - 20) + 20;
-            const columnWidth = (SCREEN_WIDTH - 80) / points.length;
-            const dx = columnWidth;
-            const dy = nextHeight - currentHeight;
-            const length = Math.sqrt(dx * dx + dy * dy);
-            const angle = Math.atan2(-dy, dx) * (180 / Math.PI);
-
-            return (
-              <View
-                key={`line-${index}`}
-                style={{
-                  position: 'absolute',
-                  left: index * columnWidth + columnWidth / 2,
-                  bottom: currentHeight - 1,
-                  width: length,
-                  height: 2,
-                  backgroundColor: COLORS.rust,
-                  borderRadius: 1,
-                  transform: [{ rotate: `${-angle}deg` }],
-                  transformOrigin: 'left bottom',
-                }}
-              />
-            );
-          })}
-        </View>
       </View>
-      <View style={mockChartStyles.xAxis}>
-        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-          <Text key={day} style={mockChartStyles.xLabel}>{day}</Text>
+      <View style={chartStyles.xAxis}>
+        {labels.map((label, i) => (
+          <Text key={i} style={chartStyles.xLabel}>{label}</Text>
         ))}
       </View>
     </View>
   );
 };
 
-const mockChartStyles = StyleSheet.create({
+const chartStyles = StyleSheet.create({
   container: {
     marginTop: 12,
   },
@@ -161,6 +243,7 @@ const mockChartStyles = StyleSheet.create({
     alignItems: 'flex-end',
     height: 120,
     paddingHorizontal: 4,
+    gap: 4,
   },
   barColumn: {
     flex: 1,
@@ -168,18 +251,10 @@ const mockChartStyles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   bar: {
-    width: 20,
+    width: '70%',
     borderRadius: 10,
-  },
-  dot: {
-    position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.rust,
-  },
-  lineOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    minWidth: 12,
+    maxWidth: 28,
   },
   xAxis: {
     flexDirection: 'row',
@@ -190,27 +265,76 @@ const mockChartStyles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.textSecondary,
     fontWeight: '500',
+    flex: 1,
+    textAlign: 'center',
+  },
+  emptyChart: {
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
   },
 });
 
 export const GrowthDashboardScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-  const { stats, sessions } = useApp();
+  const { stats, sessions, user, isPro } = useApp();
   const { growthNudge } = usePersonalization();
   const [activeRange, setActiveRange] = useState('Week');
+  const [nextMilestones, setNextMilestones] = useState([]);
+  const [quote, setQuote] = useState(null);
+
+  // Load milestones
+  useEffect(() => {
+    if (user?.id) {
+      personalizationService.getNextMilestones(user.id)
+        .then(setNextMilestones)
+        .catch(() => {});
+    }
+  }, [user?.id, stats.totalSessions]);
+
+  // Load dynamic quote
+  useEffect(() => {
+    quotesService.getRandom({ screen: 'growth', isPro: isPro || false })
+      .then(q => { if (q) setQuote(q); })
+      .catch(() => {});
+  }, []);
 
   const totalAffirmations = stats.totalAffirmations || stats.totalSessions * 5;
 
+  // Real heatmap from session data
   const heatmapData = useMemo(
-    () => generateHeatmapData(sessions, stats.currentStreak),
-    [sessions.length, stats.currentStreak]
+    () => buildHeatmapFromSessions(sessions),
+    [sessions]
+  );
+
+  // Real chart data based on active range
+  const chartData = useMemo(
+    () => buildChartData(sessions, activeRange),
+    [sessions, activeRange]
+  );
+
+  // Real trend badge
+  const trendBadge = useMemo(
+    () => computeTrendBadge(sessions, activeRange),
+    [sessions, activeRange]
   );
 
   const insightText = growthNudge?.message
-    || 'Your morning sessions show higher engagement. Consider making mornings your dedicated affirmation time.';
+    || (stats.totalSessions > 0
+      ? 'Keep showing up for yourself. Every session builds your practice.'
+      : 'Complete your first session to start tracking your growth.');
 
-  const quoteText = '"The only person you are destined to become is the person you decide to be."';
-  const quoteAuthor = '-- Ralph Waldo Emerson';
+  const quoteText = quote
+    ? `"${quote.text}"`
+    : '"The only person you are destined to become is the person you decide to be."';
+  const quoteAuthor = quote
+    ? `— ${quote.author}`
+    : '— Ralph Waldo Emerson';
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -259,17 +383,29 @@ export const GrowthDashboardScreen = ({ navigation }) => {
           ))}
         </View>
 
-        {/* Mood Evolution */}
+        {/* Sessions Chart */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Mood Evolution</Text>
-            <View style={styles.badge}>
-              <Ionicons name="trending-up" size={12} color={COLORS.rust} />
-              <Text style={styles.badgeText}>+12% vs last week</Text>
-            </View>
+            <Text style={styles.sectionTitle}>Sessions</Text>
+            {trendBadge && (
+              <View style={styles.badge}>
+                <Ionicons
+                  name={trendBadge.positive ? 'trending-up' : 'trending-down'}
+                  size={12}
+                  color={trendBadge.positive ? COLORS.rust : COLORS.textSecondary}
+                />
+                <Text style={[styles.badgeText, !trendBadge.positive && { color: COLORS.textSecondary }]}>
+                  {trendBadge.text}
+                </Text>
+              </View>
+            )}
           </View>
           <Card style={styles.chartCard}>
-            <MockLineChart />
+            <SessionsChart
+              labels={chartData.labels}
+              values={chartData.values}
+              maxVal={chartData.maxVal}
+            />
           </Card>
         </View>
 
@@ -278,7 +414,9 @@ export const GrowthDashboardScreen = ({ navigation }) => {
           <Card style={styles.statCard}>
             <Text style={styles.statLabel}>AFFIRMATIONS</Text>
             <Text style={styles.statValue}>{totalAffirmations}</Text>
-            <Text style={styles.statSubtext}>Daily goal met</Text>
+            <Text style={styles.statSubtext}>
+              {stats.totalSessions} session{stats.totalSessions !== 1 ? 's' : ''}
+            </Text>
           </Card>
           <Card style={styles.statCard}>
             <Text style={styles.statLabel}>REFLECTION TIME</Text>
@@ -289,14 +427,36 @@ export const GrowthDashboardScreen = ({ navigation }) => {
           </Card>
         </View>
 
-        {/* Consistency Journey */}
+        {/* Next Milestones */}
+        {nextMilestones.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Next Milestones</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.milestonesScroll}
+            >
+              {nextMilestones.map((m, i) => (
+                <MilestoneProgressCard
+                  key={m.key}
+                  title={m.title}
+                  current={m.current}
+                  target={m.target}
+                  index={i}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Your Rhythm (Heatmap) */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Consistency Journey</Text>
+            <Text style={styles.sectionTitle}>Your Rhythm</Text>
             <View style={styles.badge}>
               <Ionicons name="flame" size={12} color={COLORS.rust} />
               <Text style={styles.badgeText}>
-                {stats.currentStreak} Day Streak
+                {stats.currentStreak} Day Flow
               </Text>
             </View>
           </View>
@@ -322,6 +482,34 @@ export const GrowthDashboardScreen = ({ navigation }) => {
               </View>
             ))}
           </Card>
+        </View>
+
+        {/* Journey & Reflection Links */}
+        <View style={styles.journeyLinksRow}>
+          <Pressable
+            style={styles.journeyLink}
+            onPress={() => navigation.navigate('JourneyTimeline')}
+          >
+            <Ionicons name="map-outline" size={20} color={COLORS.rust} />
+            <Text style={styles.journeyLinkText}>Your Journey</Text>
+            <Ionicons name="chevron-forward" size={16} color={COLORS.textSecondary} />
+          </Pressable>
+          <Pressable
+            style={styles.journeyLink}
+            onPress={() => navigation.navigate('MoodAnalytics')}
+          >
+            <Ionicons name="pulse-outline" size={20} color={COLORS.rust} />
+            <Text style={styles.journeyLinkText}>Mood Journey</Text>
+            <Ionicons name="chevron-forward" size={16} color={COLORS.textSecondary} />
+          </Pressable>
+          <Pressable
+            style={styles.journeyLink}
+            onPress={() => navigation.navigate('ReflectionSummary')}
+          >
+            <Ionicons name="analytics-outline" size={20} color={COLORS.rust} />
+            <Text style={styles.journeyLinkText}>Monthly Reflection</Text>
+            <Ionicons name="chevron-forward" size={16} color={COLORS.textSecondary} />
+          </Pressable>
         </View>
 
         {/* Evolution Insight */}
@@ -495,6 +683,13 @@ const styles = StyleSheet.create({
     color: COLORS.rust,
   },
 
+  // Milestones
+  milestonesScroll: {
+    gap: 12,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+
   // Heatmap
   heatmapCard: {
     paddingVertical: 16,
@@ -521,6 +716,32 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
+  },
+
+  // Journey links
+  journeyLinksRow: {
+    gap: 10,
+    marginBottom: 20,
+  },
+  journeyLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.cardBg,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  journeyLinkText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
   },
 
   // Insight

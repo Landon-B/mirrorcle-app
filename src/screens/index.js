@@ -27,6 +27,9 @@ export { SuccessCelebrationScreen } from './SuccessCelebrationScreen';
 // Growth Tab
 export { GrowthDashboardScreen } from './GrowthDashboardScreen';
 export { ActivityCalendarScreen } from './ActivityCalendarScreen';
+export { JourneyTimelineScreen } from './JourneyTimelineScreen';
+export { ReflectionSummaryScreen } from './ReflectionSummaryScreen';
+export { MoodAnalyticsScreen } from './MoodAnalyticsScreen';
 
 // Profile Tab
 export { ProfileScreen } from './ProfileScreen';
