@@ -1,16 +1,16 @@
 import { Platform } from 'react-native';
 
 export const typography = {
-  // Font sizes
+  // Font sizes — strict scale
   fontSize: {
-    xs: 12,
-    sm: 14,
-    md: 16,
+    xs: 11,
+    sm: 12,
+    md: 14,
+    base: 16,
     lg: 18,
     xl: 20,
-    xxl: 22,
-    xxxl: 26,
-    title: 30,
+    xxl: 24,
+    title: 28,
     brand: 48,
   },
 
@@ -32,12 +32,16 @@ export const typography = {
   // Font families
   fontFamily: {
     serif: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    serifBold: Platform.OS === 'ios' ? 'Georgia-Bold' : 'serif',
+    serifBoldItalic: Platform.OS === 'ios' ? 'Georgia-BoldItalic' : 'serif',
     serifItalic: Platform.OS === 'ios' ? 'Georgia-Italic' : 'serif',
     sans: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    display: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium',
+    displayBlack: Platform.OS === 'ios' ? 'Avenir-Black' : 'sans-serif-black',
   },
 };
 
-// Pre-composed text styles matching v2 design
+// Pre-composed text styles matching warm light design
 export const textStyles = {
   brandTitle: {
     fontFamily: typography.fontFamily.serifItalic,
@@ -46,7 +50,7 @@ export const textStyles = {
     color: '#2D2A26',
   },
   screenTitle: {
-    fontSize: 28,
+    fontSize: typography.fontSize.xxl,
     fontWeight: typography.fontWeight.bold,
     color: '#2D2A26',
   },
@@ -55,11 +59,22 @@ export const textStyles = {
     fontWeight: typography.fontWeight.bold,
     color: '#2D2A26',
   },
+  cardTitle: {
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.semibold,
+    color: '#2D2A26',
+  },
   bodyText: {
-    fontSize: typography.fontSize.md,
+    fontSize: typography.fontSize.base,
     fontWeight: typography.fontWeight.regular,
     color: '#7A756E',
     lineHeight: 24,
+  },
+  bodySmall: {
+    fontSize: typography.fontSize.md,
+    fontWeight: typography.fontWeight.regular,
+    color: '#7A756E',
+    lineHeight: 20,
   },
   affirmationText: {
     fontFamily: typography.fontFamily.serifItalic,
@@ -74,11 +89,16 @@ export const textStyles = {
     color: '#FFFFFF',
   },
   labelSmall: {
-    fontSize: 11,
+    fontSize: typography.fontSize.xs,
     fontWeight: typography.fontWeight.medium,
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     color: '#B0AAA2',
+  },
+  caption: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.regular,
+    color: '#7A756E',
   },
   tabLabel: {
     fontSize: 10,

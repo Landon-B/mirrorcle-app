@@ -2,13 +2,15 @@ export const colors = {
   // Base
   background: '#F5F2EE',
   surface: '#FFFFFF',
-  surfaceSolid: '#FFFFFF',
+  surfaceSecondary: '#F9F7F5',
+  surfaceTertiary: '#F0ECE7',
 
   // Text
   textPrimary: '#2D2A26',
   textSecondary: '#7A756E',
   textMuted: '#B0AAA2',
   textAccent: '#C17666',
+  textOnPrimary: '#FFFFFF',
 
   // Borders
   border: '#E8E4DF',
@@ -26,11 +28,12 @@ export const colors = {
 
   // Overlay
   overlay: 'rgba(0, 0, 0, 0.3)',
+  overlayHeavy: 'rgba(0, 0, 0, 0.5)',
 
   // Disabled
   disabled: '#D4CFC9',
 
-  // V2 semantic tokens
+  // Semantic tokens
   cardBackground: '#FFFFFF',
   cardShadow: 'rgba(0, 0, 0, 0.06)',
   selectedMoodBg: '#EDE4DC',
@@ -39,6 +42,15 @@ export const colors = {
   accentOrange: '#D4845A',
   tabActive: '#C17666',
   tabInactive: '#B0AAA2',
+
+  // Interactive states
+  inputBackground: '#FFFFFF',
+  inputBorder: '#E8E4DF',
+  inputBorderFocused: '#C17666',
+  inputPlaceholder: '#B0AAA2',
+
+  // Feeling accent (pink, used for mood-related icons)
+  feelingPink: '#E8A090',
 };
 
 export const gradients = {
@@ -48,4 +60,5 @@ export const gradients = {
   warning: ['#F59E0B', '#F97316'],
   error: ['#EF4444', '#FB7185'],
   info: ['#3B82F6', '#06B6D4'],
+  disabled: ['#D4CFC9', '#D4CFC9'],
 };
