@@ -1,8 +1,16 @@
 import { Platform } from 'react-native';
-import { updateWidgetSnapshot } from 'expo-widgets';
-import AffirmationWidget from '../../widgets/AffirmationWidget';
 import { AFFIRMATIONS } from '../../constants/affirmations';
 import { DEFAULT_THEME } from '../../constants/themes';
+
+let updateWidgetSnapshot = null;
+let AffirmationWidget = null;
+
+try {
+  updateWidgetSnapshot = require('expo-widgets').updateWidgetSnapshot;
+  AffirmationWidget = require('../../widgets/AffirmationWidget').default;
+} catch {
+  // expo-widgets native module not available (e.g. Expo Go)
+}
 
 class WidgetDataServiceClass {
   constructor() {
@@ -10,7 +18,7 @@ class WidgetDataServiceClass {
   }
 
   syncWidget(theme = null) {
-    if (Platform.OS !== 'ios') return;
+    if (Platform.OS !== 'ios' || !updateWidgetSnapshot || !AffirmationWidget) return;
 
     try {
       const currentTheme = theme || DEFAULT_THEME;

@@ -63,6 +63,7 @@ export default {
       [
         "expo-widgets",
         {
+          bundleIdentifier: "com.anonymous.mirrorcleios.widgets",
           groupIdentifier: "group.com.anonymous.mirrorcleios",
           widgets: [
             {
