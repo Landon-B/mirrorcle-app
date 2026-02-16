@@ -90,7 +90,7 @@ class NotificationServiceClass {
     await Notifications.scheduleNotificationAsync({
       content: {
         ...content,
-        data: { screen: 'Feelings' },
+        data: { screen: 'FocusSelection' },
         sound: true,
       },
       trigger: {
@@ -136,21 +136,20 @@ class NotificationServiceClass {
   async sendTestNotification(context = {}) {
     const { streak = 0, lastFeeling = null, userName = null } = context;
 
-    let content;
-    if (streak > 3) {
-      content = NOTIFICATION_TEMPLATES.streakAtRisk(streak);
-    } else if (streak > 0) {
-      content = NOTIFICATION_TEMPLATES.streakActive(streak, userName);
-    } else if (lastFeeling) {
-      content = NOTIFICATION_TEMPLATES.afterFeeling(lastFeeling);
-    } else {
-      content = NOTIFICATION_TEMPLATES.noStreak();
-    }
+    // Test notification always uses the personalized greeting
+    const content = userName
+      ? {
+          title: `${userName}, your mirror is waiting`,
+          body: streak > 0
+            ? `Day ${streak + 1} of your journey. Take a moment to speak kindly to yourself today.`
+            : 'Take a moment to speak kindly to yourself today.',
+        }
+      : NOTIFICATION_TEMPLATES.noStreak();
 
     await Notifications.scheduleNotificationAsync({
       content: {
         ...content,
-        data: { screen: 'Feelings' },
+        data: { screen: 'FocusSelection' },
         sound: true,
       },
       trigger: null,

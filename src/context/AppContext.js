@@ -220,6 +220,7 @@ export const AppProvider = ({ children }) => {
           durationSeconds: sessionData.duration || 0,
           promptsCompleted: sessionData.completedPrompts || 0,
           timeOfDay: sessionData.timeOfDay || null,
+          focusAreaId: sessionData.focusAreaId || null,
         });
 
         const transformedSession = {

@@ -14,7 +14,7 @@ class SessionService {
    * @param {number} sessionData.promptsCompleted - Number of prompts spoken
    * @returns {Promise<Object>}
    */
-  async createSession({ feelingId, durationSeconds = 0, promptsCompleted = 0, timeOfDay = null }) {
+  async createSession({ feelingId, durationSeconds = 0, promptsCompleted = 0, timeOfDay = null, focusAreaId = null }) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
@@ -35,6 +35,7 @@ class SessionService {
         duration_seconds: durationSeconds,
         prompts_completed: promptsCompleted,
         time_of_day: timeOfDay,
+        focus_area_id: focusAreaId,
       })
       .select()
       .single();
@@ -483,6 +484,7 @@ class SessionService {
       durationSeconds: row.duration_seconds,
       promptsCompleted: row.prompts_completed,
       timeOfDay: row.time_of_day,
+      focusAreaId: row.focus_area_id,
       createdAt: row.created_at,
     };
   }

@@ -5,7 +5,7 @@ export const useStats = () => {
   const { stats, updateStats, sessions, addSession } = useApp();
 
   const recordSession = useCallback(async (sessionData) => {
-    const { feeling, completedPrompts = 0, duration = 0, timeOfDay } = sessionData;
+    const { feeling, completedPrompts = 0, duration = 0, timeOfDay, focusAreaId } = sessionData;
 
     // addSession handles all stat updates (totalSessions, totalAffirmations,
     // streak, lastSessionDate, feelingsHistory) via Supabase + setState
@@ -14,6 +14,7 @@ export const useStats = () => {
       completedPrompts,
       duration,
       timeOfDay,
+      focusAreaId,
     });
 
     return true;

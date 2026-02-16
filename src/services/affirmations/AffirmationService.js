@@ -1,5 +1,6 @@
 import { supabase } from '../../config/supabase';
 import { personalizationService } from '../personalization';
+import { getFocusTagId } from '../../constants/focusAreas';
 
 /**
  * Service for fetching affirmations from Supabase with support for:
@@ -214,13 +215,20 @@ class AffirmationService {
   }
 
   /**
-   * Get personalized prompts with resonance, difficulty, time-of-day, and custom affirmations
-   * @param {string} feelingId - Feeling ID
+   * Get personalized prompts with focus-first scoring, mood secondary,
+   * resonance, difficulty, time-of-day, and custom affirmations
+   * @param {string} feelingId - Feeling/mood ID
    * @param {Object} options
+   * @param {string} options.focusAreaId - Focus area ID (primary selection driver)
    * @returns {Promise<Array>}
    */
-  async getPersonalizedForSession(feelingId, { isPro = false, userId = null, count = 5, timeOfDay = null } = {}) {
-    // Get base candidates with tag weights
+  async getPersonalizedForSession(feelingId, { isPro = false, userId = null, count = 5, timeOfDay = null, focusAreaId = null } = {}) {
+    const FOCUS_TAG_WEIGHT = 5;
+
+    // Resolve focus area to its tag UUID
+    const focusTagId = focusAreaId ? getFocusTagId(focusAreaId) : null;
+
+    // Get mood tag weights (secondary signal)
     const { data: feelingTags, error: tagsError } = await supabase
       .from('feeling_tags')
       .select('tag_id, weight')
@@ -229,8 +237,12 @@ class AffirmationService {
 
     if (tagsError) throw tagsError;
 
-    const tagIds = feelingTags?.map(ft => ft.tag_id) || [];
-    const tagWeightMap = new Map(feelingTags?.map(ft => [ft.tag_id, ft.weight]) || []);
+    const moodTagWeightMap = new Map(feelingTags?.map(ft => [ft.tag_id, ft.weight]) || []);
+
+    // Build set of all relevant tag IDs (focus + mood)
+    const allRelevantTagIds = new Set();
+    if (focusTagId) allRelevantTagIds.add(focusTagId);
+    for (const ft of feelingTags || []) allRelevantTagIds.add(ft.tag_id);
 
     // Get affirmations with tags + time affinity
     let query = supabase
@@ -246,8 +258,8 @@ class AffirmationService {
         )
       `);
 
-    if (tagIds.length > 0) {
-      query = query.in('tag_id', tagIds);
+    if (allRelevantTagIds.size > 0) {
+      query = query.in('tag_id', Array.from(allRelevantTagIds));
     }
 
     const { data: affirmationTags, error: affError } = await query;
@@ -279,7 +291,7 @@ class AffirmationService {
 
     const { maxLength } = this._getDifficultyLevel(totalSessions);
 
-    // Build scored candidates
+    // Build scored candidates with focus-first, mood-secondary weighting
     const affirmationMap = new Map();
 
     for (const at of affirmationTags || []) {
@@ -289,9 +301,25 @@ class AffirmationService {
       if (engagedIds.has(aff.id)) continue;
       if (aff.text.length > maxLength) continue;
 
-      const tagWeight = tagWeightMap.get(at.tag_id) || 1;
+      let score = 0;
+
+      // PRIMARY: focus area tag match (+5)
+      if (focusTagId && at.tag_id === focusTagId) {
+        score += FOCUS_TAG_WEIGHT;
+      }
+
+      // SECONDARY: mood tag match (+weight, typically 1-2)
+      const moodWeight = moodTagWeightMap.get(at.tag_id) || 0;
+      if (!focusTagId) {
+        // No focus set — use mood weights as primary (backward compat)
+        score += moodWeight || 1;
+      } else {
+        score += moodWeight;
+      }
+
+      // Resonance boost
       const resonance = resonanceScores.get(aff.id) || 0;
-      let score = tagWeight * (1 + resonance * 0.5);
+      score = Math.max(score, 0.1) * (1 + resonance * 0.3);
 
       // Time-of-day boost
       const timeAffinity = at.tags?.time_affinity;
@@ -299,7 +327,7 @@ class AffirmationService {
         if ((timeOfDay === 'morning' && timeAffinity === 'morning') ||
             (timeOfDay === 'evening' && timeAffinity === 'evening') ||
             (timeOfDay === 'night' && timeAffinity === 'evening')) {
-          score *= 1.3;
+          score *= 1.2;
         }
       }
 
@@ -311,18 +339,18 @@ class AffirmationService {
       }
     }
 
-    // Merge in custom affirmations (already fetched in parallel above)
+    // Merge in custom affirmations
     for (const custom of customAffirmations) {
       affirmationMap.set(`custom-${custom.id}`, {
         affirmation: {
           id: `custom-${custom.id}`,
           text: custom.text,
-          gradient_start: '#A855F7',
-          gradient_end: '#EC4899',
+          gradient_start: '#C17666',
+          gradient_end: '#E8A090',
           is_prompt: true,
           is_premium: false,
         },
-        score: (tagWeightMap.values().next().value || 3) + 0.3,
+        score: (focusTagId ? FOCUS_TAG_WEIGHT : 3) + 0.3,
       });
     }
 

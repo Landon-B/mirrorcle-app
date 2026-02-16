@@ -11,3 +11,4 @@ export { sessionService } from './session';
 export { quotesService } from './quotes';
 export { personalizationService, customAffirmationService } from './personalization';
 export { widgetDataService } from './widget';
+export { focusService } from './focus';
