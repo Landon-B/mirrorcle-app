@@ -46,3 +46,6 @@ coverage/
 *.log
 tmp/
 temp/
+
+# Stitch
+stitch_active_mirror_session/
