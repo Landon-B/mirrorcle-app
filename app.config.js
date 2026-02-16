@@ -29,7 +29,6 @@ export default {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#F5F2EE"
       },
-      edgeToEdgeEnabled: true,
       permissions: [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
