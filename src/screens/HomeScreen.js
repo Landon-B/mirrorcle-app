@@ -10,10 +10,11 @@ import {
   Platform,
 } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
-import { PrimaryButton, Card } from '../components/common';
+import { PrimaryButton, Card, FloatingParticles } from '../components/common';
 import { useTrial } from '../hooks/useTrial';
 import { useEmotionalContext } from '../hooks/useEmotionalContext';
 import { MOODS } from '../constants/feelings';
@@ -23,13 +24,19 @@ import { formatRelativeDate } from '../utils/dateUtils';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const RUST = '#C17666';
+const RUST_LIGHT = '#E8A090';
 const CREAM = '#F5F2EE';
+const WARM_TINT = '#FDF5F2';
 const BORDER_COLOR = '#E8E4DF';
 const TEXT_PRIMARY = '#2C2520';
 const TEXT_SECONDARY = '#7A7267';
 const TEXT_MUTED = '#B0AAA2';
 
 const SERIF_ITALIC = Platform.OS === 'ios' ? 'Georgia-Italic' : 'serif';
+
+// Warm gradient pairs for colored cards
+const INTENTION_GRADIENT = ['#C17666', '#D4956E'];
+const RHYTHM_GRADIENT_TOP = ['#FBF3EF', '#FFFFFF'];
 
 // --- Helpers ---
 
@@ -238,28 +245,42 @@ const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions 
         <Text style={styles.emotionalSubtitle}>{greeting}</Text>
       </Animated.View>
 
-      {/* Rhythm Card — Narrative-First */}
+      {/* Rhythm Card — Narrative-First with warm gradient wash */}
       <Animated.View entering={FadeInUp.delay(200).duration(500)}>
         {isReturning ? (
-          <Card style={styles.momentumCard}>
-            <Text style={styles.momentumTitle}>Your Rhythm</Text>
-            <Text style={styles.rhythmNarrative}>
-              Life happens. What matters is you came back.
-            </Text>
-            <StreakProgressBar weeklyActivity={weeklyActivity} />
-            <Text style={styles.consistencyLabel}>READY WHEN YOU ARE</Text>
-          </Card>
+          <View style={styles.momentumCardOuter}>
+            <LinearGradient
+              colors={RHYTHM_GRADIENT_TOP}
+              style={styles.momentumGradient}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+            >
+              <Text style={styles.momentumTitle}>Your Rhythm</Text>
+              <Text style={styles.rhythmNarrative}>
+                Life happens. What matters is you came back.
+              </Text>
+              <StreakProgressBar weeklyActivity={weeklyActivity} />
+              <Text style={styles.consistencyLabel}>READY WHEN YOU ARE</Text>
+            </LinearGradient>
+          </View>
         ) : (
-          <Card style={styles.momentumCard}>
-            <Text style={styles.momentumTitle}>Your Rhythm</Text>
-            <Text style={styles.rhythmNarrative}>{streakEncouragement}</Text>
-            <View style={styles.streakRow}>
-              <Text style={styles.streakNumber}>{stats.currentStreak}</Text>
-              <Text style={styles.streakUnit}>day flow</Text>
-            </View>
-            <StreakProgressBar weeklyActivity={weeklyActivity} />
-            <Text style={styles.consistencyLabel}>{consistencyLabel}</Text>
-          </Card>
+          <View style={styles.momentumCardOuter}>
+            <LinearGradient
+              colors={RHYTHM_GRADIENT_TOP}
+              style={styles.momentumGradient}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+            >
+              <Text style={styles.momentumTitle}>Your Rhythm</Text>
+              <Text style={styles.rhythmNarrative}>{streakEncouragement}</Text>
+              <View style={styles.streakRow}>
+                <Text style={styles.streakNumber}>{stats.currentStreak}</Text>
+                <Text style={styles.streakUnit}>day flow</Text>
+              </View>
+              <StreakProgressBar weeklyActivity={weeklyActivity} />
+              <Text style={styles.consistencyLabel}>{consistencyLabel}</Text>
+            </LinearGradient>
+          </View>
         )}
       </Animated.View>
 
@@ -281,26 +302,40 @@ const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions 
         </Animated.View>
       )}
 
-      {/* What Resonated */}
+      {/* What Resonated — warm tinted card with accent border */}
       {resonanceContent && (
         <Animated.View entering={FadeInUp.delay(resonanceDelay).duration(500)}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>What Resonated</Text>
           </View>
-          <Card style={styles.resonanceCard}>
+          <View style={styles.resonanceCard}>
+            <View style={styles.resonanceIconRow}>
+              <View style={styles.resonanceIconCircle}>
+                <Ionicons
+                  name={resonanceContent.type === 'powerPhrase' ? 'mic' : 'heart'}
+                  size={16}
+                  color={RUST}
+                />
+              </View>
+            </View>
             <Text style={styles.resonanceQuote}>"{resonanceContent.text}"</Text>
             <Text style={styles.resonanceContext}>
               {resonanceContent.type === 'powerPhrase'
                 ? `You've spoken this ${resonanceContent.count} times`
                 : `Saved ${formatRelativeDate(resonanceContent.favoritedAt)}`}
             </Text>
-          </Card>
+          </View>
         </Animated.View>
       )}
 
-      {/* Personalized Daily Intention */}
+      {/* Personalized Daily Intention — warm gradient focal card */}
       <Animated.View entering={FadeInUp.delay(intentionDelay).duration(500)}>
-        <Card style={styles.intentionCard}>
+        <LinearGradient
+          colors={INTENTION_GRADIENT}
+          style={styles.intentionCard}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
           <Text style={styles.intentionTitle}>Daily Intention</Text>
           {intentionContext && (
             <Text style={styles.intentionContextLabel}>{intentionContext}</Text>
@@ -310,15 +345,15 @@ const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions 
           </Text>
           <View style={styles.intentionActions}>
             <Pressable style={styles.intentionActionButton}>
-              <Ionicons name="share-outline" size={18} color={RUST} />
+              <Ionicons name="share-outline" size={18} color="rgba(255,255,255,0.8)" />
               <Text style={styles.intentionActionText}>SHARE</Text>
             </Pressable>
             <Pressable style={styles.intentionActionButton}>
-              <Ionicons name="bookmark-outline" size={18} color={RUST} />
+              <Ionicons name="bookmark-outline" size={18} color="rgba(255,255,255,0.8)" />
               <Text style={styles.intentionActionText}>SAVE</Text>
             </Pressable>
           </View>
-        </Card>
+        </LinearGradient>
       </Animated.View>
 
       {/* Begin CTA */}
@@ -347,6 +382,7 @@ export const HomeScreen = ({ navigation }) => {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" />
+      <FloatingParticles count={6} opacity={0.08} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -507,11 +543,22 @@ const styles = StyleSheet.create({
     // inherits PrimaryButton styling
   },
 
-  // Momentum Card — narrative-first (returning user)
-  momentumCard: {
+  // Momentum Card — warm gradient wash (returning user)
+  momentumCardOuter: {
     marginBottom: 20,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  momentumGradient: {
     paddingVertical: 20,
     paddingHorizontal: 20,
+    borderRadius: 20,
   },
   momentumTitle: {
     fontSize: 13,
@@ -537,7 +584,7 @@ const styles = StyleSheet.create({
   streakNumber: {
     fontSize: 24,
     fontWeight: '700',
-    color: TEXT_PRIMARY,
+    color: RUST,
   },
   streakUnit: {
     fontSize: 14,
@@ -584,11 +631,31 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  // What Resonated (returning user)
+  // What Resonated — warm tinted card (returning user)
   resonanceCard: {
+    backgroundColor: WARM_TINT,
+    borderRadius: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: RUST,
     paddingVertical: 20,
     paddingHorizontal: 20,
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  resonanceIconRow: {
+    marginBottom: 12,
+  },
+  resonanceIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(193, 118, 102, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   resonanceQuote: {
     fontFamily: SERIF_ITALIC,
@@ -601,37 +668,43 @@ const styles = StyleSheet.create({
   resonanceContext: {
     fontSize: 12,
     fontWeight: '500',
-    color: TEXT_MUTED,
+    color: RUST,
     letterSpacing: 0.3,
   },
 
-  // Daily Intention (returning user)
+  // Daily Intention — warm gradient focal card (returning user)
   intentionCard: {
-    paddingVertical: 20,
-    paddingHorizontal: 20,
+    borderRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 22,
     marginBottom: 20,
+    shadowColor: RUST,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
   intentionTitle: {
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: 0.5,
-    color: TEXT_SECONDARY,
+    color: 'rgba(255, 255, 255, 0.7)',
     textTransform: 'uppercase',
     marginBottom: 8,
   },
   intentionContextLabel: {
     fontSize: 12,
     fontWeight: '500',
-    color: RUST,
-    marginBottom: 8,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 10,
   },
   intentionQuote: {
     fontFamily: SERIF_ITALIC,
-    fontSize: 18,
+    fontSize: 20,
     fontStyle: 'italic',
-    color: TEXT_PRIMARY,
-    lineHeight: 28,
-    marginBottom: 16,
+    color: '#FFFFFF',
+    lineHeight: 30,
+    marginBottom: 18,
   },
   intentionActions: {
     flexDirection: 'row',
@@ -646,7 +719,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.8,
-    color: RUST,
+    color: 'rgba(255, 255, 255, 0.85)',
   },
 
   // Trial Day Card
