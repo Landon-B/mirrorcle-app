@@ -8,8 +8,8 @@ export class ErrorBoundary extends React.Component {
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error) {
+    return { hasError: true, errorMessage: error?.message || String(error) };
   }
 
   componentDidCatch(error, errorInfo) {
@@ -26,7 +26,7 @@ export class ErrorBoundary extends React.Component {
         <View style={styles.container}>
           <Text style={styles.title}>Something went wrong</Text>
           <Text style={styles.subtitle}>
-            The app encountered an unexpected error. Please try again.
+            {this.state.errorMessage || 'The app encountered an unexpected error. Please try again.'}
           </Text>
           <GhostButton title="Try Again" onPress={this.handleReset} />
         </View>

@@ -21,6 +21,7 @@ import { formatTime } from '../utils/dateUtils';
 export const CameraSessionScreen = ({ navigation }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [cameraError, setCameraError] = useState(null);
   const [sessionAffirmations, setSessionAffirmations] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
@@ -241,25 +242,32 @@ export const CameraSessionScreen = ({ navigation }) => {
   }, [sessionStarted]);
 
   const startSession = async (withCamera) => {
-    if (withCamera) {
-      const status = permission?.status;
-      if (status !== 'granted') {
-        const result = await requestPermission();
-        if (!result.granted) {
-          Alert.alert(
-            'Camera Permission Required',
-            'Camera access is needed to see yourself during the session. You can enable it in Settings, or continue without camera.',
-            [
-              { text: 'Continue Without Camera', onPress: () => setSessionStarted(true) },
-              { text: 'Cancel', style: 'cancel' },
-            ]
-          );
-          return;
+    try {
+      if (withCamera) {
+        const status = permission?.status;
+        if (status !== 'granted') {
+          const result = await requestPermission();
+          if (!result.granted) {
+            Alert.alert(
+              'Camera Permission Required',
+              'Camera access is needed to see yourself during the session. You can enable it in Settings, or continue without camera.',
+              [
+                { text: 'Continue Without Camera', onPress: () => setSessionStarted(true) },
+                { text: 'Cancel', style: 'cancel' },
+              ]
+            );
+            return;
+          }
         }
+        setCameraEnabled(true);
       }
-      setCameraEnabled(true);
+      setSessionStarted(true);
+    } catch (error) {
+      console.error('Failed to start session with camera:', error);
+      // Fall back to session without camera
+      setCameraEnabled(false);
+      setSessionStarted(true);
     }
-    setSessionStarted(true);
   };
 
   const handleComplete = async () => {
@@ -333,7 +341,16 @@ export const CameraSessionScreen = ({ navigation }) => {
         <View style={styles.cameraContainer}>
           {sessionStarted ? (
             <View style={styles.cameraWrapper}>
-              {cameraEnabled && <CameraView style={styles.cameraView} facing="front" />}
+              {cameraEnabled && !cameraError && (
+                <CameraView
+                  style={styles.cameraView}
+                  facing="front"
+                  onMountError={(e) => {
+                    console.error('Camera mount error:', e);
+                    setCameraError(e);
+                  }}
+                />
+              )}
               {isComplete && isTransitioning ? (
                 <View style={[styles.cameraOverlay, !cameraEnabled && styles.noCameraOverlay, styles.completionOverlay]}>
                   <View style={styles.completedIndicator}>
