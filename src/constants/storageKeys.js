@@ -12,4 +12,5 @@ export const STORAGE_KEYS = {
   lastMood: 'mirrorcle-last-mood',
   legalAccepted: 'mirrorcle-legal-accepted',
   dailyFocus: 'mirrorcle-daily-focus',
+  pendingFirstSession: 'mirrorcle-pending-first-session',
 };

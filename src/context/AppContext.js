@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storageService } from '../services/storage';
 import { authService } from '../services/auth';
 import { userProfileService } from '../services/user';
 import { sessionService } from '../services/session';
 import { personalizationService } from '../services/personalization';
+import { STORAGE_KEYS } from '../constants';
 
 const AppContext = createContext(null);
 
@@ -135,6 +137,25 @@ export const AppProvider = ({ children }) => {
 
       // Update last login
       await userProfileService.updateLastLogin();
+
+      // Retroactively save pending first session (from guided onboarding)
+      try {
+        const pendingJson = await AsyncStorage.getItem(STORAGE_KEYS.pendingFirstSession);
+        if (pendingJson) {
+          const pending = JSON.parse(pendingJson);
+          await sessionService.createSession({
+            feelingId: null,
+            durationSeconds: pending.durationSeconds || 0,
+            promptsCompleted: pending.promptsCompleted || 1,
+            timeOfDay: null,
+            focusAreaId: null,
+          });
+          await AsyncStorage.removeItem(STORAGE_KEYS.pendingFirstSession);
+        }
+      } catch (pendingError) {
+        // Non-critical — don't block app load if this fails
+        console.log('Could not save pending first session:', pendingError);
+      }
     } catch (error) {
       console.error('Error loading Supabase data:', error);
     }

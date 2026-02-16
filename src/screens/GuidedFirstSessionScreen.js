@@ -17,8 +17,10 @@ import { AffirmationHighlightText } from '../components/affirmation';
 import { useSpeechMatcher } from '../hooks/useSpeechMatcher';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useHaptics } from '../hooks/useHaptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useApp } from '../context/AppContext';
 import { typography } from '../styles/typography';
+import { STORAGE_KEYS } from '../constants';
 
 const GUIDED_AFFIRMATION = 'I am worthy of love and kindness';
 
@@ -51,6 +53,7 @@ export const GuidedFirstSessionScreen = ({ navigation }) => {
   const { breathingPulse, successPulse, celebrationBurst } = useHaptics();
   const { completeOnboarding } = useApp();
   const isMountedRef = useRef(true);
+  const sessionStartRef = useRef(Date.now());
 
   // Breathing animation
   const circleScale = useSharedValue(0.6);
@@ -220,6 +223,24 @@ export const GuidedFirstSessionScreen = ({ navigation }) => {
 
     const timer = setTimeout(async () => {
       if (!isMountedRef.current) return;
+
+      // Cache the first session data for retroactive save after account creation
+      const durationSeconds = Math.round((Date.now() - sessionStartRef.current) / 1000);
+      const pendingSession = {
+        durationSeconds,
+        promptsCompleted: 1,
+        affirmationText: GUIDED_AFFIRMATION,
+        completedAt: new Date().toISOString(),
+      };
+      try {
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.pendingFirstSession,
+          JSON.stringify(pendingSession)
+        );
+      } catch (e) {
+        // Non-critical — session save is best-effort
+      }
+
       await completeOnboarding();
       navigation.replace('GuidedFirstCelebration');
     }, CELEBRATION_DURATION);

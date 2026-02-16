@@ -51,7 +51,7 @@ export const GuidedFirstCelebrationScreen = ({ navigation }) => {
   }));
 
   const handleContinue = () => {
-    navigation.replace('MainTabs');
+    navigation.replace('SaveJourney');
   };
 
   return (

@@ -9,6 +9,7 @@ import {
   OnboardingScreen,
   GuidedFirstSessionScreen,
   GuidedFirstCelebrationScreen,
+  SaveJourneyScreen,
   PaywallScreen,
   MilestoneCelebrationScreen,
 } from '../screens';
@@ -42,6 +43,7 @@ export const AppNavigator = () => {
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="GuidedFirstSession" component={GuidedFirstSessionScreen} />
         <Stack.Screen name="GuidedFirstCelebration" component={GuidedFirstCelebrationScreen} />
+        <Stack.Screen name="SaveJourney" component={SaveJourneyScreen} />
 
         {/* Main App with Bottom Tabs */}
         <Stack.Screen name="MainTabs" component={MainTabNavigator} />
