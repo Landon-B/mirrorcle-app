@@ -546,7 +546,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
                 /* Affirmation text with fade animation */
                 <View style={[styles.cameraOverlay, !cameraEnabled && styles.noCameraOverlay]}>
                   <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.7)']}
+                    colors={['transparent', 'rgba(0,0,0,0.5)']}
                     style={styles.promptGradient}
                   >
                     <Animated.View style={affirmationAnimatedStyle}>
@@ -557,7 +557,6 @@ export const CameraSessionScreen = ({ navigation, route }) => {
                         spokenStyle={styles.promptSpoken}
                         currentStyle={styles.promptCurrent}
                         pendingStyle={styles.promptPending}
-                        showQuotes
                       />
                     </Animated.View>
                   </LinearGradient>
@@ -689,10 +688,17 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 28,
     alignItems: 'center',
   },
-  promptText: { color: '#fff', fontSize: 24, textAlign: 'center', lineHeight: 34 },
-  promptSpoken: { color: '#34D399' },
-  promptCurrent: { color: '#E8A090', fontWeight: '700' },
-  promptPending: { color: '#E2E8F0' },
+  promptText: {
+    fontSize: 28,
+    textAlign: 'center',
+    lineHeight: 40,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
+  },
+  promptSpoken: { color: 'rgba(255, 255, 255, 0.95)' },
+  promptCurrent: { color: '#FFFFFF', fontWeight: '500' },
+  promptPending: { color: 'rgba(255, 255, 255, 0.4)' },
   gazePromptContainer: {
     paddingHorizontal: 32,
     alignItems: 'center',

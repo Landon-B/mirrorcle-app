@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet, Platform } from 'react-native';
 
 export const AffirmationHighlightText = ({
   tokens = [],
@@ -15,7 +15,6 @@ export const AffirmationHighlightText = ({
 
   return (
     <Text style={[styles.base, style]}>
-      {showQuotes ? '"' : ''}
       {tokens.map((token, index) => {
         let stateStyle = styles.pending;
         if (index < activeToken) stateStyle = styles.spoken;
@@ -30,7 +29,6 @@ export const AffirmationHighlightText = ({
           </Text>
         );
       })}
-      {showQuotes ? '"' : ''}
     </Text>
   );
 };
@@ -38,12 +36,15 @@ export const AffirmationHighlightText = ({
 const styles = StyleSheet.create({
   base: {
     textAlign: 'center',
-    fontSize: 22,
-    lineHeight: 30,
-    color: '#E2E8F0',
+    fontFamily: Platform.OS === 'ios' ? 'Georgia-Italic' : 'serif',
+    fontStyle: 'italic',
+    fontSize: 26,
+    lineHeight: 38,
+    color: 'rgba(255, 255, 255, 0.5)',
+    letterSpacing: 0.3,
   },
-  word: { color: '#E2E8F0' },
-  spoken: { color: '#34D399' },
-  current: { color: '#E8A090', fontWeight: '700' },
-  pending: { color: '#E2E8F0' },
+  word: { color: 'rgba(255, 255, 255, 0.5)' },
+  spoken: { color: 'rgba(255, 255, 255, 0.95)', fontWeight: '400' },
+  current: { color: '#FFFFFF', fontWeight: '500' },
+  pending: { color: 'rgba(255, 255, 255, 0.35)' },
 });
