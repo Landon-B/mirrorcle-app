@@ -11,11 +11,13 @@ import { useApp } from '../context/AppContext';
 import { ScreenHeader, PrimaryButton } from '../components/common';
 import { textStyles, typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
+import { useHaptics } from '../hooks/useHaptics';
 
 export const MoodCheckInScreen = ({ navigation, route }) => {
   const { mode = 'pre-session', focusArea, ...sessionData } = route.params || {};
   const { user } = useApp();
   const [selectedMood, setSelectedMood] = useState(null);
+  const { selectionTap } = useHaptics();
 
   const isPost = mode === 'post-session';
   const userName = user?.user_metadata?.name || 'Friend';
@@ -69,7 +71,7 @@ export const MoodCheckInScreen = ({ navigation, route }) => {
             return (
               <Pressable
                 key={mood.id}
-                onPress={() => setSelectedMood(mood.id)}
+                onPress={() => { selectionTap(); setSelectedMood(mood.id); }}
                 accessibilityRole="button"
                 accessibilityLabel={`${mood.label} mood`}
                 accessibilityState={{ selected: isSelected }}

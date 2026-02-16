@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,24 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withDelay,
+  withRepeat,
+  withSequence,
+  Easing,
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+} from 'react-native-reanimated';
 import { useApp } from '../context/AppContext';
 import { PrimaryButton, Card } from '../components/common';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
+import { useHaptics } from '../hooks/useHaptics';
 
 const MOTIVATIONAL_QUOTES = [
   { text: 'The real voyage of discovery consists not in seeking new landscapes, but in having new eyes.', author: 'Marcel Proust' },
@@ -38,6 +52,40 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
   } = route.params || {};
 
   const { stats } = useApp();
+  const { celebrationBurst } = useHaptics();
+
+  // Sparkle breathe animation
+  const sparkleScale = useSharedValue(0);
+
+  useEffect(() => {
+    // Celebration haptic on mount
+    celebrationBurst();
+
+    // Entrance animation for sparkle
+    sparkleScale.value = withSpring(1, {
+      damping: 10,
+      stiffness: 120,
+      mass: 0.5,
+    });
+
+    // Start breathing pulse after entrance
+    const breatheTimer = setTimeout(() => {
+      sparkleScale.value = withRepeat(
+        withSequence(
+          withTiming(1.08, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1.0, { duration: 2000, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+    }, 600);
+
+    return () => clearTimeout(breatheTimer);
+  }, []);
+
+  const sparkleAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: sparkleScale.value }],
+  }));
 
   const quote = useMemo(() => {
     const randomIndex = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);
@@ -45,7 +93,6 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
   }, []);
 
   const handleBackToHome = () => {
-    // Navigate back to the root home tab
     const parent = navigation.getParent();
     if (parent) {
       parent.navigate('HomeTab', { screen: 'Home' });
@@ -57,7 +104,7 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `I just completed a Mirrorcle session! ${completedPrompts} affirmations spoken with intention. My light is shining brighter.`,
+        message: `I just completed a Mirrorcle session! ${completedPrompts} truths spoken about myself. My light is shining brighter.`,
       });
     } catch (error) {
       // User cancelled or share failed silently
@@ -71,24 +118,37 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Sparkle icon */}
-        <View style={styles.sparkleContainer}>
+        {/* Sparkle icon with entrance + breathe animation */}
+        <Animated.View style={[styles.sparkleContainer, sparkleAnimatedStyle]}>
           <View style={styles.sparkleCircle}>
             <Ionicons name="sparkles" size={32} color="#C17666" />
           </View>
-        </View>
+        </Animated.View>
 
-        {/* Heading */}
-        <Text style={styles.heading}>Beautifully done.</Text>
-        <Text style={styles.subtitle}>Your light is shining brighter.</Text>
+        {/* Heading with staggered entrance */}
+        <Animated.Text
+          entering={FadeInDown.delay(200).duration(500)}
+          style={styles.heading}
+        >
+          Beautifully done.
+        </Animated.Text>
+        <Animated.Text
+          entering={FadeInDown.delay(400).duration(500)}
+          style={styles.subtitle}
+        >
+          Your light is shining brighter.
+        </Animated.Text>
 
         {/* Session stats card */}
-        <View style={styles.statsCard}>
+        <Animated.View
+          entering={FadeInUp.delay(600).duration(600)}
+          style={styles.statsCard}
+        >
           <Text style={styles.statsLabel}>TODAY'S SESSION</Text>
 
           <Text style={styles.statsCount}>{completedPrompts}</Text>
           <Text style={styles.statsDescription}>
-            affirmations spoken{'\n'}with intention
+            truths spoken{'\n'}about yourself
           </Text>
 
           <View style={styles.statsDivider} />
@@ -110,19 +170,25 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
               <Text style={styles.statLabel}>day streak</Text>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Motivational quote */}
-        <View style={styles.quoteContainer}>
+        <Animated.View
+          entering={FadeIn.delay(1000).duration(600)}
+          style={styles.quoteContainer}
+        >
           <Text style={styles.quoteText}>
             {'\u201C'}{quote.text}{'\u201D'}
           </Text>
           <Text style={styles.quoteAuthor}>{'\u2014'} {quote.author}</Text>
-        </View>
+        </Animated.View>
       </ScrollView>
 
       {/* Footer actions */}
-      <View style={styles.footer}>
+      <Animated.View
+        entering={FadeIn.delay(1200).duration(400)}
+        style={styles.footer}
+      >
         <PrimaryButton
           title="Back to Home"
           icon="arrow-forward"
@@ -137,7 +203,7 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
         >
           <Text style={styles.shareText}>SHARE YOUR PROGRESS</Text>
         </Pressable>
-      </View>
+      </Animated.View>
     </View>
   );
 };

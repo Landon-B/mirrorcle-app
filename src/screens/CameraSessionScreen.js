@@ -4,6 +4,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withRepeat,
+  withSequence,
+  Easing,
+  FadeIn,
+  FadeOut,
+} from 'react-native-reanimated';
 import { GradientBackground, PrimaryButton, GhostButton } from '../components/common';
 import { AffirmationHighlightText } from '../components/affirmation';
 import { FALLBACK_AFFIRMATIONS } from '../constants';
@@ -17,6 +28,12 @@ import { useApp } from '../context/AppContext';
 import { usePersonalization } from '../hooks/usePersonalization';
 import { storageService } from '../services/storage';
 import { formatTime } from '../utils/dateUtils';
+import { useHaptics } from '../hooks/useHaptics';
+import { typography } from '../styles/typography';
+
+const GAZE_PROMPT_DURATION = 3500;
+const TRANSITION_DURATION = 2500;
+const SESSION_END_DURATION = 3000;
 
 export const CameraSessionScreen = ({ navigation, route }) => {
   const [permission, requestPermission] = useCameraPermissions();
@@ -32,9 +49,11 @@ export const CameraSessionScreen = ({ navigation, route }) => {
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [affirmationStartTime, setAffirmationStartTime] = useState(null);
+  const [showGazePrompt, setShowGazePrompt] = useState(false);
   const { recordSession } = useStats();
   const { isPro, user, preferences } = useApp();
   const { streakEncouragement, timeOfDay } = usePersonalization();
+  const { successPulse, celebrationBurst, selectionTap } = useHaptics();
 
   const sessionAffirmationCount = preferences.preferredSessionLength || 3;
   const totalCount = preferences.repeatAffirmations ? sessionAffirmationCount * 2 : sessionAffirmationCount;
@@ -57,10 +76,45 @@ export const CameraSessionScreen = ({ navigation, route }) => {
   const ignoredFinal = useRef('');
   const transitionTimerRef = useRef(null);
   const innerTransitionTimerRef = useRef(null);
+  const gazeTimerRef = useRef(null);
   const isMountedRef = useRef(true);
   const partialRef = useRef('');
   const finalTextRef = useRef('');
   const completedCountRef = useRef(0);
+
+  // Animated values
+  const progressWidth = useSharedValue(0);
+  const completionOpacity = useSharedValue(0);
+  const completionScale = useSharedValue(0.5);
+  const affirmationOpacity = useSharedValue(1);
+  const gazeOpacity = useSharedValue(0);
+  const micScale = useSharedValue(1);
+  const micOpacity = useSharedValue(0.7);
+
+  // Pulsing mic animation
+  useEffect(() => {
+    if (isListening && !isTransitioning && !showGazePrompt) {
+      micScale.value = withRepeat(
+        withSequence(
+          withTiming(1.15, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1.0, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+      micOpacity.value = withRepeat(
+        withSequence(
+          withTiming(1.0, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.7, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+    } else {
+      micScale.value = withTiming(1.0, { duration: 300 });
+      micOpacity.value = withTiming(0.7, { duration: 300 });
+    }
+  }, [isListening, isTransitioning, showGazePrompt]);
 
   // Cleanup all timers on unmount
   useEffect(() => {
@@ -68,6 +122,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
       isMountedRef.current = false;
       if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
       if (innerTransitionTimerRef.current) clearTimeout(innerTransitionTimerRef.current);
+      if (gazeTimerRef.current) clearTimeout(gazeTimerRef.current);
     };
   }, []);
 
@@ -78,14 +133,12 @@ export const CameraSessionScreen = ({ navigation, route }) => {
 
   const loadSessionData = async () => {
     try {
-      // Prefer mood from v2 route params, fall back to AsyncStorage (v1 flow)
       const routeMood = route.params?.mood;
       const currentFeeling = routeMood?.id || await storageService.getCurrentFeeling();
       if (currentFeeling) {
         setFeeling(currentFeeling);
       }
 
-      // Try to load personalized prompts from Supabase
       try {
         const routeFocus = route.params?.focusArea;
         const prompts = await affirmationService.getPersonalizedForSession(
@@ -102,7 +155,6 @@ export const CameraSessionScreen = ({ navigation, route }) => {
         if (prompts && prompts.length > 0) {
           setSessionAffirmations(prompts.slice(0, sessionAffirmationCount));
         } else {
-          // Fallback to local prompts
           useLocalPrompts();
         }
       } catch (error) {
@@ -128,24 +180,24 @@ export const CameraSessionScreen = ({ navigation, route }) => {
     );
   };
 
-  // Keep refs in sync for use in completion effect without triggering it
+  // Keep refs in sync
   useEffect(() => { partialRef.current = partial; }, [partial]);
   useEffect(() => { finalTextRef.current = finalText; }, [finalText]);
 
-  // Update speech matcher with recognized speech - ignore stale data from previous affirmation
+  // Update speech matcher — ignore stale data from previous affirmation
   useEffect(() => {
-    if (partial && partial !== ignoredPartial.current && !isTransitioning) {
+    if (partial && partial !== ignoredPartial.current && !isTransitioning && !showGazePrompt) {
       updateWithSpeech(partial);
     }
-  }, [partial, isTransitioning, updateWithSpeech]);
+  }, [partial, isTransitioning, showGazePrompt, updateWithSpeech]);
 
   useEffect(() => {
-    if (finalText && finalText !== ignoredFinal.current && !isTransitioning) {
+    if (finalText && finalText !== ignoredFinal.current && !isTransitioning && !showGazePrompt) {
       updateWithSpeech(finalText);
     }
-  }, [finalText, isTransitioning, updateWithSpeech]);
+  }, [finalText, isTransitioning, showGazePrompt, updateWithSpeech]);
 
-  // Auto-start listening when session begins
+  // Auto-start listening when session begins (after gaze prompt)
   const beginListening = useCallback(async () => {
     if (isSpeechSupported && !isListening) {
       try {
@@ -157,21 +209,21 @@ export const CameraSessionScreen = ({ navigation, route }) => {
   }, [isSpeechSupported, isListening, startListening]);
 
   useEffect(() => {
-    if (sessionStarted && isSpeechSupported && !isTransitioning) {
+    if (sessionStarted && isSpeechSupported && !isTransitioning && !showGazePrompt) {
       const timer = setTimeout(() => {
         beginListening();
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [sessionStarted, isSpeechSupported, isTransitioning, beginListening]);
+  }, [sessionStarted, isSpeechSupported, isTransitioning, showGazePrompt, beginListening]);
 
-  // Handle affirmation completion and transition
+  // Handle affirmation completion with ceremony
   useEffect(() => {
     if (isComplete && !isTransitioning && !hasHandledCompletion.current) {
       hasHandledCompletion.current = true;
       setIsTransitioning(true);
 
-      // Capture current speech values IMMEDIATELY to ignore them for next affirmation
+      // Capture current speech values to ignore for next affirmation
       ignoredPartial.current = partialRef.current;
       ignoredFinal.current = finalTextRef.current;
 
@@ -179,22 +231,42 @@ export const CameraSessionScreen = ({ navigation, route }) => {
       completedCountRef.current = newCompletedCount;
       setCompletedCount(newCompletedCount);
 
+      // Haptic success pulse
+      successPulse();
+
+      // Animate progress bar
+      const newProgress = (newCompletedCount / totalCount) * 100;
+      progressWidth.value = withTiming(newProgress, {
+        duration: 600,
+        easing: Easing.out(Easing.ease),
+      });
+
+      // Animate completion overlay (fade in + scale up)
+      completionOpacity.value = withTiming(1, { duration: 400 });
+      completionScale.value = withSpring(1.0, {
+        damping: 12,
+        stiffness: 150,
+        mass: 0.5,
+      });
+
+      // Fade out affirmation text
+      affirmationOpacity.value = withTiming(0, { duration: 300 });
+
       // Calculate completion time for voice pacing
       const completionTimeSeconds = affirmationStartTime
         ? (Date.now() - affirmationStartTime) / 1000
         : null;
 
-      // Record affirmation engagement in Supabase
+      // Record affirmation engagement
       const currentAff = sessionAffirmations[currentIndex % sessionAffirmations.length];
       if (user && currentAff && !currentAff.id.startsWith('local-')) {
         sessionService.recordAffirmationEngagement(
           currentAff.id,
-          true, // engaged (spoken)
+          true,
           currentSessionId,
           completionTimeSeconds
         ).catch(err => console.log('Failed to record engagement:', err));
 
-        // Update voice pacing
         if (completionTimeSeconds && currentAff.text) {
           const wordCount = currentAff.text.split(/\s+/).length;
           personalizationService.updateVoicePacing(user.id, wordCount, completionTimeSeconds)
@@ -207,24 +279,40 @@ export const CameraSessionScreen = ({ navigation, route }) => {
         stopListening();
       }
 
-      // Check if session is complete (3 affirmations done)
-      if (newCompletedCount >= totalCount) {
-        // Session complete - navigate to reflection after delay
-        transitionTimerRef.current = setTimeout(() => {
-          if (isMountedRef.current) handleComplete();
-        }, 1200);
-      } else {
-        // Transition to next affirmation
-        transitionTimerRef.current = setTimeout(() => {
-          if (!isMountedRef.current) return;
+      const isSessionComplete = newCompletedCount >= totalCount;
+      const transitionTime = isSessionComplete ? SESSION_END_DURATION : TRANSITION_DURATION;
+
+      if (isSessionComplete) {
+        // Extra celebration haptic for session completion
+        setTimeout(() => celebrationBurst(), 400);
+      }
+
+      transitionTimerRef.current = setTimeout(() => {
+        if (!isMountedRef.current) return;
+
+        if (isSessionComplete) {
+          handleComplete();
+        } else {
+          // Reset completion animation
+          completionOpacity.value = withTiming(0, { duration: 200 });
+          completionScale.value = 0.5;
+
           hasHandledCompletion.current = false;
           setCurrentIndex((prev) => prev + 1);
-          // Small delay before allowing new speech processing
+
+          // Fade in next affirmation
+          affirmationOpacity.value = 0;
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              affirmationOpacity.value = withTiming(1, { duration: 400 });
+            }
+          }, 100);
+
           innerTransitionTimerRef.current = setTimeout(() => {
             if (isMountedRef.current) setIsTransitioning(false);
-          }, 100);
-        }, 1200);
-      }
+          }, 200);
+        }
+      }, transitionTime);
     }
   }, [isComplete, isTransitioning, completedCount, isListening, stopListening, sessionAffirmations, currentIndex, currentSessionId, user]);
 
@@ -239,11 +327,11 @@ export const CameraSessionScreen = ({ navigation, route }) => {
   // Session timer
   useEffect(() => {
     let interval;
-    if (sessionStarted) {
+    if (sessionStarted && !showGazePrompt) {
       interval = setInterval(() => setSessionTime((prev) => prev + 1), 1000);
     }
     return () => interval && clearInterval(interval);
-  }, [sessionStarted]);
+  }, [sessionStarted, showGazePrompt]);
 
   const startSession = async (withCamera) => {
     try {
@@ -256,22 +344,46 @@ export const CameraSessionScreen = ({ navigation, route }) => {
               'Camera Permission Required',
               'Camera access is needed to see yourself during the session. You can enable it in Settings, or continue without camera.',
               [
-                { text: 'Continue Without Camera', onPress: () => setSessionStarted(true) },
+                { text: 'Continue Without Camera', onPress: () => beginSession(false) },
                 { text: 'Cancel', style: 'cancel' },
               ]
             );
             return;
           }
         }
-        setCameraEnabled(true);
+        beginSession(true);
+      } else {
+        beginSession(false);
       }
-      setSessionStarted(true);
     } catch (error) {
       console.error('Failed to start session with camera:', error);
-      // Fall back to session without camera
-      setCameraEnabled(false);
-      setSessionStarted(true);
+      beginSession(false);
     }
+  };
+
+  const beginSession = (withCamera) => {
+    setCameraEnabled(withCamera);
+    setSessionStarted(true);
+    // Show gaze prompt before first affirmation
+    setShowGazePrompt(true);
+    selectionTap();
+
+    // Fade in the gaze prompt
+    gazeOpacity.value = withTiming(1, { duration: 800 });
+
+    gazeTimerRef.current = setTimeout(() => {
+      if (!isMountedRef.current) return;
+      // Fade out gaze prompt
+      gazeOpacity.value = withTiming(0, { duration: 600 });
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          setShowGazePrompt(false);
+          // Fade in first affirmation
+          affirmationOpacity.value = 0;
+          affirmationOpacity.value = withTiming(1, { duration: 500 });
+        }
+      }, 600);
+    }, GAZE_PROMPT_DURATION);
   };
 
   const handleComplete = async () => {
@@ -324,6 +436,29 @@ export const CameraSessionScreen = ({ navigation, route }) => {
 
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
+  // Animated styles
+  const completionAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: completionOpacity.value,
+    transform: [{ scale: completionScale.value }],
+  }));
+
+  const affirmationAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: affirmationOpacity.value,
+  }));
+
+  const gazeAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: gazeOpacity.value,
+  }));
+
+  const progressAnimatedStyle = useAnimatedStyle(() => ({
+    width: `${progressWidth.value}%`,
+  }));
+
+  const micAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: micScale.value }],
+    opacity: micOpacity.value,
+  }));
+
   if (isLoadingPrompts) {
     return (
       <GradientBackground>
@@ -361,32 +496,70 @@ export const CameraSessionScreen = ({ navigation, route }) => {
                   }}
                 />
               )}
-              {isComplete && isTransitioning ? (
+
+              {/* Warm vignette overlay */}
+              {cameraEnabled && (
+                <>
+                  <LinearGradient
+                    colors={['rgba(193, 118, 102, 0.2)', 'transparent']}
+                    style={styles.vignetteTop}
+                  />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(193, 118, 102, 0.15)']}
+                    style={styles.vignetteBottom}
+                  />
+                  <LinearGradient
+                    colors={['rgba(193, 118, 102, 0.15)', 'transparent']}
+                    start={{ x: 0, y: 0.5 }}
+                    end={{ x: 0.3, y: 0.5 }}
+                    style={styles.vignetteLeft}
+                  />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(193, 118, 102, 0.15)']}
+                    start={{ x: 0.7, y: 0.5 }}
+                    end={{ x: 1, y: 0.5 }}
+                    style={styles.vignetteRight}
+                  />
+                </>
+              )}
+
+              {/* Gaze prompt — shown before first affirmation */}
+              {showGazePrompt ? (
+                <View style={[styles.cameraOverlay, !cameraEnabled && styles.noCameraOverlay, styles.gazeOverlay]}>
+                  <Animated.View style={[styles.gazePromptContainer, gazeAnimatedStyle]}>
+                    <Text style={styles.gazePromptText}>Look into your own eyes.</Text>
+                  </Animated.View>
+                </View>
+              ) : isComplete && isTransitioning ? (
+                /* Completion overlay with animation */
                 <View style={[styles.cameraOverlay, !cameraEnabled && styles.noCameraOverlay, styles.completionOverlay]}>
-                  <View style={styles.completedIndicator}>
+                  <Animated.View style={[styles.completedIndicator, completionAnimatedStyle]}>
                     <Ionicons name="checkmark-circle" size={48} color="#34D399" />
                     <Text style={styles.completedText}>
                       {completedCount >= totalCount
-                        ? "Session Complete!"
-                        : "Great job!"}
+                        ? "Session Complete"
+                        : "Notice how that feels."}
                     </Text>
-                  </View>
+                  </Animated.View>
                 </View>
               ) : (
+                /* Affirmation text with fade animation */
                 <View style={[styles.cameraOverlay, !cameraEnabled && styles.noCameraOverlay]}>
                   <LinearGradient
                     colors={['transparent', 'rgba(0,0,0,0.7)']}
                     style={styles.promptGradient}
                   >
-                    <AffirmationHighlightText
-                      tokens={displayTokens}
-                      activeToken={activeToken}
-                      style={styles.promptText}
-                      spokenStyle={styles.promptSpoken}
-                      currentStyle={styles.promptCurrent}
-                      pendingStyle={styles.promptPending}
-                      showQuotes
-                    />
+                    <Animated.View style={affirmationAnimatedStyle}>
+                      <AffirmationHighlightText
+                        tokens={displayTokens}
+                        activeToken={activeToken}
+                        style={styles.promptText}
+                        spokenStyle={styles.promptSpoken}
+                        currentStyle={styles.promptCurrent}
+                        pendingStyle={styles.promptPending}
+                        showQuotes
+                      />
+                    </Animated.View>
                   </LinearGradient>
                 </View>
               )}
@@ -408,18 +581,18 @@ export const CameraSessionScreen = ({ navigation, route }) => {
 
         <View style={styles.progressWrap}>
           <View style={styles.progressRow}>
-            {isListening ? (
-              <View style={styles.listeningIndicator}>
+            {isListening && !showGazePrompt ? (
+              <Animated.View style={[styles.listeningIndicator, micAnimatedStyle]}>
                 <Ionicons name="mic" size={14} color="#A7F3D0" />
                 <Text style={styles.listeningBadge}>Listening...</Text>
-              </View>
+              </Animated.View>
             ) : (
               <View />
             )}
             <Text style={styles.progressText}>{Math.round(progress)}%</Text>
           </View>
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progress}%` }]} />
+            <Animated.View style={[styles.progressFill, progressAnimatedStyle]} />
           </View>
         </View>
 
@@ -452,6 +625,39 @@ const styles = StyleSheet.create({
   cameraContainer: { flex: 1, padding: 16 },
   cameraWrapper: { flex: 1, borderRadius: 28, overflow: 'hidden' },
   cameraView: { flex: 1 },
+  // Vignette overlays
+  vignetteTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '25%',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+  },
+  vignetteBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '25%',
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+  },
+  vignetteLeft: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: '20%',
+  },
+  vignetteRight: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: '20%',
+  },
   cameraOverlay: {
     position: 'absolute',
     bottom: 0,
@@ -460,6 +666,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   completionOverlay: {
+    top: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gazeOverlay: {
     top: 0,
     justifyContent: 'center',
     alignItems: 'center',
@@ -482,14 +693,35 @@ const styles = StyleSheet.create({
   promptSpoken: { color: '#34D399' },
   promptCurrent: { color: '#E8A090', fontWeight: '700' },
   promptPending: { color: '#E2E8F0' },
+  gazePromptContainer: {
+    paddingHorizontal: 32,
+    alignItems: 'center',
+  },
+  gazePromptText: {
+    fontFamily: typography.fontFamily.serifItalic,
+    fontSize: 26,
+    fontStyle: 'italic',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    lineHeight: 36,
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
   completedIndicator: {
     alignItems: 'center',
     gap: 12,
   },
   completedText: {
-    color: '#34D399',
+    fontFamily: typography.fontFamily.serifItalic,
     fontSize: 20,
-    fontWeight: '600',
+    fontStyle: 'italic',
+    fontWeight: '500',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   listeningIndicator: {
     flexDirection: 'row',
@@ -518,7 +750,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginTop: 8,
   },
-  progressFill: { height: '100%', backgroundColor: '#C17666' },
+  progressFill: { height: '100%', backgroundColor: '#C17666', borderRadius: 8 },
   rowButtons: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingBottom: 16, marginTop: 16 },
   flexButton: { flex: 1 },
 });

@@ -7,11 +7,13 @@ import { PrimaryButton, GhostButton } from '../components/common';
 import { FEELINGS } from '../constants';
 import { affirmationService } from '../services/affirmations';
 import { storageService } from '../services/storage';
+import { useHaptics } from '../hooks/useHaptics';
 
 export const FeelingsScreen = ({ navigation }) => {
   const [selected, setSelected] = useState(null);
   const [feelings, setFeelings] = useState(FEELINGS); // Fallback to local constants
   const [isLoading, setIsLoading] = useState(true);
+  const { selectionTap } = useHaptics();
 
   useEffect(() => {
     loadFeelings();
@@ -63,7 +65,7 @@ export const FeelingsScreen = ({ navigation }) => {
             {feelings.map((feeling) => (
               <Pressable
                 key={feeling.id}
-                onPress={() => setSelected(feeling.id)}
+                onPress={() => { selectionTap(); setSelected(feeling.id); }}
                 style={({ pressed }) => [
                   styles.feelingCard,
                   selected !== feeling.id && styles.feelingCardShadow,

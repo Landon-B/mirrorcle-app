@@ -15,11 +15,13 @@ import { useFeatureGate } from '../components/pro/FeatureGate';
 import { ScreenHeader, PrimaryButton } from '../components/common';
 import { textStyles, typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
+import { useHaptics } from '../hooks/useHaptics';
 
 export const FocusSelectionScreen = ({ navigation }) => {
   const [selectedArea, setSelectedArea] = useState(null);
   const [customFocus, setCustomFocus] = useState('');
   const { isPro, checkAccess, PaywallComponent } = useFeatureGate();
+  const { selectionTap } = useHaptics();
 
   const handleContinue = () => {
     if (!selectedArea && !customFocus.trim()) return;
@@ -40,6 +42,7 @@ export const FocusSelectionScreen = ({ navigation }) => {
   };
 
   const handleSelectArea = (id) => {
+    selectionTap();
     setSelectedArea(id);
     setCustomFocus('');
     Keyboard.dismiss();
