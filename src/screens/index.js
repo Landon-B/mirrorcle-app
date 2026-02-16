@@ -1,3 +1,6 @@
+// Splash
+export { SplashScreen } from './SplashScreen';
+
 // Auth & Onboarding
 export { WelcomeScreen } from './WelcomeScreen';
 export { CreateAccountScreen } from './CreateAccountScreen';

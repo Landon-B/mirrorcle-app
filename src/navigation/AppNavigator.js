@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
+  SplashScreen,
   WelcomeScreen,
   CreateAccountScreen,
   LoginScreen,
@@ -26,8 +27,11 @@ export const AppNavigator = () => {
     <ErrorBoundary>
       <Stack.Navigator
         screenOptions={{ headerShown: false }}
-        initialRouteName={hasCompletedOnboarding ? 'MainTabs' : 'Welcome'}
+        initialRouteName="Splash"
       >
+        {/* Splash */}
+        <Stack.Screen name="Splash" component={SplashScreen} />
+
         {/* Auth Flow */}
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, StatusBar, Pressable, ActivityIndic
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { GradientBackground, PrimaryButton, GhostButton } from '../components/common';
+import { PrimaryButton, GhostButton } from '../components/common';
 import { FEELINGS } from '../constants';
 import { affirmationService } from '../services/affirmations';
 import { storageService } from '../services/storage';
@@ -39,20 +39,20 @@ export const FeelingsScreen = ({ navigation }) => {
 
   if (isLoading) {
     return (
-      <GradientBackground>
+      <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#A855F7" />
+            <ActivityIndicator size="large" color="#C17666" />
           </View>
         </SafeAreaView>
-      </GradientBackground>
+      </View>
     );
   }
 
   return (
-    <GradientBackground>
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <ScrollView contentContainerStyle={styles.centeredContainer}>
           <View style={styles.headerBlock}>
             <Text style={styles.sectionTitle}>How are you feeling?</Text>
@@ -64,16 +64,20 @@ export const FeelingsScreen = ({ navigation }) => {
               <Pressable
                 key={feeling.id}
                 onPress={() => setSelected(feeling.id)}
-                style={({ pressed }) => [styles.feelingCard, pressed && styles.buttonPressed]}
+                style={({ pressed }) => [
+                  styles.feelingCard,
+                  selected !== feeling.id && styles.feelingCardShadow,
+                  pressed && styles.buttonPressed,
+                ]}
               >
                 <LinearGradient
-                  colors={selected === feeling.id ? feeling.colors : ['#1F2937', '#1F2937']}
+                  colors={selected === feeling.id ? feeling.colors : ['#FFFFFF', '#FFFFFF']}
                   style={styles.feelingCardGradient}
                 >
                   <MaterialCommunityIcons
                     name={feeling.icon}
                     size={34}
-                    color={selected === feeling.id ? '#fff' : '#94A3B8'}
+                    color={selected === feeling.id ? '#fff' : '#B0AAA2'}
                   />
                   <Text style={selected === feeling.id ? styles.feelingTextActive : styles.feelingText}>
                     {feeling.label}
@@ -94,11 +98,12 @@ export const FeelingsScreen = ({ navigation }) => {
           </View>
         </ScrollView>
       </SafeAreaView>
-    </GradientBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F5F2EE' },
   safeArea: { flex: 1 },
   loadingContainer: {
     flex: 1,
@@ -112,10 +117,18 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   headerBlock: { alignItems: 'center', marginBottom: 16 },
-  sectionTitle: { color: '#fff', fontSize: 30, fontWeight: '700', textAlign: 'center' },
-  sectionSubtitle: { color: '#CBD5F5', marginTop: 8, textAlign: 'center' },
+  sectionTitle: { color: '#2D2A26', fontSize: 30, fontWeight: '700', textAlign: 'center' },
+  sectionSubtitle: { color: '#7A756E', marginTop: 8, textAlign: 'center' },
   feelingsGrid: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 16 },
   feelingCard: { width: '48%' },
+  feelingCardShadow: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    borderRadius: 20,
+  },
   feelingCardGradient: {
     borderRadius: 20,
     paddingVertical: 20,
@@ -123,7 +136,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  feelingText: { color: '#CBD5F5', fontSize: 16 },
+  feelingText: { color: '#7A756E', fontSize: 16 },
   feelingTextActive: { color: '#fff', fontSize: 16, fontWeight: '600' },
   rowButtons: { flexDirection: 'row', gap: 12, marginTop: 20, width: '100%' },
   flexButton: { flex: 1 },

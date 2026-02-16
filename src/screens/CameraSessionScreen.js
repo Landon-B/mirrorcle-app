@@ -87,6 +87,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
 
       // Try to load personalized prompts from Supabase
       try {
+        const routeFocus = route.params?.focusArea;
         const prompts = await affirmationService.getPersonalizedForSession(
           currentFeeling,
           {
@@ -94,6 +95,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
             userId: user?.id,
             count: sessionAffirmationCount,
             timeOfDay,
+            focusAreaId: routeFocus?.id || null,
           }
         );
 
@@ -121,7 +123,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
       shuffled.slice(0, sessionAffirmationCount).map((text, index) => ({
         id: `local-${index}`,
         text,
-        colors: ['#A855F7', '#EC4899'],
+        colors: ['#C17666', '#E8A090'],
       }))
     );
   };
@@ -283,6 +285,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
         completedPrompts: count,
         duration: sessionTime,
         timeOfDay,
+        focusAreaId: route.params?.focusArea?.id || null,
       });
     } catch (e) {
       console.log('Failed to record session:', e);
@@ -306,6 +309,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
         completedPrompts: count,
         duration: sessionTime,
         timeOfDay,
+        focusAreaId: route.params?.focusArea?.id || null,
       });
     } catch (e) {
       console.log('Failed to record session:', e);
@@ -325,7 +329,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
       <GradientBackground>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#A855F7" />
+            <ActivityIndicator size="large" color="#C17666" />
             <Text style={styles.loadingText}>Loading your personalized prompts...</Text>
           </View>
         </SafeAreaView>
@@ -444,7 +448,7 @@ const styles = StyleSheet.create({
   sessionHeader: { alignItems: 'center', paddingHorizontal: 16, marginTop: 12 },
   sessionTitle: { color: '#fff', fontSize: 26, fontWeight: '700' },
   sessionSubtitle: { color: '#CBD5F5', marginTop: 6, fontSize: 14 },
-  highlightText: { color: '#C084FC', fontWeight: '600' },
+  highlightText: { color: '#E8A090', fontWeight: '600' },
   cameraContainer: { flex: 1, padding: 16 },
   cameraWrapper: { flex: 1, borderRadius: 28, overflow: 'hidden' },
   cameraView: { flex: 1 },
@@ -476,7 +480,7 @@ const styles = StyleSheet.create({
   },
   promptText: { color: '#fff', fontSize: 24, textAlign: 'center', lineHeight: 34 },
   promptSpoken: { color: '#34D399' },
-  promptCurrent: { color: '#C084FC', fontWeight: '700' },
+  promptCurrent: { color: '#E8A090', fontWeight: '700' },
   promptPending: { color: '#E2E8F0' },
   completedIndicator: {
     alignItems: 'center',
@@ -514,7 +518,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginTop: 8,
   },
-  progressFill: { height: '100%', backgroundColor: '#A855F7' },
+  progressFill: { height: '100%', backgroundColor: '#C17666' },
   rowButtons: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingBottom: 16, marginTop: 16 },
   flexButton: { flex: 1 },
 });

@@ -13,11 +13,14 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
-import { GradientBackground, PrimaryButton, OverlaySheet, IconButton } from '../components/common';
+import { PrimaryButton, OverlaySheet, IconButton } from '../components/common';
 import { AFFIRMATIONS } from '../constants';
 import { affirmationService } from '../services/affirmations';
+import { focusService } from '../services/focus';
 import { useFavorites } from '../hooks/useFavorites';
 import { useApp } from '../context/AppContext';
+import { getCardColors } from '../constants/cardPalette';
+import { typography } from '../styles/typography';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -141,10 +144,10 @@ export const AffirmationHomeScreen = ({ navigation }) => {
       icon: 'color-palette',
       label: 'Themes',
       subtitle: 'Customize your experience',
-      colors: ['#A855F7', '#EC4899'],
+      colors: ['#C17666', '#E8A090'],
       onPress: () => {
         setShowProfile(false);
-        navigation.navigate('Themes');
+        navigation.getParent()?.navigate('ProfileTab', { screen: 'Themes' });
       },
     },
     {
@@ -154,7 +157,7 @@ export const AffirmationHomeScreen = ({ navigation }) => {
       colors: ['#FB7185', '#F43F5E'],
       onPress: () => {
         setShowProfile(false);
-        navigation.navigate('Favorites');
+        navigation.getParent()?.navigate('ProfileTab', { screen: 'Favorites' });
       },
     },
     {
@@ -164,7 +167,7 @@ export const AffirmationHomeScreen = ({ navigation }) => {
       colors: ['#22C55E', '#10B981'],
       onPress: () => {
         setShowProfile(false);
-        navigation.navigate('Trends');
+        navigation.getParent()?.navigate('GrowthTab', { screen: 'GrowthDashboard' });
       },
     },
     {
@@ -174,7 +177,7 @@ export const AffirmationHomeScreen = ({ navigation }) => {
       colors: ['#F59E0B', '#F97316'],
       onPress: () => {
         setShowProfile(false);
-        navigation.navigate('CustomAffirmations');
+        navigation.getParent()?.navigate('ProfileTab', { screen: 'CustomAffirmations' });
       },
     },
   ];
@@ -196,14 +199,14 @@ export const AffirmationHomeScreen = ({ navigation }) => {
       icon: 'timer-outline',
       label: 'Session Length',
       subtitle: `${preferences.preferredSessionLength || 3} affirmations`,
-      colors: ['#8B5CF6', '#6366F1'],
+      colors: ['#D4845A', '#C17666'],
       onPress: cycleSessionLength,
     },
     {
       icon: 'repeat',
       label: 'Repeat Affirmations',
       subtitle: preferences.repeatAffirmations ? 'On' : 'Off',
-      colors: ['#14B8A6', '#06B6D4'],
+      colors: ['#22C55E', '#10B981'],
       onPress: toggleRepeatAffirmations,
     },
     {
@@ -213,17 +216,17 @@ export const AffirmationHomeScreen = ({ navigation }) => {
       colors: ['#F59E0B', '#F97316'],
       onPress: () => {
         setShowSettings(false);
-        navigation.navigate('Paywall');
+        navigation.getParent()?.getParent()?.navigate('Paywall');
       },
     },
     {
       icon: 'notifications',
       label: 'Notifications',
       subtitle: 'Daily reminders',
-      colors: ['#6366F1', '#A855F7'],
+      colors: ['#3B82F6', '#06B6D4'],
       onPress: () => {
         setShowSettings(false);
-        navigation.navigate('NotificationSettings');
+        navigation.getParent()?.navigate('ProfileTab', { screen: 'NotificationSettings' });
       },
     },
     {
@@ -237,32 +240,32 @@ export const AffirmationHomeScreen = ({ navigation }) => {
 
   if (isLoading) {
     return (
-      <GradientBackground>
+      <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#A855F7" />
+            <ActivityIndicator size="large" color="#C17666" />
           </View>
         </SafeAreaView>
-      </GradientBackground>
+      </View>
     );
   }
 
   if (!current) {
     return (
-      <GradientBackground>
+      <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
             <Text style={styles.errorText}>No affirmations available</Text>
           </View>
         </SafeAreaView>
-      </GradientBackground>
+      </View>
     );
   }
 
   return (
-    <GradientBackground>
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <View style={styles.topBar}>
           <IconButton icon="person" onPress={() => setShowProfile(true)} />
           <IconButton icon="settings" onPress={() => setShowSettings(true)} />
@@ -271,20 +274,23 @@ export const AffirmationHomeScreen = ({ navigation }) => {
         <View style={styles.body}>
           <GestureDetector gesture={panGesture}>
             <Animated.View style={[styles.cardContainer, animatedCardStyle]}>
-              <LinearGradient colors={current.colors} style={styles.affirmationGradientLarge}>
-                <View style={styles.affirmationCardLarge}>
-                  <Text style={styles.affirmationTextLarge}>"{current.text}"</Text>
-                  <View style={styles.affirmationActions}>
-                    <Pressable
-                      onPress={handleToggleLike}
-                      style={[styles.roundAction, isLiked && styles.roundActionActive]}
-                    >
-                      <Ionicons name={isLiked ? 'heart' : 'heart-outline'} size={22} color="#fff" />
-                    </Pressable>
-                    <Pressable onPress={handleShare} style={styles.roundAction}>
-                      <Ionicons name="share-social" size={22} color="#fff" />
-                    </Pressable>
-                  </View>
+              <LinearGradient
+                colors={getCardColors(currentIndex)}
+                style={styles.affirmationCardLarge}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={styles.affirmationTextLarge}>{current.text}</Text>
+                <View style={styles.affirmationActions}>
+                  <Pressable
+                    onPress={handleToggleLike}
+                    style={[styles.roundAction, isLiked && styles.roundActionActive]}
+                  >
+                    <Ionicons name={isLiked ? 'heart' : 'heart-outline'} size={22} color="#fff" />
+                  </Pressable>
+                  <Pressable onPress={handleShare} style={styles.roundAction}>
+                    <Ionicons name="share-social" size={22} color="#fff" />
+                  </Pressable>
                 </View>
               </LinearGradient>
             </Animated.View>
@@ -295,7 +301,21 @@ export const AffirmationHomeScreen = ({ navigation }) => {
           <PrimaryButton
             title="Practice"
             icon="sparkles"
-            onPress={() => navigation.navigate('Feelings')}
+            onPress={async () => {
+              try {
+                const todaysFocus = await focusService.getTodaysFocus();
+                if (todaysFocus) {
+                  navigation.navigate('MoodCheckIn', {
+                    mode: 'pre-session',
+                    focusArea: todaysFocus,
+                  });
+                } else {
+                  navigation.navigate('FocusSelection');
+                }
+              } catch (e) {
+                navigation.navigate('FocusSelection');
+              }
+            }}
           />
         </View>
 
@@ -314,11 +334,12 @@ export const AffirmationHomeScreen = ({ navigation }) => {
           onClose={() => setShowSettings(false)}
         />
       </SafeAreaView>
-    </GradientBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F5F2EE' },
   safeArea: { flex: 1 },
   loadingContainer: {
     flex: 1,
@@ -326,7 +347,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   errorText: {
-    color: '#94A3B8',
+    color: '#7A756E',
     fontSize: 16,
   },
   topBar: {
@@ -344,25 +365,36 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: '100%',
   },
-  affirmationGradientLarge: { width: '100%', borderRadius: 28, padding: 2 },
   affirmationCardLarge: {
-    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-    borderRadius: 26,
+    width: '100%',
+    borderRadius: 28,
     minHeight: SCREEN_HEIGHT * 0.5,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 4,
   },
-  affirmationTextLarge: { color: '#fff', fontSize: 26, textAlign: 'center', lineHeight: 34 },
+  affirmationTextLarge: {
+    color: '#FFFFFF',
+    fontFamily: typography.fontFamily.display,
+    fontSize: 26,
+    textAlign: 'center',
+    lineHeight: 38,
+    letterSpacing: 0.3,
+  },
   affirmationActions: { flexDirection: 'row', gap: 16, marginTop: 28 },
   roundAction: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  roundActionActive: { backgroundColor: '#EF4444' },
+  roundActionActive: { backgroundColor: 'rgba(255, 255, 255, 0.4)' },
   bottomButtonWrap: { paddingHorizontal: 20, paddingBottom: 18 },
 });

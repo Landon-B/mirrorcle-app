@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FOCUS_AREAS } from '../constants/focusAreas';
+import { focusService } from '../services/focus';
+import { useFeatureGate } from '../components/pro/FeatureGate';
 import { ScreenHeader, PrimaryButton } from '../components/common';
 import { textStyles, typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
@@ -17,6 +19,7 @@ import { shadows } from '../styles/spacing';
 export const FocusSelectionScreen = ({ navigation }) => {
   const [selectedArea, setSelectedArea] = useState(null);
   const [customFocus, setCustomFocus] = useState('');
+  const { isPro, checkAccess, PaywallComponent } = useFeatureGate();
 
   const handleContinue = () => {
     if (!selectedArea && !customFocus.trim()) return;
@@ -24,6 +27,11 @@ export const FocusSelectionScreen = ({ navigation }) => {
     const focusArea = selectedArea
       ? FOCUS_AREAS.find(f => f.id === selectedArea)
       : { id: 'custom', label: customFocus.trim(), emoji: '\u2728', tagName: null };
+
+    // Persist today's focus (fire-and-forget, only for preset areas)
+    if (focusArea.id !== 'custom') {
+      focusService.setTodaysFocus(focusArea.id).catch(console.error);
+    }
 
     navigation.navigate('MoodCheckIn', {
       mode: 'pre-session',
@@ -44,7 +52,13 @@ export const FocusSelectionScreen = ({ navigation }) => {
     }
   };
 
-  const isValid = selectedArea || customFocus.trim().length > 0;
+  const handleCustomFocusPress = () => {
+    if (!isPro) {
+      checkAccess('custom_focus');
+    }
+  };
+
+  const isValid = selectedArea || (isPro && customFocus.trim().length > 0);
 
   return (
     <View style={styles.container}>
@@ -91,23 +105,27 @@ export const FocusSelectionScreen = ({ navigation }) => {
           })}
         </View>
 
-        <View style={styles.searchContainer}>
+        <Pressable
+          onPress={handleCustomFocusPress}
+          style={styles.searchContainer}
+        >
           <Ionicons
-            name="search-outline"
+            name={isPro ? 'search-outline' : 'lock-closed'}
             size={18}
             color="#B0AAA2"
             style={styles.searchIcon}
           />
           <TextInput
             style={styles.searchInput}
-            placeholder="Or type your own focus..."
+            placeholder={isPro ? 'Or type your own focus...' : 'Type your own focus (Pro)'}
             placeholderTextColor="#B0AAA2"
             value={customFocus}
             onChangeText={handleCustomFocusChange}
+            editable={isPro}
             returnKeyType="done"
             onSubmitEditing={Keyboard.dismiss}
           />
-        </View>
+        </Pressable>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -118,6 +136,8 @@ export const FocusSelectionScreen = ({ navigation }) => {
           disabled={!isValid}
         />
       </View>
+
+      <PaywallComponent />
     </View>
   );
 };
