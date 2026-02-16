@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, StatusBar, Switch, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, StatusBar, Pressable, Switch, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, PrimaryButton, ScreenHeader } from '../components/common';
 import { useNotifications } from '../hooks/useNotifications';
