@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, StatusBar, Pressable, Dimensions, A
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { GradientBackground, Card } from '../components/common';
+import { Card } from '../components/common';
 import { useApp } from '../context/AppContext';
 import { FEELINGS, getFeelingLabel } from '../constants';
 import { affirmationService } from '../services/affirmations';
@@ -117,7 +117,7 @@ export const TrendsScreen = ({ navigation }) => {
 
   const getFeelingColor = (feelingId) => {
     const feeling = feelings.find(f => f.id === feelingId);
-    return feeling?.colors || ['#A855F7', '#EC4899'];
+    return feeling?.colors || ['#C17666', '#E8A090'];
   };
 
   const getFeelingLabelFromData = (feelingId) => {
@@ -127,31 +127,31 @@ export const TrendsScreen = ({ navigation }) => {
 
   if (isLoading) {
     return (
-      <GradientBackground>
+      <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <StatusBar barStyle="light-content" />
+          <StatusBar barStyle="dark-content" />
           <View style={styles.header}>
             <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+              <Ionicons name="chevron-back" size={20} color="#7A756E" />
             </Pressable>
             <Text style={styles.title}>Trends</Text>
             <View style={styles.placeholder} />
           </View>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#A855F7" />
+            <ActivityIndicator size="large" color="#C17666" />
           </View>
         </SafeAreaView>
-      </GradientBackground>
+      </View>
     );
   }
 
   return (
-    <GradientBackground>
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
           <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="chevron-back" size={20} color="#7A756E" />
           </Pressable>
           <Text style={styles.title}>Trends</Text>
           <View style={styles.placeholder} />
@@ -248,11 +248,12 @@ export const TrendsScreen = ({ navigation }) => {
           </Card>
         </ScrollView>
       </SafeAreaView>
-    </GradientBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F5F2EE' },
   safeArea: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -262,15 +263,15 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#F0ECE7',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { color: '#fff', fontSize: 20, fontWeight: '600' },
-  placeholder: { width: 40 },
+  title: { color: '#2D2A26', fontSize: 20, fontWeight: '600' },
+  placeholder: { width: 42 },
   content: { padding: 20, gap: 16 },
   loadingContainer: {
     flex: 1,
@@ -279,7 +280,7 @@ const styles = StyleSheet.create({
   },
   periodSelector: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    backgroundColor: '#F0ECE7',
     borderRadius: 12,
     padding: 4,
   },
@@ -290,30 +291,30 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   periodButtonActive: {
-    backgroundColor: '#A855F7',
+    backgroundColor: '#C17666',
   },
-  periodButtonText: { color: '#94A3B8', fontWeight: '500' },
-  periodButtonTextActive: { color: '#fff' },
+  periodButtonText: { color: '#7A756E', fontWeight: '500' },
+  periodButtonTextActive: { color: '#FFFFFF' },
   statsRow: { flexDirection: 'row', gap: 12 },
   summaryCard: { flex: 1, alignItems: 'center', padding: 16 },
-  summaryValue: { color: '#fff', fontSize: 24, fontWeight: '700' },
-  summaryLabel: { color: '#94A3B8', fontSize: 12, marginTop: 4 },
+  summaryValue: { color: '#2D2A26', fontSize: 24, fontWeight: '700' },
+  summaryLabel: { color: '#7A756E', fontSize: 12, marginTop: 4 },
   chartCard: { gap: 16 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardTitle: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  emptyText: { color: '#94A3B8', textAlign: 'center', paddingVertical: 20 },
+  cardTitle: { color: '#2D2A26', fontSize: 16, fontWeight: '600' },
+  emptyText: { color: '#7A756E', textAlign: 'center', paddingVertical: 20 },
   barsContainer: { gap: 12 },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  barLabel: { color: '#CBD5F5', fontSize: 14, width: 80 },
+  barLabel: { color: '#7A756E', fontSize: 14, width: 80 },
   barTrack: {
     flex: 1,
     height: 24,
-    backgroundColor: 'rgba(71, 85, 105, 0.3)',
+    backgroundColor: '#F0ECE7',
     borderRadius: 12,
     overflow: 'hidden',
   },
   barFill: { height: '100%', borderRadius: 12 },
-  barValue: { color: '#fff', fontSize: 14, fontWeight: '600', width: 30, textAlign: 'right' },
+  barValue: { color: '#2D2A26', fontSize: 14, fontWeight: '600', width: 30, textAlign: 'right' },
   activityGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -323,10 +324,10 @@ const styles = StyleSheet.create({
     width: (SCREEN_WIDTH - 80) / 7 - 4,
     aspectRatio: 1,
     borderRadius: 4,
-    backgroundColor: 'rgba(71, 85, 105, 0.3)',
+    backgroundColor: '#F0ECE7',
   },
   activityCellActive: {
-    backgroundColor: '#A855F7',
+    backgroundColor: '#C17666',
   },
-  activityHint: { color: '#94A3B8', fontSize: 12, textAlign: 'center', marginTop: 8 },
+  activityHint: { color: '#7A756E', fontSize: 12, textAlign: 'center', marginTop: 8 },
 });

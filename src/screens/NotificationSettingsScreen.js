@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, StatusBar, Pressable, Switch, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, StatusBar, Pressable, Switch, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { GradientBackground, Card, PrimaryButton } from '../components/common';
+import { Card, PrimaryButton } from '../components/common';
 import { useNotifications } from '../hooks/useNotifications';
 
 const TIME_OPTIONS = [
@@ -47,9 +47,19 @@ export const NotificationSettingsScreen = ({ navigation }) => {
   const handleSendTest = async () => {
     setSendingTest(true);
     try {
+      // Ensure permission is granted before sending
+      if (permissionStatus !== 'granted') {
+        const granted = await enableNotifications(notificationTime);
+        if (!granted) {
+          Alert.alert('Permission Required', 'Please enable notifications in your device settings to send a test.');
+          return;
+        }
+      }
       await sendTestNotification();
+      Alert.alert('Sent!', 'Check your notifications in a moment.');
     } catch (error) {
       console.log('Error sending test notification:', error);
+      Alert.alert('Error', 'Failed to send test notification.');
     } finally {
       setSendingTest(false);
     }
@@ -61,12 +71,12 @@ export const NotificationSettingsScreen = ({ navigation }) => {
   };
 
   return (
-    <GradientBackground>
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
           <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="chevron-back" size={20} color="#7A756E" />
           </Pressable>
           <Text style={styles.title}>Notifications</Text>
           <View style={styles.placeholder} />
@@ -76,7 +86,7 @@ export const NotificationSettingsScreen = ({ navigation }) => {
           <Card style={styles.toggleCard}>
             <View style={styles.toggleRow}>
               <View style={styles.toggleInfo}>
-                <Ionicons name="notifications" size={24} color="#A855F7" />
+                <Ionicons name="notifications" size={24} color="#C17666" />
                 <View>
                   <Text style={styles.toggleTitle}>Daily Reminders</Text>
                   <Text style={styles.toggleSubtitle}>Get reminded to practice</Text>
@@ -85,7 +95,7 @@ export const NotificationSettingsScreen = ({ navigation }) => {
               <Switch
                 value={isEnabled}
                 onValueChange={handleToggle}
-                trackColor={{ false: '#475569', true: '#A855F7' }}
+                trackColor={{ false: '#E8E4DF', true: '#C17666' }}
                 thumbColor="#fff"
               />
             </View>
@@ -118,16 +128,16 @@ export const NotificationSettingsScreen = ({ navigation }) => {
             </Card>
           )}
 
-          {isEnabled && permissionStatus === 'granted' && (
+          {isEnabled && (
             <Pressable
               onPress={handleSendTest}
               disabled={sendingTest}
               style={[styles.testButton, sendingTest && styles.testButtonDisabled]}
             >
               {sendingTest ? (
-                <ActivityIndicator size="small" color="#A855F7" />
+                <ActivityIndicator size="small" color="#C17666" />
               ) : (
-                <Ionicons name="paper-plane" size={18} color="#A855F7" />
+                <Ionicons name="paper-plane" size={18} color="#C17666" />
               )}
               <Text style={styles.testButtonText}>
                 {sendingTest ? 'Sending...' : 'Send Test Notification'}
@@ -144,11 +154,12 @@ export const NotificationSettingsScreen = ({ navigation }) => {
           </Card>
         </View>
       </SafeAreaView>
-    </GradientBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F5F2EE' },
   safeArea: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -158,15 +169,15 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#F0ECE7',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { color: '#fff', fontSize: 20, fontWeight: '600' },
-  placeholder: { width: 40 },
+  title: { color: '#2D2A26', fontSize: 20, fontWeight: '600' },
+  placeholder: { width: 42 },
   content: { padding: 20, gap: 16 },
   toggleCard: {},
   toggleRow: {
@@ -175,10 +186,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   toggleInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  toggleTitle: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  toggleSubtitle: { color: '#94A3B8', fontSize: 12, marginTop: 2 },
+  toggleTitle: { color: '#2D2A26', fontSize: 16, fontWeight: '600' },
+  toggleSubtitle: { color: '#7A756E', fontSize: 12, marginTop: 2 },
   timeCard: { gap: 16 },
-  sectionLabel: { color: '#CBD5F5', fontSize: 14, fontWeight: '600' },
+  sectionLabel: { color: '#B0AAA2', fontSize: 14, fontWeight: '600' },
   timeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -188,16 +199,16 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: 'rgba(71, 85, 105, 0.3)',
+    backgroundColor: '#F9F7F5',
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: '#E8E4DF',
   },
   timeButtonActive: {
-    backgroundColor: 'rgba(168, 85, 247, 0.2)',
-    borderColor: '#A855F7',
+    backgroundColor: 'rgba(193, 118, 102, 0.12)',
+    borderColor: '#C17666',
   },
-  timeButtonText: { color: '#94A3B8', fontSize: 14 },
-  timeButtonTextActive: { color: '#fff', fontWeight: '600' },
+  timeButtonText: { color: '#7A756E', fontSize: 14 },
+  timeButtonTextActive: { color: '#C17666', fontWeight: '600' },
   testButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -205,18 +216,18 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: 'rgba(168, 85, 247, 0.15)',
+    backgroundColor: 'rgba(193, 118, 102, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.3)',
+    borderColor: 'rgba(193, 118, 102, 0.3)',
   },
   testButtonDisabled: { opacity: 0.6 },
-  testButtonText: { color: '#A855F7', fontSize: 15, fontWeight: '600' },
+  testButtonText: { color: '#C17666', fontSize: 15, fontWeight: '600' },
   infoCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderColor: 'rgba(59, 130, 246, 0.3)',
+    backgroundColor: 'rgba(59, 130, 246, 0.08)',
+    borderColor: 'rgba(59, 130, 246, 0.2)',
   },
-  infoText: { flex: 1, color: '#94A3B8', fontSize: 14, lineHeight: 20 },
+  infoText: { flex: 1, color: '#7A756E', fontSize: 14, lineHeight: 20 },
 });

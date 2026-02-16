@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, StatusBar, Pressable } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { GradientBackground, PrimaryButton, GhostButton, Card } from '../components/common';
+import { PrimaryButton, GhostButton, Card } from '../components/common';
 import { useApp } from '../context/AppContext';
 
 const FEATURES = [
@@ -31,12 +31,12 @@ export const PaywallScreen = ({ navigation }) => {
 
   if (isPro) {
     return (
-      <GradientBackground>
+      <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <StatusBar barStyle="light-content" />
+          <StatusBar barStyle="dark-content" />
           <View style={styles.header}>
             <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+              <Ionicons name="chevron-back" size={20} color="#7A756E" />
             </Pressable>
             <Text style={styles.title}>Pro Member</Text>
             <View style={styles.placeholder} />
@@ -51,17 +51,17 @@ export const PaywallScreen = ({ navigation }) => {
             <PrimaryButton title="Back to App" onPress={() => navigation.goBack()} />
           </View>
         </SafeAreaView>
-      </GradientBackground>
+      </View>
     );
   }
 
   return (
-    <GradientBackground>
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
           <Pressable onPress={() => navigation.goBack()} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color="#fff" />
+            <Ionicons name="close" size={24} color="#7A756E" />
           </Pressable>
         </View>
 
@@ -78,7 +78,7 @@ export const PaywallScreen = ({ navigation }) => {
             {FEATURES.map((feature, index) => (
               <View key={index} style={styles.featureRow}>
                 <LinearGradient
-                  colors={['#A855F7', '#EC4899']}
+                  colors={['#C17666', '#E8A090']}
                   style={styles.featureIcon}
                 >
                   <Ionicons name={feature.icon} size={18} color="#fff" />
@@ -114,11 +114,12 @@ export const PaywallScreen = ({ navigation }) => {
           </Text>
         </ScrollView>
       </SafeAreaView>
-    </GradientBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F5F2EE' },
   safeArea: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -127,23 +128,23 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#F0ECE7',
     alignItems: 'center',
     justifyContent: 'center',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#F0ECE7',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { color: '#fff', fontSize: 20, fontWeight: '600' },
-  placeholder: { width: 40 },
+  title: { color: '#2D2A26', fontSize: 20, fontWeight: '600' },
+  placeholder: { width: 42 },
   content: { padding: 20, gap: 24 },
   heroSection: { alignItems: 'center', gap: 12 },
   crownBadge: {
@@ -153,16 +154,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroTitle: { color: '#fff', fontSize: 28, fontWeight: '700' },
-  heroSubtitle: { color: '#CBD5F5', fontSize: 16 },
+  heroTitle: { color: '#2D2A26', fontSize: 28, fontWeight: '700' },
+  heroSubtitle: { color: '#7A756E', fontSize: 16 },
   featuresSection: { gap: 12 },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: 'rgba(30, 41, 59, 0.4)',
+    backgroundColor: '#FFFFFF',
     padding: 12,
     borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   featureIcon: {
     width: 36,
@@ -172,15 +178,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   featureText: { flex: 1 },
-  featureTitle: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  featureSubtitle: { color: '#94A3B8', fontSize: 12, marginTop: 2 },
+  featureTitle: { color: '#2D2A26', fontSize: 14, fontWeight: '600' },
+  featureSubtitle: { color: '#7A756E', fontSize: 12, marginTop: 2 },
   pricingCard: {
     alignItems: 'center',
-    backgroundColor: 'rgba(168, 85, 247, 0.15)',
-    borderColor: '#A855F7',
+    backgroundColor: 'rgba(193, 118, 102, 0.1)',
+    borderColor: '#C17666',
   },
   pricingHeader: {
-    backgroundColor: '#A855F7',
+    backgroundColor: '#C17666',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -188,12 +194,12 @@ const styles = StyleSheet.create({
   },
   pricingLabel: { color: '#fff', fontSize: 12, fontWeight: '600' },
   pricingContent: { flexDirection: 'row', alignItems: 'baseline' },
-  priceMain: { color: '#fff', fontSize: 36, fontWeight: '700' },
-  pricePeriod: { color: '#CBD5F5', fontSize: 16 },
-  pricingNote: { color: '#94A3B8', fontSize: 12, marginTop: 4 },
+  priceMain: { color: '#2D2A26', fontSize: 36, fontWeight: '700' },
+  pricePeriod: { color: '#7A756E', fontSize: 16 },
+  pricingNote: { color: '#7A756E', fontSize: 12, marginTop: 4 },
   actions: { gap: 12, alignItems: 'center' },
-  trialNote: { color: '#94A3B8', fontSize: 12 },
-  termsText: { color: '#64748B', fontSize: 12, textAlign: 'center' },
+  trialNote: { color: '#7A756E', fontSize: 12 },
+  termsText: { color: '#B0AAA2', fontSize: 12, textAlign: 'center' },
   proContent: {
     flex: 1,
     alignItems: 'center',
@@ -208,6 +214,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  proTitle: { color: '#fff', fontSize: 28, fontWeight: '700' },
-  proSubtitle: { color: '#CBD5F5', fontSize: 16, marginBottom: 20 },
+  proTitle: { color: '#2D2A26', fontSize: 28, fontWeight: '700' },
+  proSubtitle: { color: '#7A756E', fontSize: 16, marginBottom: 20 },
 });

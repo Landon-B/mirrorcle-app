@@ -17,7 +17,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { GradientBackground } from '../components/common';
 import { useApp } from '../context/AppContext';
 import { authService } from '../services/auth';
 
@@ -75,9 +74,9 @@ export const LoginScreen = ({ navigation }) => {
   const isLoginDisabled = isLoading || !email.trim() || !password.trim();
 
   return (
-    <GradientBackground>
+    <View style={styles.background}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.container}
@@ -86,7 +85,7 @@ export const LoginScreen = ({ navigation }) => {
           {/* Fixed Header with Navigation */}
           <View style={styles.header}>
             <Pressable onPress={handleBack} style={styles.headerButton}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+              <Ionicons name="arrow-back" size={24} color="#2D2A26" />
               <Text style={styles.headerButtonText}>Back</Text>
             </Pressable>
 
@@ -99,12 +98,12 @@ export const LoginScreen = ({ navigation }) => {
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Text>
               {isLoading ? (
-                <ActivityIndicator size="small" color="#C084FC" />
+                <ActivityIndicator size="small" color="#C17666" />
               ) : (
                 <Ionicons
                   name="log-in-outline"
                   size={20}
-                  color={isLoginDisabled ? "#64748B" : "#C084FC"}
+                  color={isLoginDisabled ? "#D4CFC9" : "#C17666"}
                 />
               )}
             </Pressable>
@@ -118,7 +117,7 @@ export const LoginScreen = ({ navigation }) => {
             >
               <View style={styles.headerContent}>
                 <LinearGradient
-                  colors={['#A855F7', '#EC4899']}
+                  colors={['#C17666', '#E8A090']}
                   style={styles.iconContainer}
                 >
                   <Ionicons name="sparkles" size={32} color="#fff" />
@@ -134,11 +133,11 @@ export const LoginScreen = ({ navigation }) => {
 
               <View style={styles.formContainer}>
                 <View style={styles.inputWrapper}>
-                  <Ionicons name="mail-outline" size={22} color="#94A3B8" style={styles.inputIcon} />
+                  <Ionicons name="mail-outline" size={22} color="#B0AAA2" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Email address"
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor="#B0AAA2"
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -149,11 +148,11 @@ export const LoginScreen = ({ navigation }) => {
                 </View>
 
                 <View style={styles.inputWrapper}>
-                  <Ionicons name="lock-closed-outline" size={22} color="#94A3B8" style={styles.inputIcon} />
+                  <Ionicons name="lock-closed-outline" size={22} color="#B0AAA2" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Password"
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor="#B0AAA2"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -164,7 +163,7 @@ export const LoginScreen = ({ navigation }) => {
                     <Ionicons
                       name={showPassword ? "eye-off-outline" : "eye-outline"}
                       size={22}
-                      color="#94A3B8"
+                      color="#B0AAA2"
                     />
                   </Pressable>
                 </View>
@@ -184,11 +183,15 @@ export const LoginScreen = ({ navigation }) => {
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </GradientBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    backgroundColor: '#F5F2EE',
+  },
   safeArea: { flex: 1 },
   container: {
     flex: 1,
@@ -200,7 +203,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(71, 85, 105, 0.3)',
+    borderBottomColor: '#E8E4DF',
   },
   headerButton: {
     flexDirection: 'row',
@@ -216,18 +219,18 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   headerButtonText: {
-    color: '#fff',
+    color: '#2D2A26',
     fontSize: 16,
     marginLeft: 6,
   },
   headerButtonTextRight: {
-    color: '#C084FC',
+    color: '#C17666',
     fontWeight: '600',
     marginLeft: 0,
     marginRight: 6,
   },
   headerButtonTextDisabled: {
-    color: '#64748B',
+    color: '#D4CFC9',
   },
   scrollContent: {
     flexGrow: 1,
@@ -248,29 +251,34 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#fff',
+    color: '#2D2A26',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#CBD5F5',
+    color: '#7A756E',
     textAlign: 'center',
   },
   quoteCard: {
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
     marginBottom: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   quoteText: {
-    color: '#E2E8F0',
+    color: '#2D2A26',
     fontSize: 14,
     fontStyle: 'italic',
     lineHeight: 22,
     textAlign: 'center',
   },
   quoteAuthor: {
-    color: '#94A3B8',
+    color: '#7A756E',
     fontSize: 12,
     textAlign: 'center',
     marginTop: 10,
@@ -282,10 +290,10 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E8E4DF',
     paddingHorizontal: 16,
   },
   inputIcon: {
@@ -293,7 +301,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#fff',
+    color: '#2D2A26',
     fontSize: 18,
     paddingVertical: 18,
   },
@@ -304,7 +312,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   forgotPasswordText: {
-    color: '#C084FC',
+    color: '#C17666',
     fontSize: 14,
   },
   footer: {
@@ -314,11 +322,11 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   footerText: {
-    color: '#94A3B8',
+    color: '#7A756E',
     fontSize: 14,
   },
   footerLink: {
-    color: '#C084FC',
+    color: '#C17666',
     fontSize: 14,
     fontWeight: '600',
   },

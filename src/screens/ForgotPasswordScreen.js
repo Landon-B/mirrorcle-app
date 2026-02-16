@@ -18,7 +18,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { GradientBackground } from '../components/common';
 import { authService } from '../services/auth';
 
 const STEPS = [
@@ -176,11 +175,11 @@ export const ForgotPasswordScreen = ({ navigation }) => {
         return (
           <View style={styles.inputContainer}>
             <View style={styles.inputWrapper}>
-              <Ionicons name="mail-outline" size={22} color="#94A3B8" style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={22} color="#B0AAA2" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Email address"
-                placeholderTextColor="#64748B"
+                placeholderTextColor="#B0AAA2"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -198,11 +197,11 @@ export const ForgotPasswordScreen = ({ navigation }) => {
           <View style={styles.inputContainer}>
             <Text style={styles.otpHint}>We sent a code to {email}</Text>
             <View style={styles.inputWrapper}>
-              <Ionicons name="keypad-outline" size={22} color="#94A3B8" style={styles.inputIcon} />
+              <Ionicons name="keypad-outline" size={22} color="#B0AAA2" style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, styles.otpInput]}
                 placeholder="00000000"
-                placeholderTextColor="#64748B"
+                placeholderTextColor="#B0AAA2"
                 value={otpCode}
                 onChangeText={(text) => setOtpCode(text.replace(/[^0-9]/g, '').slice(0, 8))}
                 keyboardType="number-pad"
@@ -215,11 +214,11 @@ export const ForgotPasswordScreen = ({ navigation }) => {
               <Text style={styles.resendText}>Didn't receive a code? Resend</Text>
             </Pressable>
             <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={22} color="#94A3B8" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={22} color="#B0AAA2" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="New password"
-                placeholderTextColor="#64748B"
+                placeholderTextColor="#B0AAA2"
                 value={newPassword}
                 onChangeText={setNewPassword}
                 secureTextEntry={!showNewPassword}
@@ -229,16 +228,16 @@ export const ForgotPasswordScreen = ({ navigation }) => {
                 <Ionicons
                   name={showNewPassword ? "eye-off-outline" : "eye-outline"}
                   size={22}
-                  color="#94A3B8"
+                  color="#B0AAA2"
                 />
               </Pressable>
             </View>
             <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={22} color="#94A3B8" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={22} color="#B0AAA2" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Confirm new password"
-                placeholderTextColor="#64748B"
+                placeholderTextColor="#B0AAA2"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showConfirmPassword}
@@ -249,7 +248,7 @@ export const ForgotPasswordScreen = ({ navigation }) => {
                 <Ionicons
                   name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
                   size={22}
-                  color="#94A3B8"
+                  color="#B0AAA2"
                 />
               </Pressable>
             </View>
@@ -276,9 +275,9 @@ export const ForgotPasswordScreen = ({ navigation }) => {
   };
 
   return (
-    <GradientBackground>
+    <View style={styles.background}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.container}
@@ -286,7 +285,7 @@ export const ForgotPasswordScreen = ({ navigation }) => {
         >
           <View style={styles.header}>
             <Pressable onPress={handleBack} style={styles.headerButton}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+              <Ionicons name="arrow-back" size={24} color="#2D2A26" />
               <Text style={styles.headerButtonText}>Back</Text>
             </Pressable>
 
@@ -308,12 +307,12 @@ export const ForgotPasswordScreen = ({ navigation }) => {
                 {isLoading ? getLoadingText() : getNextButtonText()}
               </Text>
               {isLoading ? (
-                <ActivityIndicator size="small" color="#C084FC" />
+                <ActivityIndicator size="small" color="#C17666" />
               ) : (
                 <Ionicons
                   name={step === 2 ? "log-in-outline" : "arrow-forward"}
                   size={20}
-                  color={isNextDisabled() ? "#64748B" : "#C084FC"}
+                  color={isNextDisabled() ? "#D4CFC9" : "#C17666"}
                 />
               )}
             </Pressable>
@@ -335,7 +334,7 @@ export const ForgotPasswordScreen = ({ navigation }) => {
                 ]}
               >
                 <View style={styles.quoteCard}>
-                  <Ionicons name="chatbubble-ellipses" size={24} color="#C084FC" style={styles.quoteIcon} />
+                  <Ionicons name="chatbubble-ellipses" size={24} color="#C17666" style={styles.quoteIcon} />
                   <Text style={styles.quoteText}>"{currentStep.quote}"</Text>
                   <Text style={styles.quoteAuthor}>— {currentStep.author}</Text>
                 </View>
@@ -350,11 +349,15 @@ export const ForgotPasswordScreen = ({ navigation }) => {
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </GradientBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    backgroundColor: '#F5F2EE',
+  },
   safeArea: { flex: 1 },
   container: {
     flex: 1,
@@ -366,7 +369,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(71, 85, 105, 0.3)',
+    borderBottomColor: '#E8E4DF',
   },
   headerButton: {
     flexDirection: 'row',
@@ -382,18 +385,18 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   headerButtonText: {
-    color: '#fff',
+    color: '#2D2A26',
     fontSize: 16,
     marginLeft: 6,
   },
   headerButtonTextRight: {
-    color: '#C084FC',
+    color: '#C17666',
     fontWeight: '600',
     marginLeft: 0,
     marginRight: 6,
   },
   headerButtonTextDisabled: {
-    color: '#64748B',
+    color: '#D4CFC9',
   },
   progressDots: {
     flexDirection: 'row',
@@ -403,11 +406,11 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#475569',
+    backgroundColor: '#E8E4DF',
   },
   dotActive: {
     width: 24,
-    backgroundColor: '#C084FC',
+    backgroundColor: '#C17666',
   },
   dotCompleted: {
     backgroundColor: '#22C55E',
@@ -420,22 +423,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   quoteCard: {
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     marginBottom: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   quoteIcon: {
     marginBottom: 12,
   },
   quoteText: {
-    color: '#fff',
+    color: '#2D2A26',
     fontSize: 18,
     fontStyle: 'italic',
     lineHeight: 28,
   },
   quoteAuthor: {
-    color: '#94A3B8',
+    color: '#7A756E',
     fontSize: 14,
     marginTop: 16,
   },
@@ -443,13 +451,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   stepTitle: {
-    color: '#fff',
+    color: '#2D2A26',
     fontSize: 28,
     fontWeight: '700',
     marginBottom: 8,
   },
   stepSubtitle: {
-    color: '#CBD5F5',
+    color: '#7A756E',
     fontSize: 16,
     marginBottom: 32,
   },
@@ -459,10 +467,10 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E8E4DF',
     paddingHorizontal: 16,
   },
   inputIcon: {
@@ -470,7 +478,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#fff',
+    color: '#2D2A26',
     fontSize: 18,
     paddingVertical: 18,
   },
@@ -481,7 +489,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   otpHint: {
-    color: '#94A3B8',
+    color: '#7A756E',
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 8,
@@ -494,7 +502,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   resendText: {
-    color: '#C084FC',
+    color: '#C17666',
     fontSize: 14,
   },
   successContainer: {
@@ -510,13 +518,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   successText: {
-    color: '#fff',
+    color: '#2D2A26',
     fontSize: 28,
     fontWeight: '700',
     marginBottom: 12,
   },
   successSubtext: {
-    color: '#CBD5F5',
+    color: '#7A756E',
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,

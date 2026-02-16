@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { GradientBackground, PrimaryButton, GhostButton, Card } from '../components/common';
+import { PrimaryButton, GhostButton, Card } from '../components/common';
 import { useApp } from '../context/AppContext';
 import { customAffirmationService } from '../services/personalization';
 
@@ -108,23 +108,23 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
 
   if (isLoading) {
     return (
-      <GradientBackground>
+      <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#A855F7" />
+            <ActivityIndicator size="large" color="#C17666" />
           </View>
         </SafeAreaView>
-      </GradientBackground>
+      </View>
     );
   }
 
   return (
-    <GradientBackground>
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
           <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="chevron-back" size={20} color="#7A756E" />
           </Pressable>
           <Text style={styles.title}>My Affirmations</Text>
           <View style={styles.placeholder} />
@@ -136,7 +136,7 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
             <TextInput
               style={styles.textInput}
               placeholder="I am..."
-              placeholderTextColor="#64748B"
+              placeholderTextColor="#B0AAA2"
               value={newText}
               onChangeText={setNewText}
               maxLength={MAX_LENGTH}
@@ -161,7 +161,7 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
 
           {affirmations.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="create-outline" size={48} color="#475569" />
+              <Ionicons name="create-outline" size={48} color="#E8E4DF" />
               <Text style={styles.emptyTitle}>No custom affirmations yet</Text>
               <Text style={styles.emptySubtitle}>
                 Create your own affirmations that will appear in your mirror sessions
@@ -195,7 +195,7 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
                         <Ionicons
                           name={item.isActive ? 'checkmark-circle' : 'ellipse-outline'}
                           size={22}
-                          color={item.isActive ? '#34D399' : '#475569'}
+                          color={item.isActive ? '#34D399' : '#E8E4DF'}
                         />
                         <Text style={[styles.actionText, item.isActive && styles.actionTextActive]}>
                           {item.isActive ? 'Active' : 'Inactive'}
@@ -203,7 +203,7 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
                       </Pressable>
                       <View style={styles.rightActions}>
                         <Pressable onPress={() => startEditing(item)} style={styles.iconAction}>
-                          <Ionicons name="pencil" size={18} color="#94A3B8" />
+                          <Ionicons name="pencil" size={18} color="#7A756E" />
                         </Pressable>
                         <Pressable onPress={() => handleDelete(item)} style={styles.iconAction}>
                           <Ionicons name="trash-outline" size={18} color="#EF4444" />
@@ -217,11 +217,12 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
           )}
         </ScrollView>
       </SafeAreaView>
-    </GradientBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F5F2EE' },
   safeArea: { flex: 1 },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
@@ -232,50 +233,50 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   backButton: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: '#F0ECE7',
     alignItems: 'center', justifyContent: 'center',
   },
-  title: { color: '#fff', fontSize: 20, fontWeight: '600' },
-  placeholder: { width: 40 },
+  title: { color: '#2D2A26', fontSize: 20, fontWeight: '600' },
+  placeholder: { width: 42 },
   content: { padding: 20, gap: 16 },
   inputCard: { gap: 12 },
-  inputLabel: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  inputLabel: { color: '#2D2A26', fontSize: 16, fontWeight: '600' },
   textInput: {
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 14,
-    color: '#fff',
+    color: '#2D2A26',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: 'rgba(71, 85, 105, 0.6)',
+    borderColor: '#E8E4DF',
     minHeight: 60,
     textAlignVertical: 'top',
   },
   inputFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  charCount: { color: '#64748B', fontSize: 12 },
+  charCount: { color: '#B0AAA2', fontSize: 12 },
   addButton: { minWidth: 100 },
-  limitText: { color: '#94A3B8', fontSize: 12, marginTop: 4 },
+  limitText: { color: '#7A756E', fontSize: 12, marginTop: 4 },
   emptyState: { alignItems: 'center', paddingVertical: 40, gap: 12 },
-  emptyTitle: { color: '#CBD5F5', fontSize: 18, fontWeight: '600' },
-  emptySubtitle: { color: '#94A3B8', fontSize: 14, textAlign: 'center' },
+  emptyTitle: { color: '#2D2A26', fontSize: 18, fontWeight: '600' },
+  emptySubtitle: { color: '#7A756E', fontSize: 14, textAlign: 'center' },
   affirmationCard: { gap: 12 },
-  affirmationText: { color: '#fff', fontSize: 16, fontStyle: 'italic', lineHeight: 24 },
-  affirmationTextInactive: { color: '#64748B' },
+  affirmationText: { color: '#2D2A26', fontSize: 16, fontStyle: 'italic', lineHeight: 24 },
+  affirmationTextInactive: { color: '#B0AAA2' },
   affirmationActions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   actionButton: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  actionText: { color: '#475569', fontSize: 13 },
+  actionText: { color: '#B0AAA2', fontSize: 13 },
   actionTextActive: { color: '#34D399' },
   rightActions: { flexDirection: 'row', gap: 16 },
   iconAction: { padding: 4 },
   editInput: {
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 14,
-    color: '#fff',
+    color: '#2D2A26',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#A855F7',
+    borderColor: '#C17666',
     minHeight: 60,
     textAlignVertical: 'top',
   },

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, Dimensions, StatusBar, Pressable } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { GradientBackground, PrimaryButton } from '../components/common';
+import { PrimaryButton } from '../components/common';
 import { useApp } from '../context/AppContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -14,21 +14,21 @@ const SLIDES = [
     title: 'Welcome to Mirrorcle',
     subtitle: 'Your daily companion for self-affirmation and growth',
     icon: 'sparkles',
-    colors: ['#A855F7', '#EC4899'],
+    colors: ['#C17666', '#E8A090'],
   },
   {
     id: '2',
     title: 'Check In With Yourself',
     subtitle: 'Start each session by reflecting on how you feel right now',
     icon: 'heart',
-    colors: ['#FB7185', '#F43F5E'],
+    colors: ['#E8A090', '#D4845A'],
   },
   {
     id: '3',
     title: 'Mirror Sessions',
     subtitle: 'Look yourself in the eye and speak powerful affirmations',
     icon: 'camera',
-    colors: ['#3B82F6', '#06B6D4'],
+    colors: ['#D4845A', '#C17666'],
   },
   {
     id: '4',
@@ -73,9 +73,9 @@ export const OnboardingScreen = ({ navigation }) => {
   const isLastSlide = currentIndex === SLIDES.length - 1;
 
   return (
-    <GradientBackground>
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
 
         <View style={styles.header}>
           {!isLastSlide && (
@@ -122,11 +122,12 @@ export const OnboardingScreen = ({ navigation }) => {
           </View>
         </View>
       </SafeAreaView>
-    </GradientBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F5F2EE' },
   safeArea: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
-  skipText: { color: '#94A3B8', fontSize: 16 },
+  skipText: { color: '#B0AAA2', fontSize: 16 },
   flatListContent: {},
   slide: {
     width: SCREEN_WIDTH,
@@ -156,14 +157,14 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   slideTitle: {
-    color: '#fff',
+    color: '#2D2A26',
     fontSize: 28,
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 16,
   },
   slideSubtitle: {
-    color: '#CBD5F5',
+    color: '#7A756E',
     fontSize: 18,
     textAlign: 'center',
     lineHeight: 26,
@@ -182,11 +183,11 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#475569',
+    backgroundColor: '#E8E4DF',
   },
   dotActive: {
     width: 24,
-    backgroundColor: '#C084FC',
+    backgroundColor: '#C17666',
   },
   buttonContainer: {},
 });

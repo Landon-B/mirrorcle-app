@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView, StatusBar, Pressable } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { GradientBackground } from '../components/common';
 import { THEMES, getFreeThemes, getPremiumThemes } from '../constants';
 import { useTheme } from '../context/ThemeContext';
 import { useApp } from '../context/AppContext';
@@ -99,12 +98,12 @@ export const ThemesScreen = ({ navigation }) => {
   };
 
   return (
-    <GradientBackground>
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
           <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="chevron-back" size={20} color="#7A756E" />
           </Pressable>
           <Text style={styles.title}>Themes</Text>
           <View style={styles.placeholder} />
@@ -143,11 +142,12 @@ export const ThemesScreen = ({ navigation }) => {
           )}
         </ScrollView>
       </SafeAreaView>
-    </GradientBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F5F2EE' },
   safeArea: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -157,17 +157,17 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#F0ECE7',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { color: '#fff', fontSize: 20, fontWeight: '600' },
+  title: { color: '#2D2A26', fontSize: 20, fontWeight: '600' },
   placeholder: { width: 40 },
   content: { padding: 20, gap: 20 },
-  sectionTitle: { color: '#CBD5F5', fontSize: 14, fontWeight: '600', textTransform: 'uppercase' },
+  sectionTitle: { color: '#B0AAA2', fontSize: 14, fontWeight: '600', textTransform: 'uppercase' },
   themesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
   themeCard: {
     width: '47%',
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  themeName: { color: '#fff', fontSize: 14, fontWeight: '500' },
+  themeName: { color: '#2D2A26', fontSize: 14, fontWeight: '500' },
   proBadge: {
     color: '#F59E0B',
     fontSize: 10,
@@ -232,17 +232,17 @@ const styles = StyleSheet.create({
   unlockInfo: { width: '100%', gap: 4 },
   progressTrack: {
     height: 4,
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    backgroundColor: '#E8E4DF',
     borderRadius: 2,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#A855F7',
+    backgroundColor: '#C17666',
     borderRadius: 2,
   },
   unlockLabel: {
-    color: '#94A3B8',
+    color: '#7A756E',
     fontSize: 10,
     textAlign: 'center',
   },

@@ -3,11 +3,13 @@ import { View, Text, StyleSheet, FlatList, StatusBar, Pressable, ActivityIndicat
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { GradientBackground, PrimaryButton, Card } from '../components/common';
+import { PrimaryButton } from '../components/common';
 import { AFFIRMATIONS, getAffirmationById } from '../constants';
 import { userProfileService } from '../services/user';
 import { useFavorites } from '../hooks/useFavorites';
 import { useApp } from '../context/AppContext';
+import { getCardColors } from '../constants/cardPalette';
+import { typography } from '../styles/typography';
 
 export const FavoritesScreen = ({ navigation }) => {
   const { favorites, toggleFavorite } = useFavorites();
@@ -56,31 +58,31 @@ export const FavoritesScreen = ({ navigation }) => {
 
   if (isLoading) {
     return (
-      <GradientBackground>
+      <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <StatusBar barStyle="light-content" />
+          <StatusBar barStyle="dark-content" />
           <View style={styles.header}>
             <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+              <Ionicons name="chevron-back" size={20} color="#7A756E" />
             </Pressable>
             <Text style={styles.title}>Favorites</Text>
             <View style={styles.placeholder} />
           </View>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#A855F7" />
+            <ActivityIndicator size="large" color="#C17666" />
           </View>
         </SafeAreaView>
-      </GradientBackground>
+      </View>
     );
   }
 
   return (
-    <GradientBackground>
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
           <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="chevron-back" size={20} color="#7A756E" />
           </Pressable>
           <Text style={styles.title}>Favorites</Text>
           <View style={styles.placeholder} />
@@ -88,7 +90,7 @@ export const FavoritesScreen = ({ navigation }) => {
 
         {favoriteAffirmations.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="heart-outline" size={64} color="#475569" />
+            <Ionicons name="heart-outline" size={64} color="#E8E4DF" />
             <Text style={styles.emptyTitle}>No favorites yet</Text>
             <Text style={styles.emptySubtitle}>
               Tap the heart icon on affirmations to save them here
@@ -103,34 +105,33 @@ export const FavoritesScreen = ({ navigation }) => {
             data={favoriteAffirmations}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.content}
-            renderItem={({ item: affirmation }) => (
-              <Card style={styles.affirmationCard}>
-                <LinearGradient
-                  colors={affirmation.colors}
-                  style={styles.cardGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
+            renderItem={({ item: affirmation, index }) => (
+              <LinearGradient
+                colors={getCardColors(index)}
+                style={styles.affirmationCard}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={styles.affirmationText}>{affirmation.text}</Text>
+                <Pressable
+                  onPress={() => handleRemoveFavorite(affirmation.id)}
+                  style={styles.heartButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Remove from favorites"
                 >
-                  <Text style={styles.affirmationText}>"{affirmation.text}"</Text>
-                  <Pressable
-                    onPress={() => handleRemoveFavorite(affirmation.id)}
-                    style={styles.heartButton}
-                    accessibilityRole="button"
-                    accessibilityLabel="Remove from favorites"
-                  >
-                    <Ionicons name="heart" size={20} color="#fff" />
-                  </Pressable>
-                </LinearGradient>
-              </Card>
+                  <Ionicons name="heart" size={20} color="#fff" />
+                </Pressable>
+              </LinearGradient>
             )}
           />
         )}
       </SafeAreaView>
-    </GradientBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F5F2EE' },
   safeArea: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -140,15 +141,15 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#F0ECE7',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { color: '#fff', fontSize: 20, fontWeight: '600' },
-  placeholder: { width: 40 },
+  title: { color: '#2D2A26', fontSize: 20, fontWeight: '600' },
+  placeholder: { width: 42 },
   content: { padding: 20, gap: 16 },
   loadingContainer: {
     flex: 1,
@@ -162,11 +163,25 @@ const styles = StyleSheet.create({
     gap: 16,
     paddingVertical: 60,
   },
-  emptyTitle: { color: '#fff', fontSize: 20, fontWeight: '600' },
-  emptySubtitle: { color: '#94A3B8', textAlign: 'center', maxWidth: 250 },
-  affirmationCard: { padding: 0, overflow: 'hidden' },
-  cardGradient: { padding: 20, borderRadius: 20 },
-  affirmationText: { color: '#fff', fontSize: 18, lineHeight: 26, marginBottom: 12 },
+  emptyTitle: { color: '#2D2A26', fontSize: 20, fontWeight: '600' },
+  emptySubtitle: { color: '#7A756E', textAlign: 'center', maxWidth: 250 },
+  affirmationCard: {
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  affirmationText: {
+    color: '#FFFFFF',
+    fontFamily: typography.fontFamily.display,
+    fontSize: 18,
+    lineHeight: 28,
+    letterSpacing: 0.3,
+    marginBottom: 12,
+  },
   heartButton: {
     alignSelf: 'flex-end',
     width: 40,
