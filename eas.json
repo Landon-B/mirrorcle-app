@@ -1,7 +1,7 @@
 {
   "cli": {
     "version": ">= 16.32.0",
-    "appVersionSource": "remote"
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
@@ -12,7 +12,6 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true,
       "env": {
         "SUPABASE_URL": "https://xfvdyqkqgeeqnyhnwzvf.supabase.co",
         "SUPABASE_API_KEY": "@SUPABASE_API_KEY"
