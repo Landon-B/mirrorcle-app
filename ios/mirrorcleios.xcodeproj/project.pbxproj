@@ -49,7 +49,7 @@
 		13B07F961A680F5B00A75B9A /* mirrorcleios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = mirrorcleios.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = mirrorcleios/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = mirrorcleios/Info.plist; sourceTree = "<group>"; };
-		226A4F32100B431BB8B9990B /* index.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = index.swift; path = "/Users/landonblakey/mirrorcle-ios/ios/ExpoWidgetsTarget/index.swift"; sourceTree = "<group>"; };
+		226A4F32100B431BB8B9990B /* index.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = index.swift; path = index.swift; sourceTree = "<group>"; };
 		24D7720528EB526F281BDF79 /* libPods-mirrorcleios.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-mirrorcleios.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		35A045733C72E9BD69A3CCDE /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = mirrorcleios/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		4253E162DE00D803138FFA84 /* Pods-ExpoWidgetsTarget.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ExpoWidgetsTarget.release.xcconfig"; path = "Target Support Files/Pods-ExpoWidgetsTarget/Pods-ExpoWidgetsTarget.release.xcconfig"; sourceTree = "<group>"; };
@@ -58,15 +58,14 @@
 		5A36D7F5005BDA35F0F4F212 /* Pods-ExpoWidgetsTarget.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ExpoWidgetsTarget.debug.xcconfig"; path = "Target Support Files/Pods-ExpoWidgetsTarget/Pods-ExpoWidgetsTarget.debug.xcconfig"; sourceTree = "<group>"; };
 		5ACD5942448CEB5653AF91C6 /* Pods-mirrorcleios.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mirrorcleios.release.xcconfig"; path = "Target Support Files/Pods-mirrorcleios/Pods-mirrorcleios.release.xcconfig"; sourceTree = "<group>"; };
 		6FD23C931620E7C1E66C4BDE /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-mirrorcleios/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		8E6D76A8DC724ADCA2A8A7C7 /* AffirmationWidget.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = AffirmationWidget.swift; path = "/Users/landonblakey/mirrorcle-ios/ios/ExpoWidgetsTarget/AffirmationWidget.swift"; sourceTree = "<group>"; };
+		8E6D76A8DC724ADCA2A8A7C7 /* AffirmationWidget.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = AffirmationWidget.swift; path = AffirmationWidget.swift; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = mirrorcleios/SplashScreen.storyboard; sourceTree = "<group>"; };
 		AC0C7E0061C24D51BB371438 /* ExpoWidgetsTarget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = undefined; name = ExpoWidgetsTarget.appex; path = ExpoWidgetsTarget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		BE00E660D4844CED994E7F8B /* ExpoWidgetsTarget.entitlements */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = ExpoWidgetsTarget.entitlements; path = "/Users/landonblakey/mirrorcle-ios/ios/ExpoWidgetsTarget/ExpoWidgetsTarget.entitlements"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = mirrorcleios/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* mirrorcleios-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "mirrorcleios-Bridging-Header.h"; path = "mirrorcleios/mirrorcleios-Bridging-Header.h"; sourceTree = "<group>"; };
-		F8D65E17F23E441FB63D40A3 /* Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = Info.plist; path = "/Users/landonblakey/mirrorcle-ios/ios/ExpoWidgetsTarget/Info.plist"; sourceTree = "<group>"; };
+		F8D65E17F23E441FB63D40A3 /* Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = Info.plist; path = Info.plist; sourceTree = "<group>"; };
 		FA2555F66DE9C6B1417107D5 /* Pods-mirrorcleios.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mirrorcleios.debug.xcconfig"; path = "Target Support Files/Pods-mirrorcleios/Pods-mirrorcleios.debug.xcconfig"; sourceTree = "<group>"; };
 		FE12B9ED1F75361B8226A9D5 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-ExpoWidgetsTarget/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -108,7 +107,6 @@
 		20FDDB1BB13C46E7917CB0F4 /* ExpoWidgetsTarget */ = {
 			isa = PBXGroup;
 			children = (
-				BE00E660D4844CED994E7F8B /* ExpoWidgetsTarget.entitlements */,
 				F8D65E17F23E441FB63D40A3 /* Info.plist */,
 				226A4F32100B431BB8B9990B /* index.swift */,
 				8E6D76A8DC724ADCA2A8A7C7 /* AffirmationWidget.swift */,
