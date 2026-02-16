@@ -1,70 +1,42 @@
 import React from 'react';
-import { Text, VStack, ZStack, Spacer } from '@expo/ui/swift-ui';
-import { font, foregroundStyle, background, cornerRadius, padding, frame, bold } from '@expo/ui/swift-ui/modifiers';
-
-const FONT_SIZES = {
-  systemSmall: 14,
-  systemMedium: 16,
-  systemLarge: 22,
-};
+import { Text, VStack, Spacer } from '@expo/ui/swift-ui';
+import { font, foregroundStyle, background, padding, frame } from '@expo/ui/swift-ui/modifiers';
 
 const AffirmationWidget = (props) => {
-  const { text, colors, family } = props;
-  const fontSize = FONT_SIZES[family] || 16;
-  const gradientColors = colors || ['#A855F7', '#EC4899'];
-  const showBranding = family === 'systemLarge';
+  const { text, color1, color2 } = props;
+  const primaryColor = color1 || '#A855F7';
+  const secondaryColor = color2 || '#EC4899';
 
   return (
-    <ZStack
+    <VStack
       alignment="center"
+      spacing={8}
       modifiers={[
-        frame({ maxWidth: Infinity, maxHeight: Infinity }),
-        background({
-          type: 'linearGradient',
-          colors: gradientColors,
-          startPoint: { x: 0, y: 0 },
-          endPoint: { x: 1, y: 1 },
-        }),
+        frame({ maxWidth: 10000, maxHeight: 10000 }),
+        background(primaryColor),
+        padding({ all: 20 }),
       ]}
     >
-      <VStack
-        alignment="center"
-        spacing={showBranding ? 12 : 8}
+      <Text
         modifiers={[
-          frame({ maxWidth: Infinity, maxHeight: Infinity }),
-          background('#0F172AE6'),
-          cornerRadius(16),
-          padding({ all: showBranding ? 20 : 14 }),
+          font({ size: 10, weight: 'medium', design: 'rounded' }),
+          foregroundStyle(secondaryColor),
         ]}
       >
-        {showBranding && (
-          <Text
-            modifiers={[
-              font({ size: 12, weight: 'medium', design: 'rounded' }),
-              foregroundStyle({
-                type: 'linearGradient',
-                colors: gradientColors,
-                startPoint: { x: 0, y: 0 },
-                endPoint: { x: 1, y: 0 },
-              }),
-            ]}
-          >
-            mirrorcle
-          </Text>
-        )}
-        <Spacer />
-        <Text
-          modifiers={[
-            font({ size: fontSize, weight: 'semibold', design: 'rounded' }),
-            foregroundStyle('#FFFFFF'),
-            padding({ horizontal: 4 }),
-          ]}
-        >
-          {text || 'I am worthy of love and respect'}
-        </Text>
-        <Spacer />
-      </VStack>
-    </ZStack>
+        mirrorcle
+      </Text>
+      <Spacer />
+      <Text
+        modifiers={[
+          font({ size: 18, weight: 'bold', design: 'rounded' }),
+          foregroundStyle('#FFFFFF'),
+          padding({ horizontal: 4 }),
+        ]}
+      >
+        {text || 'I am worthy of love and respect'}
+      </Text>
+      <Spacer />
+    </VStack>
   );
 };
 

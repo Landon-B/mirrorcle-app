@@ -2,31 +2,39 @@ import { Platform } from 'react-native';
 import { AFFIRMATIONS } from '../../constants/affirmations';
 import { DEFAULT_THEME } from '../../constants/themes';
 
-let updateWidgetSnapshot = null;
-let AffirmationWidget = null;
-
-try {
-  updateWidgetSnapshot = require('expo-widgets').updateWidgetSnapshot;
-  AffirmationWidget = require('../../widgets/AffirmationWidget').default;
-} catch {
-  // expo-widgets native module not available (e.g. Expo Go)
-}
-
 class WidgetDataServiceClass {
   constructor() {
     this.lastAffirmation = null;
+    this._resolved = false;
+    this._updateWidgetSnapshot = null;
+    this._AffirmationWidget = null;
+  }
+
+  _resolve() {
+    if (this._resolved) return;
+    this._resolved = true;
+    try {
+      this._updateWidgetSnapshot = require('expo-widgets').updateWidgetSnapshot;
+      this._AffirmationWidget = require('../../widgets/AffirmationWidget').default;
+    } catch {
+      // expo-widgets native module not available (e.g. Expo Go)
+    }
   }
 
   syncWidget(theme = null) {
-    if (Platform.OS !== 'ios' || !updateWidgetSnapshot || !AffirmationWidget) return;
+    if (Platform.OS !== 'ios') return;
+
+    this._resolve();
+    if (!this._updateWidgetSnapshot || !this._AffirmationWidget) return;
 
     try {
       const currentTheme = theme || DEFAULT_THEME;
       const affirmation = this.getRandomAffirmation();
 
-      updateWidgetSnapshot('AffirmationWidget', AffirmationWidget, {
+      this._updateWidgetSnapshot('AffirmationWidget', this._AffirmationWidget, {
         text: affirmation.text,
-        colors: currentTheme.primary,
+        color1: currentTheme.primary[0],
+        color2: currentTheme.primary[1],
       });
 
       this.lastAffirmation = affirmation;

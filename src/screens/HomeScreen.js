@@ -197,7 +197,7 @@ export const HomeScreen = ({ navigation }) => {
         <View style={styles.centeredContainer} {...panResponder.panHandlers}>
           <View style={styles.brandHeader}>
             <Text style={styles.brandTitle}>Mirrorcle</Text>
-            <Text style={styles.brandSubtitle}>Reflect, affirm, transform</Text>
+            <Text style={styles.brandSubtitle}>Reflect. Affirm. Transform.</Text>
           </View>
 
           <Animated.View
