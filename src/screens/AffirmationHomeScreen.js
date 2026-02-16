@@ -19,6 +19,7 @@ import { affirmationService } from '../services/affirmations';
 import { focusService } from '../services/focus';
 import { useFavorites } from '../hooks/useFavorites';
 import { useApp } from '../context/AppContext';
+import { usePaywall } from '../hooks/usePaywall';
 import { getCardColors } from '../constants/cardPalette';
 import { typography } from '../styles/typography';
 
@@ -41,6 +42,7 @@ export const AffirmationHomeScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { isFavorite, toggleFavorite } = useFavorites();
   const { isPro, preferences, updatePreferences } = useApp();
+  const { openPaywall } = usePaywall();
 
   // Shared values for gesture-driven animations
   const translateY = useSharedValue(0);
@@ -216,7 +218,7 @@ export const AffirmationHomeScreen = ({ navigation }) => {
       colors: ['#F59E0B', '#F97316'],
       onPress: () => {
         setShowSettings(false);
-        navigation.getParent()?.getParent()?.navigate('Paywall');
+        openPaywall();
       },
     },
     {

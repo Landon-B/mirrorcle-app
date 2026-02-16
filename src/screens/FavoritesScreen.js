@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, StatusBar, Pressable, ActivityIndicator, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { PrimaryButton, FloatingParticles } from '../components/common';
+import { PrimaryButton, FloatingParticles, ScreenHeader } from '../components/common';
 import { AFFIRMATIONS, getAffirmationById } from '../constants';
 import { userProfileService } from '../services/user';
 import { sessionService } from '../services/session';
@@ -111,22 +110,15 @@ export const FavoritesScreen = ({ navigation }) => {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <StatusBar barStyle="dark-content" />
-          <View style={styles.header}>
-            <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Ionicons name="chevron-back" size={20} color="#7A756E" />
-            </Pressable>
-            <View style={styles.headerCenter}>
-              <Text style={styles.title}>Favorites</Text>
-              <Text style={styles.headerSubtitle}>Words that moved you</Text>
-            </View>
-            <View style={styles.placeholder} />
-          </View>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#C17666" />
-          </View>
-        </SafeAreaView>
+        <StatusBar barStyle="dark-content" />
+        <ScreenHeader
+          title="Favorites"
+          subtitle="Words that moved you"
+          onBack={() => navigation.goBack()}
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#C17666" />
+        </View>
       </View>
     );
   }
@@ -134,20 +126,12 @@ export const FavoritesScreen = ({ navigation }) => {
   // --- Main Content ---
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" />
-
-        {/* Emotional Header */}
-        <View style={styles.header}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={20} color="#7A756E" />
-          </Pressable>
-          <View style={styles.headerCenter}>
-            <Text style={styles.title}>Favorites</Text>
-            <Text style={styles.headerSubtitle}>Words that moved you</Text>
-          </View>
-          <View style={styles.placeholder} />
-        </View>
+        <ScreenHeader
+          title="Favorites"
+          subtitle="Words that moved you"
+          onBack={() => navigation.goBack()}
+        />
 
         {favoriteAffirmations.length > 0 && (
           <Text style={styles.favoritesCount}>
@@ -210,7 +194,6 @@ export const FavoritesScreen = ({ navigation }) => {
             }}
           />
         )}
-      </SafeAreaView>
     </View>
   );
 };
@@ -236,34 +219,6 @@ function buildContextLine(affirmation) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F2EE' },
-  safeArea: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#F0ECE7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerCenter: {
-    alignItems: 'center',
-  },
-  title: { color: '#2D2A26', fontSize: 20, fontWeight: '600' },
-  headerSubtitle: {
-    fontFamily: SERIF_ITALIC,
-    fontSize: 13,
-    fontStyle: 'italic',
-    color: '#7A756E',
-    marginTop: 2,
-  },
-  placeholder: { width: 42 },
   favoritesCount: {
     fontSize: 11,
     fontWeight: '500',

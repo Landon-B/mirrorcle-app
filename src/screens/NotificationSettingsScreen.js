@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, StatusBar, Pressable, Switch, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, StatusBar, Switch, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Card, PrimaryButton } from '../components/common';
+import { Card, PrimaryButton, ScreenHeader } from '../components/common';
 import { useNotifications } from '../hooks/useNotifications';
 
 const TIME_OPTIONS = [
@@ -72,15 +71,8 @@ export const NotificationSettingsScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" />
-        <View style={styles.header}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={20} color="#7A756E" />
-          </Pressable>
-          <Text style={styles.title}>Notifications</Text>
-          <View style={styles.placeholder} />
-        </View>
+        <ScreenHeader title="Notifications" onBack={() => navigation.goBack()} />
 
         <View style={styles.content}>
           <Card style={styles.toggleCard}>
@@ -153,31 +145,12 @@ export const NotificationSettingsScreen = ({ navigation }) => {
             </Text>
           </Card>
         </View>
-      </SafeAreaView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F2EE' },
-  safeArea: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#F0ECE7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: { color: '#2D2A26', fontSize: 20, fontWeight: '600' },
-  placeholder: { width: 42 },
   content: { padding: 20, gap: 16 },
   toggleCard: {},
   toggleRow: {

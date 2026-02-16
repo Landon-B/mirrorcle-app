@@ -20,8 +20,14 @@ import { GrowthNudgeCard } from '../components/personalization/GrowthNudgeCard';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
 import { useHaptics } from '../hooks/useHaptics';
+import { usePersonalization } from '../hooks/usePersonalization';
 import { getMoodById, getMoodEmoji, FEELING_COLORS } from '../constants/feelings';
 import { personalizationService } from '../services/personalization';
+
+const THEME_UNLOCK_MAP = {
+  seven_day_streak: 'Sunset Glow',
+  thirty_day_streak: 'Rose Garden',
+};
 
 const formatDuration = (seconds) => {
   if (!seconds || seconds < 60) return `${seconds || 0} seconds`;
@@ -114,31 +120,50 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
 
   const { stats, user } = useApp();
   const { celebrationBurst } = useHaptics();
+  const { checkNewMilestones } = usePersonalization();
 
   // Personalization data
   const [powerPhrase, setPowerPhrase] = useState(null);
   const [growthNudge, setGrowthNudge] = useState(null);
+  const [newMilestones, setNewMilestones] = useState([]);
 
   useEffect(() => {
     celebrationBurst();
 
-    // Load personalization data
+    // Load personalization data and check for new milestones
     if (user?.id) {
       Promise.allSettled([
         personalizationService.getPowerPhrase(user.id),
         personalizationService.getGrowthNudge(user.id),
-      ]).then(([phraseResult, nudgeResult]) => {
+        checkNewMilestones(),
+      ]).then(([phraseResult, nudgeResult, milestoneResult]) => {
         if (phraseResult.status === 'fulfilled' && phraseResult.value) {
           setPowerPhrase(phraseResult.value);
         }
         if (nudgeResult.status === 'fulfilled' && nudgeResult.value) {
           setGrowthNudge(nudgeResult.value);
         }
+        if (milestoneResult.status === 'fulfilled' && milestoneResult.value?.length > 0) {
+          setNewMilestones(milestoneResult.value);
+        }
       });
     }
   }, []);
 
   const handleBackToHome = () => {
+    // If milestones were earned, show the celebration modal first
+    if (newMilestones.length > 0) {
+      const milestone = newMilestones[0];
+      setNewMilestones(prev => prev.slice(1));
+      const rootNav = navigation.getParent()?.getParent() || navigation.getParent() || navigation;
+      rootNav.navigate('MilestoneCelebration', {
+        milestoneKey: milestone.key,
+        themeUnlocked: THEME_UNLOCK_MAP[milestone.key] || null,
+        fromSession: true,
+      });
+      return;
+    }
+
     const parent = navigation.getParent();
     if (parent) {
       parent.navigate('HomeTab', { screen: 'Home' });

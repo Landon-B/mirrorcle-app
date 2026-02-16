@@ -13,6 +13,7 @@ import { useApp } from '../context/AppContext';
 import { ScreenHeader, Card, PrimaryButton } from '../components/common';
 import { useJourney } from '../hooks/useJourney';
 import { getMoodEmoji } from '../constants/feelings';
+import { usePaywall } from '../hooks/usePaywall';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
 
@@ -34,6 +35,7 @@ const MONTH_NAMES = [
 export const ReflectionSummaryScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const { isPro } = useApp();
+  const { openPaywall } = usePaywall();
   const { summary, loadSummary } = useJourney();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
@@ -186,7 +188,7 @@ export const ReflectionSummaryScreen = ({ navigation }) => {
                 </Text>
                 <PrimaryButton
                   title="Deepen Your Practice"
-                  onPress={() => navigation.navigate('Paywall')}
+                  onPress={openPaywall}
                   style={styles.premiumButton}
                 />
               </View>

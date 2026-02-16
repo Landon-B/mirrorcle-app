@@ -115,7 +115,7 @@ const BadgeIcon = ({ icon }) => {
 
 export const MilestoneCelebrationScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
-  const { milestoneKey, themeUnlocked } = route.params || {};
+  const { milestoneKey, themeUnlocked, fromSession } = route.params || {};
   const { celebrationBurst } = useHaptics();
 
   const config = MILESTONE_CONFIG[milestoneKey] || DEFAULT_MILESTONE;
@@ -125,7 +125,12 @@ export const MilestoneCelebrationScreen = ({ navigation, route }) => {
   }, []);
 
   const handleDismiss = () => {
-    navigation.goBack();
+    if (fromSession) {
+      // Navigate home instead of going back to SuccessCelebration
+      navigation.navigate('MainTabs', { screen: 'HomeTab', params: { screen: 'Home' } });
+    } else {
+      navigation.goBack();
+    }
   };
 
   return (

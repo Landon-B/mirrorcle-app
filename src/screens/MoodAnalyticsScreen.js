@@ -16,6 +16,7 @@ import { sessionService } from '../services/session';
 import { getMoodEmoji, getMoodLabel, FEELING_COLORS } from '../constants/feelings';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
+import { usePaywall } from '../hooks/usePaywall';
 
 const COLORS = {
   bg: '#F5F2EE',
@@ -37,6 +38,7 @@ const TIME_RANGES = [
 export const MoodAnalyticsScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const { user, isPro } = useApp();
+  const { openPaywall } = usePaywall();
   const [activeRange, setActiveRange] = useState('month');
   const [moodData, setMoodData] = useState(null);
   const [sessions, setSessions] = useState([]);
@@ -201,7 +203,7 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
                     </Text>
                     <PrimaryButton
                       title="Deepen Your Practice"
-                      onPress={() => navigation.navigate('Paywall')}
+                      onPress={openPaywall}
                       style={styles.premiumButton}
                     />
                   </View>

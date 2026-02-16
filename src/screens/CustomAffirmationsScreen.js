@@ -3,9 +3,8 @@ import {
   View, Text, StyleSheet, ScrollView, StatusBar, Pressable,
   TextInput, ActivityIndicator, Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { PrimaryButton, GhostButton, Card } from '../components/common';
+import { PrimaryButton, GhostButton, Card, ScreenHeader } from '../components/common';
 import { useApp } from '../context/AppContext';
 import { customAffirmationService } from '../services/personalization';
 
@@ -109,26 +108,17 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#C17666" />
-          </View>
-        </SafeAreaView>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#C17666" />
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" />
-        <View style={styles.header}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={20} color="#7A756E" />
-          </Pressable>
-          <Text style={styles.title}>My Affirmations</Text>
-          <View style={styles.placeholder} />
-        </View>
+        <ScreenHeader title="My Affirmations" onBack={() => navigation.goBack()} />
 
         <ScrollView contentContainerStyle={styles.content}>
           <Card style={styles.inputCard}>
@@ -216,29 +206,13 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
             ))
           )}
         </ScrollView>
-      </SafeAreaView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F2EE' },
-  safeArea: { flex: 1 },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  backButton: {
-    width: 42, height: 42, borderRadius: 21,
-    backgroundColor: '#F0ECE7',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  title: { color: '#2D2A26', fontSize: 20, fontWeight: '600' },
-  placeholder: { width: 42 },
   content: { padding: 20, gap: 16 },
   inputCard: { gap: 12 },
   inputLabel: { color: '#2D2A26', fontSize: 16, fontWeight: '600' },

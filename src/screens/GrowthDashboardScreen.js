@@ -349,7 +349,7 @@ export const GrowthDashboardScreen = ({ navigation }) => {
           <View style={styles.headerRight}>
             <Pressable
               style={styles.headerIcon}
-              onPress={() => navigation?.navigate?.('NotificationSettings')}
+              onPress={() => navigation.getParent()?.navigate('ProfileTab', { screen: 'NotificationSettings' })}
               hitSlop={8}
             >
               <Ionicons name="notifications-outline" size={22} color={COLORS.textPrimary} />
@@ -460,28 +460,31 @@ export const GrowthDashboardScreen = ({ navigation }) => {
               </Text>
             </View>
           </View>
-          <Card style={styles.heatmapCard}>
-            {/* Weekday labels */}
-            <View style={styles.heatmapHeader}>
-              {WEEKDAY_LABELS.map((label, i) => (
-                <Text key={i} style={styles.heatmapDayLabel}>{label}</Text>
-              ))}
-            </View>
-            {/* Heatmap grid */}
-            {heatmapData.map((week, weekIndex) => (
-              <View key={weekIndex} style={styles.heatmapRow}>
-                {week.map((level, dayIndex) => (
-                  <View
-                    key={dayIndex}
-                    style={[
-                      styles.heatmapCircle,
-                      { backgroundColor: heatmapColor(level) },
-                    ]}
-                  />
+          <Pressable onPress={() => navigation.navigate('ActivityCalendar')}>
+            <Card style={styles.heatmapCard}>
+              {/* Weekday labels */}
+              <View style={styles.heatmapHeader}>
+                {WEEKDAY_LABELS.map((label, i) => (
+                  <Text key={i} style={styles.heatmapDayLabel}>{label}</Text>
                 ))}
               </View>
-            ))}
-          </Card>
+              {/* Heatmap grid */}
+              {heatmapData.map((week, weekIndex) => (
+                <View key={weekIndex} style={styles.heatmapRow}>
+                  {week.map((level, dayIndex) => (
+                    <View
+                      key={dayIndex}
+                      style={[
+                        styles.heatmapCircle,
+                        { backgroundColor: heatmapColor(level) },
+                      ]}
+                    />
+                  ))}
+                </View>
+              ))}
+              <Text style={styles.heatmapViewAll}>View Full Calendar</Text>
+            </Card>
+          </Pressable>
         </View>
 
         {/* Journey & Reflection Links */}
@@ -716,6 +719,14 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
+  },
+  heatmapViewAll: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: COLORS.rust,
+    textAlign: 'center',
+    marginTop: 8,
+    letterSpacing: 0.5,
   },
 
   // Journey links

@@ -45,7 +45,3 @@ export { PaywallScreen } from './PaywallScreen';
 export { MilestoneCelebrationScreen } from './MilestoneCelebrationScreen';
 export { CameraPermissionDeniedScreen } from './CameraPermissionDeniedScreen';
 
-// Legacy (deprecated, kept for backward compat)
-export { FeelingsScreen } from './FeelingsScreen';
-export { ReflectionScreen } from './ReflectionScreen';
-export { TrendsScreen } from './TrendsScreen';

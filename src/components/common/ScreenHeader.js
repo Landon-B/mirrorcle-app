@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { textStyles } from '../../styles/typography';
 
-export const ScreenHeader = ({ label, onBack, rightAction, style }) => {
+export const ScreenHeader = ({ label, title, subtitle, onBack, rightAction, style }) => {
   const insets = useSafeAreaInsets();
 
   return (
@@ -22,6 +22,12 @@ export const ScreenHeader = ({ label, onBack, rightAction, style }) => {
         )}
       </View>
       {label && <Text style={[textStyles.labelSmall, styles.label]}>{label}</Text>}
+      {title && (
+        <View style={styles.titleCenter}>
+          <Text style={styles.title}>{title}</Text>
+          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+        </View>
+      )}
       <View style={styles.right}>
         {rightAction || null}
       </View>
@@ -56,5 +62,22 @@ const styles = StyleSheet.create({
   label: {
     textAlign: 'center',
     flex: 1,
+  },
+  titleCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#2D2A26',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    color: '#7A756E',
+    textAlign: 'center',
+    marginTop: 2,
   },
 });

@@ -1,15 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, StatusBar, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { ScreenHeader } from '../components/common';
 import { THEMES, getFreeThemes, getPremiumThemes } from '../constants';
 import { useTheme } from '../context/ThemeContext';
 import { useApp } from '../context/AppContext';
+import { usePaywall } from '../hooks/usePaywall';
 
 export const ThemesScreen = ({ navigation }) => {
   const { theme, changeTheme } = useTheme();
   const { isPro, unlockedThemes, stats } = useApp();
+  const { openPaywall } = usePaywall();
 
   const freeThemes = getFreeThemes();
   const premiumThemes = getPremiumThemes();
@@ -35,7 +37,7 @@ export const ThemesScreen = ({ navigation }) => {
 
   const handleThemeSelect = (selectedTheme) => {
     if (selectedTheme.isPremium && !isPro && !unlockedThemes.includes(selectedTheme.id)) {
-      navigation.navigate('Paywall');
+      openPaywall();
       return;
     }
     changeTheme(selectedTheme.id);
@@ -99,15 +101,8 @@ export const ThemesScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" />
-        <View style={styles.header}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={20} color="#7A756E" />
-          </Pressable>
-          <Text style={styles.title}>Themes</Text>
-          <View style={styles.placeholder} />
-        </View>
+        <ScreenHeader title="Themes" onBack={() => navigation.goBack()} />
 
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.sectionTitle}>Free Themes</Text>
@@ -123,7 +118,7 @@ export const ThemesScreen = ({ navigation }) => {
           {!isPro && (
             <Pressable
               style={styles.upgradeCard}
-              onPress={() => navigation.navigate('Paywall')}
+              onPress={() => openPaywall()}
             >
               <LinearGradient
                 colors={['#F59E0B', '#F97316']}
@@ -141,31 +136,12 @@ export const ThemesScreen = ({ navigation }) => {
             </Pressable>
           )}
         </ScrollView>
-      </SafeAreaView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F2EE' },
-  safeArea: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#F0ECE7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: { color: '#2D2A26', fontSize: 20, fontWeight: '600' },
-  placeholder: { width: 40 },
   content: { padding: 20, gap: 20 },
   sectionTitle: { color: '#B0AAA2', fontSize: 14, fontWeight: '600', textTransform: 'uppercase' },
   themesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },

@@ -8,6 +8,7 @@ import {
   Pressable,
   Dimensions,
   Platform,
+  Share,
 } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,6 +18,9 @@ import { useApp } from '../context/AppContext';
 import { PrimaryButton, Card, FloatingParticles } from '../components/common';
 import { useTrial } from '../hooks/useTrial';
 import { useEmotionalContext } from '../hooks/useEmotionalContext';
+import { useFavorites } from '../hooks/useFavorites';
+import { useHaptics } from '../hooks/useHaptics';
+import { usePaywall } from '../hooks/usePaywall';
 import { MOODS } from '../constants/feelings';
 import { FOCUS_AREAS } from '../constants/focusAreas';
 import { formatRelativeDate } from '../utils/dateUtils';
@@ -200,6 +204,9 @@ const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions 
   const weeklyActivity = useMemo(() => getWeeklyActivity(sessions), [sessions]);
   const activeDays = weeklyActivity.filter(Boolean).length;
   const { trialStatus, dayContent } = useTrial();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { successPulse } = useHaptics();
+  const { openPaywall } = usePaywall();
 
   const {
     greetingName,
@@ -293,7 +300,7 @@ const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions 
             daysRemaining={trialStatus.daysRemaining}
             onPress={() => {
               if (dayContent.feature) {
-                navigation.navigate('Paywall');
+                openPaywall();
               } else {
                 navigation.navigate('AffirmTab', { screen: 'FocusSelection' });
               }
@@ -344,13 +351,38 @@ const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions 
             "{dailyIntention?.text || ''}"
           </Text>
           <View style={styles.intentionActions}>
-            <Pressable style={styles.intentionActionButton}>
+            <Pressable
+              style={styles.intentionActionButton}
+              onPress={async () => {
+                if (!dailyIntention?.text) return;
+                try {
+                  await Share.share({
+                    message: `"${dailyIntention.text}" - From my Mirrorcle practice`,
+                  });
+                } catch (error) {
+                  // User cancelled or share failed
+                }
+              }}
+            >
               <Ionicons name="share-outline" size={18} color="rgba(255,255,255,0.8)" />
               <Text style={styles.intentionActionText}>SHARE</Text>
             </Pressable>
-            <Pressable style={styles.intentionActionButton}>
-              <Ionicons name="bookmark-outline" size={18} color="rgba(255,255,255,0.8)" />
-              <Text style={styles.intentionActionText}>SAVE</Text>
+            <Pressable
+              style={styles.intentionActionButton}
+              onPress={async () => {
+                if (!dailyIntention?.id) return;
+                await toggleFavorite(dailyIntention.id);
+                successPulse();
+              }}
+            >
+              <Ionicons
+                name={dailyIntention?.id && isFavorite(dailyIntention.id) ? 'bookmark' : 'bookmark-outline'}
+                size={18}
+                color="rgba(255,255,255,0.8)"
+              />
+              <Text style={styles.intentionActionText}>
+                {dailyIntention?.id && isFavorite(dailyIntention.id) ? 'SAVED' : 'SAVE'}
+              </Text>
             </Pressable>
           </View>
         </LinearGradient>

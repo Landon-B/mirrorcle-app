@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet, Alert } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
+import { usePaywall } from '../hooks/usePaywall';
 
 const COLORS = {
   background: '#F5F2EE',
@@ -54,6 +55,7 @@ export const ProfileScreen = ({ navigation }) => {
   const userName = user?.user_metadata?.name || preferences?.name || 'User';
   const userEmail = user?.email || '';
   const isPro = preferences?.isPro || false;
+  const { openPaywall } = usePaywall();
 
   const handleSignOut = () => {
     Alert.alert(
@@ -129,7 +131,7 @@ export const ProfileScreen = ({ navigation }) => {
               <SettingsRow
                 icon="star"
                 label="Upgrade to Pro"
-                onPress={() => navigation.getParent()?.navigate('Paywall')}
+                onPress={openPaywall}
               />
               <View style={styles.divider} />
             </>
