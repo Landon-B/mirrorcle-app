@@ -1,6 +1,5 @@
 import { Platform } from 'react-native';
 import { AFFIRMATIONS } from '../../constants/affirmations';
-import { DEFAULT_THEME } from '../../constants/themes';
 
 class WidgetDataServiceClass {
   constructor() {
@@ -21,20 +20,17 @@ class WidgetDataServiceClass {
     }
   }
 
-  syncWidget(theme = null) {
+  syncWidget() {
     if (Platform.OS !== 'ios') return;
 
     this._resolve();
     if (!this._updateWidgetSnapshot || !this._AffirmationWidget) return;
 
     try {
-      const currentTheme = theme || DEFAULT_THEME;
       const affirmation = this.getRandomAffirmation();
 
       this._updateWidgetSnapshot('AffirmationWidget', this._AffirmationWidget, {
         text: affirmation.text,
-        color1: currentTheme.primary[0],
-        color2: currentTheme.primary[1],
       });
 
       this.lastAffirmation = affirmation;

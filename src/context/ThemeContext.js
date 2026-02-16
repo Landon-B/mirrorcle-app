@@ -31,7 +31,7 @@ export const ThemeProvider = ({ children }) => {
     const newTheme = getThemeById(themeId);
     setTheme(newTheme);
     await storageService.saveTheme(themeId);
-    widgetDataService.syncWidget(newTheme);
+    widgetDataService.syncWidget();
   };
 
   return (
