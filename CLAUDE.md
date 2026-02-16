@@ -52,7 +52,7 @@ Context Providers → Custom Hooks → Services → Supabase / AsyncStorage
 
 ### Key Directories
 - `src/context/` — AppContext (stats, sessions, preferences, unlockedThemes), ThemeContext
-- `src/hooks/` — useStats, useFavorites, useNotifications, useAudio, useStorage, useSpeechRecognition, useSpeechMatcher, usePersonalization, useWidgetSync
+- `src/hooks/` — useStats, useFavorites, useNotifications, useAudio, useStorage, useSpeechRecognition, useSpeechMatcher, usePersonalization, useWidgetSync, useJourney, useTrial
 - `src/services/` — Service singletons organized by domain:
   - `affirmations/` — AffirmationService (tag-weighted selection, personalized sessions)
   - `session/` — SessionService (sessions, mood history, streaks, affirmation engagement)
@@ -64,22 +64,26 @@ Context Providers → Custom Hooks → Services → Supabase / AsyncStorage
   - `storage/` — StorageService adapter pattern (AsyncStorage)
   - `audio/` — AudioService (expo-speech stub)
   - `speech/` — SpeechRecognitionService (@react-native-voice/voice + Web Speech API)
+  - `journey/` — JourneyService (timeline aggregation, week narratives, reflection summaries)
+  - `trial/` — TrialService (7-day trial tracking, day-specific content)
   - `widget/` — WidgetDataService (syncs affirmation + theme to iOS widget via expo-widgets)
 - `src/widgets/` — AffirmationWidget (SwiftUI widget component using @expo/ui)
 - `src/constants/` — Affirmations, feelings, prompts, themes (with unlockRequirements), storage keys
-- `src/components/` — common/ (GradientBackground, Card, PrimaryButton, GhostButton, OverlaySheet, IconButton), affirmation/, pro/ (FeatureGate), personalization/ (MilestoneCard, PowerPhraseCard, GrowthNudgeCard, MoodJourneyCard), stats/, onboarding/
+- `src/components/` — common/ (GradientBackground, Card, PrimaryButton, GhostButton, OverlaySheet, IconButton, FloatingParticles), affirmation/, pro/ (FeatureGate, PaywallModal), personalization/ (MilestoneCard, PowerPhraseCard, GrowthNudgeCard, MoodJourneyCard, MilestoneProgressCard, MoodPatternChart), stats/, onboarding/
 - `src/utils/` — dateUtils, statsUtils, speech/SessionSpeechMatcher
 - `src/styles/` — Design system (colors with 6 themes, typography, spacing)
-- `supabase/migrations/` — 5 SQL migration files
+- `supabase/migrations/` — 9 SQL migration files
 
 ### Navigation Flow
 ```
 Welcome → CreateAccount / Login / ForgotPassword → Onboarding
   ↓
-Home → AffirmationHome → Feelings → Session (CameraSession) → Reflection
+Home → AffirmationHome → FocusSelection → Session (CameraSession) → Reflection
                 ↓
   Favorites, Trends, Themes, CustomAffirmations, NotificationSettings
   Paywall (modal for premium features)
+  ↓
+Growth → GrowthDashboard → ActivityCalendar, JourneyTimeline, MoodAnalytics, ReflectionSummary
 ```
 
 ### Service Architecture
@@ -96,7 +100,7 @@ All services are **singleton classes** exported from `src/services/index.js`. Th
 - `quotes` — text, author, screen, is_premium
 
 **User tables** (RLS — users see only own data):
-- `user_profiles` — id→auth.users, name, is_pro, theme_id, streaks, totals, preferred_session_length, experience_level, avg_speech_speed_wpm
+- `user_profiles` — id→auth.users, name, is_pro, theme_id, streaks, totals, preferred_session_length, experience_level, avg_speech_speed_wpm, trial_started_at, trial_ended_at
 - `user_sessions` — feeling_id, duration_seconds, prompts_completed, time_of_day
 - `user_affirmation_history` — affirmation_id, engaged (bool), session_id, completion_time_seconds
 - `user_mood_history` — feeling_id, session_id
@@ -120,7 +124,21 @@ All services are **singleton classes** exported from `src/services/index.js`. Th
 Six themes (3 free, 3 premium) in `src/constants/themes.js`. Premium themes have `unlockRequirement` for milestone-based unlocking. `unlockedThemes` array tracked in AppContext. ThemeContext provides `theme` and `changeTheme`.
 
 ### Premium Features
-`isPro` flag in user_profiles/preferences. `FeatureGate` component + `useFeatureGate` hook. PaywallScreen for upsell. Custom affirmations: 3 free, unlimited Pro.
+`isPro` flag in user_profiles/preferences. `FeatureGate` component + `useFeatureGate` hook. PaywallScreen for upsell (transformation-focused messaging, terracotta palette). PaywallModal with context-aware messaging per feature key (`custom_affirmations`, `advanced_trends`, `premium_themes`, `monthly_reflection`, `mood_analytics`). Custom affirmations: 3 free, unlimited Pro. MoodAnalyticsScreen: free users see 1 week, extended ranges gated. ReflectionSummaryScreen: basic stats visible, deeper content gated.
+
+### Trial System
+7-day trial orchestrated by `TrialService` (`src/services/trial/`). `useTrial` hook provides `trialStatus` (isInTrial, trialDay, daysRemaining) and `dayContent` (day-specific messaging). Trial day cards shown on HomeScreen for returning users. Day-specific content teases premium features (Day 3: mood analytics, Day 4: custom affirmations, Day 7: retention prompt). Trial columns: `trial_started_at`, `trial_ended_at` on `user_profiles`.
+
+### Journey & Growth System
+- **JourneyService** (`src/services/journey/`) — aggregates milestones, sessions, mood shifts into timeline events with narrative text; generates monthly/yearly reflection summaries
+- **useJourney hook** — provides `{ timeline, summary, loading, loadSummary }` for screens
+- **GrowthDashboard** — real session-derived heatmap, bar charts (Week/Month/Year tabs), trend badges comparing current vs previous period, dynamic quotes from QuotesService, next milestone progress indicators, navigation links to JourneyTimeline, MoodAnalytics, ReflectionSummary
+- **JourneyTimelineScreen** — vertical timeline with milestone cards, week summary narratives, streak recovery events
+- **MoodAnalyticsScreen** — mood distribution bars (MoodPatternChart), mood transitions (pre→post), auto-generated insights
+- **ReflectionSummaryScreen** — month navigator, hero stat, focus summary, mood journey, consistency bar
+- **MilestoneProgressCard** — animated progress bar with `withTiming`, shows next 3 unachieved milestones
+- **MoodPatternChart** — horizontal animated bars colored by FEELING_COLORS
+- **Streak language** — "Flow" not "Streak", compassionate welcome-back messaging when streak=0
 
 ### Speech Recognition Flow
 1. `useSpeechRecognition` wraps platform-specific recognition (Voice for native, Web Speech API for web)

@@ -214,7 +214,52 @@ The difference between an app people *use* and an app people *need* is **emotion
 
 - [x] Phase 1: "The Mirror Breathes" — Sensory Foundation
 - [x] Phase 2: "The Sacred Moment" — Transform the Mirror Session
-- [ ] Phase 3: "The Witness" — Post-Session Transformation Reveal
-- [ ] Phase 4: "The First Time" — Onboarding That Builds Belief
-- [ ] Phase 5: "The Journey Map" — Progression That Means Something
-- [ ] Phase 6: "Worth Paying For" — Premium That Sells Transformation
+- [x] Phase 3: "The Witness" — Post-Session Transformation Reveal
+- [x] Phase 4: "The First Time" — Onboarding That Builds Belief
+- [x] Phase 5: "The Journey Map" — Progression That Means Something
+- [x] Phase 6: "Worth Paying For" — Premium That Sells Transformation
+
+---
+
+## Implementation Notes
+
+### Phase 1+2 (Sensory Foundation + Sacred Mirror Session)
+- `expo-haptics` via `useHaptics` hook — selectionTap, successPulse, celebrationBurst, breathingPulse
+- BreathingPrepScreen with animated breathing circle (reanimated), 3 cycles, skip option
+- CameraSessionScreen: gaze prompt, warm vignette, animated completion, pulsing mic indicator
+- SuccessCelebrationScreen: staggered entrance animations, FloatingParticles background
+- Sound design deferred (no audio system beyond expo-speech stub)
+
+### Phase 3+4 (Transformation Reveal + Onboarding)
+- SuccessCelebrationScreen: mood shift visualization (pre→post emoji), power phrase card, growth nudge
+- Reflection prompt with optional journaling
+- Onboarding flow: vulnerability-aware slides, guided first session
+
+### Phase 5 (Journey Map)
+- **FloatingParticles** — reusable animated particle component (`src/components/common/FloatingParticles.js`)
+- **MilestoneCelebrationScreen** — spring-animated badge, glow ring pulse, staggered text, narrative messages
+- **JourneyService** (`src/services/journey/`) — timeline aggregation, week narratives, reflection summaries
+- **useJourney hook** — wraps JourneyService for screen consumption
+- **JourneyTimelineScreen** — vertical timeline with milestone/week/streak cards, terracotta accent line
+- **Streak reframing** — "Flow" language everywhere, compassionate welcome-back cards for streak=0
+- **MilestoneProgressCard** — animated progress bars, horizontal scroll on GrowthDashboard
+- **ReflectionSummaryScreen** — month navigator, hero stats, premium gate for non-pro users
+
+### Phase 6 (Premium That Sells Transformation)
+- **PaywallScreen** — terracotta palette, transformation-focused value cards, social proof quote
+- **PaywallModal** — context-aware messaging map (custom_affirmations, monthly_reflection, mood_analytics, etc.)
+- **GrowthDashboard real data** — session-derived heatmap, bar charts with Week/Month/Year tabs, trend badges, dynamic quotes from QuotesService
+- **MoodAnalyticsScreen** — mood distribution (MoodPatternChart), mood transitions, auto-generated insights, premium gate for extended ranges
+- **TrialService** (`src/services/trial/`) — 7-day trial tracking, day-specific content messaging
+- **useTrial hook** — trial status, day content, auto-start on first session
+- **Trial day cards** on HomeScreen — contextual messaging that teases premium features
+- **Migration 0009** — `trial_started_at` and `trial_ended_at` columns on `user_profiles`
+
+### Deferred Items
+- Sound design system (no audio infrastructure beyond expo-speech)
+- Custom voice affirmations (record + playback)
+- Session soundscapes (rain, singing bowls)
+- Shareable image/PDF export of journey
+- Partner/couple mode
+- RevenueCat payment integration (purchases currently mocked)
+- Particle-gathering anticipation animation on milestone unlock
