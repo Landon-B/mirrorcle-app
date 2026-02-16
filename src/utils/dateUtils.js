@@ -42,3 +42,24 @@ export const getStartOfMonth = () => {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
 };
+
+/**
+ * Format a date string as a human-friendly relative date.
+ * today, yesterday, 3 days ago, 2 weeks ago, or "Feb 3" for older dates.
+ * @param {string} dateStr - ISO date string
+ * @returns {string}
+ */
+export const formatRelativeDate = (dateStr) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'today';
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  const weeks = Math.floor(diffDays / 7);
+  if (diffDays < 30) return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};

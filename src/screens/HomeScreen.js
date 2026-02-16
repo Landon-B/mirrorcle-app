@@ -7,15 +7,18 @@ import {
   ScrollView,
   Pressable,
   Dimensions,
+  Platform,
 } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { PrimaryButton, Card } from '../components/common';
 import { useTrial } from '../hooks/useTrial';
+import { useEmotionalContext } from '../hooks/useEmotionalContext';
 import { MOODS } from '../constants/feelings';
 import { FOCUS_AREAS } from '../constants/focusAreas';
-import { AFFIRMATIONS, FALLBACK_AFFIRMATIONS } from '../constants';
+import { formatRelativeDate } from '../utils/dateUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -26,32 +29,11 @@ const TEXT_PRIMARY = '#2C2520';
 const TEXT_SECONDARY = '#7A7267';
 const TEXT_MUTED = '#B0AAA2';
 
+const SERIF_ITALIC = Platform.OS === 'ios' ? 'Georgia-Italic' : 'serif';
+
 // --- Helpers ---
 
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
-}
-
-function getUserName(user, preferences) {
-  return user?.user_metadata?.name || preferences?.name || null;
-}
-
-function getDailyAffirmation() {
-  // Use date-based seed for consistent daily quote
-  const today = new Date();
-  const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-  const allAffirmations = AFFIRMATIONS.length > 0 ? AFFIRMATIONS : [];
-  if (allAffirmations.length > 0) {
-    return allAffirmations[seed % allAffirmations.length].text;
-  }
-  return FALLBACK_AFFIRMATIONS[seed % FALLBACK_AFFIRMATIONS.length];
-}
-
 function getWeeklyActivity(sessions) {
-  // Returns array of 7 booleans for Mon-Sun of current week
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0 = Sun, 1 = Mon, ...
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
@@ -75,79 +57,87 @@ function getWeeklyActivity(sessions) {
 
 // --- New User Dashboard ---
 
-const NewUserDashboard = ({ navigation, name, selectedMood, onMoodSelect }) => {
+const NewUserDashboard = ({ navigation, emotionalContext, selectedMood, onMoodSelect }) => {
   const displayFocusAreas = FOCUS_AREAS.slice(0, 4);
+  const { greetingName, greeting, ctaText } = emotionalContext;
 
   return (
     <>
       {/* Greeting */}
-      <View style={styles.greetingSection}>
+      <Animated.View entering={FadeInUp.duration(500)} style={styles.greetingSection}>
         <Text style={styles.greetingText}>
-          {getGreeting()},{' '}
-          {name ? <Text style={styles.rustText}>{name}</Text> : <Text style={styles.rustText}>friend</Text>}.
+          {greetingName ? (
+            <Text style={styles.rustText}>{greetingName}.</Text>
+          ) : (
+            <Text style={styles.rustText}>Welcome.</Text>
+          )}
         </Text>
-        <Text style={styles.subtitleText}>How are you feeling right now?</Text>
-      </View>
+        <Text style={styles.emotionalSubtitle}>{greeting}</Text>
+      </Animated.View>
 
       {/* Mood Pills */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.moodPillsContainer}
-        style={styles.moodPillsScroll}
-      >
-        {MOODS.map((mood) => {
-          const isSelected = selectedMood === mood.id;
-          return (
-            <Pressable
-              key={mood.id}
-              onPress={() => onMoodSelect(mood.id)}
-              style={[
-                styles.moodPill,
-                isSelected && styles.moodPillSelected,
-              ]}
-            >
-              <Text style={styles.moodEmoji}>{mood.emoji}</Text>
-              <Text
+      <Animated.View entering={FadeInUp.delay(200).duration(500)}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.moodPillsContainer}
+          style={styles.moodPillsScroll}
+        >
+          {MOODS.map((mood) => {
+            const isSelected = selectedMood === mood.id;
+            return (
+              <Pressable
+                key={mood.id}
+                onPress={() => onMoodSelect(mood.id)}
                 style={[
-                  styles.moodLabel,
-                  isSelected && styles.moodLabelSelected,
+                  styles.moodPill,
+                  isSelected && styles.moodPillSelected,
                 ]}
               >
-                {mood.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+                <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+                <Text
+                  style={[
+                    styles.moodLabel,
+                    isSelected && styles.moodLabelSelected,
+                  ]}
+                >
+                  {mood.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </Animated.View>
 
       {/* Daily Focus Areas */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Daily Focus Areas</Text>
-        <Pressable onPress={() => navigation.navigate('AffirmTab')}>
-          <Text style={styles.viewAllLink}>View All</Text>
-        </Pressable>
-      </View>
+      <Animated.View entering={FadeInUp.delay(400).duration(500)}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Daily Focus Areas</Text>
+          <Pressable onPress={() => navigation.navigate('AffirmTab')}>
+            <Text style={styles.viewAllLink}>View All</Text>
+          </Pressable>
+        </View>
 
-      <View style={styles.focusGrid}>
-        {displayFocusAreas.map((area) => (
-          <Card key={area.id} style={styles.focusCard}>
-            <Text style={styles.focusEmoji}>{area.emoji}</Text>
-            <Text style={styles.focusLabel}>{area.label}</Text>
-            <Text style={styles.focusSubtitle}>Explore</Text>
-          </Card>
-        ))}
-      </View>
+        <View style={styles.focusGrid}>
+          {displayFocusAreas.map((area) => (
+            <Card key={area.id} style={styles.focusCard}>
+              <Text style={styles.focusEmoji}>{area.emoji}</Text>
+              <Text style={styles.focusLabel}>{area.label}</Text>
+              <Text style={styles.focusSubtitle}>Explore</Text>
+            </Card>
+          ))}
+        </View>
+      </Animated.View>
 
       {/* Start Session CTA */}
-      <View style={styles.ctaSection}>
+      <Animated.View entering={FadeInUp.delay(600).duration(500)} style={styles.ctaSection}>
         <PrimaryButton
-          title="START MIRROR SESSION"
-          icon="videocam"
+          title={ctaText}
+          icon="play"
           onPress={() => navigation.navigate('AffirmTab', { screen: 'FocusSelection' })}
           style={styles.ctaButton}
         />
-      </View>
+      </Animated.View>
     </>
   );
 };
@@ -199,11 +189,20 @@ const TrialDayCard = ({ dayContent, trialDay, daysRemaining, onPress }) => {
   );
 };
 
-const ReturningUserDashboard = ({ navigation, name, stats, sessions }) => {
+const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions }) => {
   const weeklyActivity = useMemo(() => getWeeklyActivity(sessions), [sessions]);
   const activeDays = weeklyActivity.filter(Boolean).length;
-  const dailyAffirmation = useMemo(() => getDailyAffirmation(), []);
   const { trialStatus, dayContent } = useTrial();
+
+  const {
+    greetingName,
+    greeting,
+    streakEncouragement,
+    resonanceContent,
+    dailyIntention,
+    intentionContext,
+    ctaText,
+  } = emotionalContext;
 
   // Compassionate rhythm label
   const consistencyLabel = activeDays >= 5
@@ -216,101 +215,121 @@ const ReturningUserDashboard = ({ navigation, name, stats, sessions }) => {
 
   const isReturning = stats.currentStreak === 0 && stats.totalSessions > 0;
 
+  // Dynamic stagger base — accounts for optional trial card
+  const hasTrialCard = trialStatus.isInTrial && dayContent;
+  const resonanceDelay = hasTrialCard ? 600 : 400;
+  const intentionDelay = hasTrialCard ? 800 : 600;
+  const ctaDelay = hasTrialCard ? 1000 : 800;
+
   return (
     <>
       {/* Brand Label */}
       <Text style={styles.brandLabel}>MIRRORCLE</Text>
 
-      {/* Greeting */}
-      <View style={styles.greetingSection}>
+      {/* Emotional Greeting */}
+      <Animated.View entering={FadeInUp.duration(500)} style={styles.greetingSection}>
         <Text style={styles.greetingText}>
-          Welcome back,{' '}
-          {name ? <Text style={styles.rustText}>{name}</Text> : <Text style={styles.rustText}>friend</Text>}.
+          {greetingName ? (
+            <Text style={styles.rustText}>{greetingName}.</Text>
+          ) : (
+            <Text style={styles.rustText}>Welcome back.</Text>
+          )}
         </Text>
-      </View>
+        <Text style={styles.emotionalSubtitle}>{greeting}</Text>
+      </Animated.View>
 
-      {/* Your Rhythm Card */}
-      {isReturning ? (
-        <Card style={styles.momentumCard}>
-          <Text style={styles.momentumTitle}>Welcome Back</Text>
-          <Text style={styles.welcomeBackMessage}>
-            Life happens. What matters is you came back.
-          </Text>
-          <StreakProgressBar weeklyActivity={weeklyActivity} />
-          <Text style={styles.consistencyLabel}>READY WHEN YOU ARE</Text>
-        </Card>
-      ) : (
-        <Card style={styles.momentumCard}>
-          <Text style={styles.momentumTitle}>Your Rhythm</Text>
-          <View style={styles.streakRow}>
-            <Text style={styles.streakNumber}>{stats.currentStreak}</Text>
-            <Text style={styles.streakUnit}>days</Text>
-          </View>
-          <StreakProgressBar weeklyActivity={weeklyActivity} />
-          <Text style={styles.consistencyLabel}>{consistencyLabel}</Text>
-        </Card>
-      )}
+      {/* Rhythm Card — Narrative-First */}
+      <Animated.View entering={FadeInUp.delay(200).duration(500)}>
+        {isReturning ? (
+          <Card style={styles.momentumCard}>
+            <Text style={styles.momentumTitle}>Your Rhythm</Text>
+            <Text style={styles.rhythmNarrative}>
+              Life happens. What matters is you came back.
+            </Text>
+            <StreakProgressBar weeklyActivity={weeklyActivity} />
+            <Text style={styles.consistencyLabel}>READY WHEN YOU ARE</Text>
+          </Card>
+        ) : (
+          <Card style={styles.momentumCard}>
+            <Text style={styles.momentumTitle}>Your Rhythm</Text>
+            <Text style={styles.rhythmNarrative}>{streakEncouragement}</Text>
+            <View style={styles.streakRow}>
+              <Text style={styles.streakNumber}>{stats.currentStreak}</Text>
+              <Text style={styles.streakUnit}>day flow</Text>
+            </View>
+            <StreakProgressBar weeklyActivity={weeklyActivity} />
+            <Text style={styles.consistencyLabel}>{consistencyLabel}</Text>
+          </Card>
+        )}
+      </Animated.View>
 
       {/* Trial Day Card */}
-      {trialStatus.isInTrial && dayContent && (
-        <TrialDayCard
-          dayContent={dayContent}
-          trialDay={trialStatus.trialDay}
-          daysRemaining={trialStatus.daysRemaining}
-          onPress={() => {
-            if (dayContent.feature) {
-              navigation.navigate('Paywall');
-            } else {
-              navigation.navigate('AffirmTab', { screen: 'FocusSelection' });
-            }
-          }}
-        />
+      {hasTrialCard && (
+        <Animated.View entering={FadeInUp.delay(400).duration(500)}>
+          <TrialDayCard
+            dayContent={dayContent}
+            trialDay={trialStatus.trialDay}
+            daysRemaining={trialStatus.daysRemaining}
+            onPress={() => {
+              if (dayContent.feature) {
+                navigation.navigate('Paywall');
+              } else {
+                navigation.navigate('AffirmTab', { screen: 'FocusSelection' });
+              }
+            }}
+          />
+        </Animated.View>
       )}
 
+      {/* What Resonated */}
+      {resonanceContent && (
+        <Animated.View entering={FadeInUp.delay(resonanceDelay).duration(500)}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>What Resonated</Text>
+          </View>
+          <Card style={styles.resonanceCard}>
+            <Text style={styles.resonanceQuote}>"{resonanceContent.text}"</Text>
+            <Text style={styles.resonanceContext}>
+              {resonanceContent.type === 'powerPhrase'
+                ? `You've spoken this ${resonanceContent.count} times`
+                : `Saved ${formatRelativeDate(resonanceContent.favoritedAt)}`}
+            </Text>
+          </Card>
+        </Animated.View>
+      )}
+
+      {/* Personalized Daily Intention */}
+      <Animated.View entering={FadeInUp.delay(intentionDelay).duration(500)}>
+        <Card style={styles.intentionCard}>
+          <Text style={styles.intentionTitle}>Daily Intention</Text>
+          {intentionContext && (
+            <Text style={styles.intentionContextLabel}>{intentionContext}</Text>
+          )}
+          <Text style={styles.intentionQuote}>
+            "{dailyIntention?.text || ''}"
+          </Text>
+          <View style={styles.intentionActions}>
+            <Pressable style={styles.intentionActionButton}>
+              <Ionicons name="share-outline" size={18} color={RUST} />
+              <Text style={styles.intentionActionText}>SHARE</Text>
+            </Pressable>
+            <Pressable style={styles.intentionActionButton}>
+              <Ionicons name="bookmark-outline" size={18} color={RUST} />
+              <Text style={styles.intentionActionText}>SAVE</Text>
+            </Pressable>
+          </View>
+        </Card>
+      </Animated.View>
+
       {/* Begin CTA */}
-      <View style={styles.ctaSection}>
+      <Animated.View entering={FadeInUp.delay(ctaDelay).duration(500)} style={styles.ctaSection}>
         <PrimaryButton
-          title="Begin Today's Ritual"
+          title={ctaText}
           icon="play"
           onPress={() => navigation.navigate('AffirmTab', { screen: 'FocusSelection' })}
           style={styles.ctaButton}
         />
-      </View>
-
-      {/* Recent Focus */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Recent Focus</Text>
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.recentFocusContainer}
-        style={styles.recentFocusScroll}
-      >
-        {FOCUS_AREAS.map((area) => (
-          <Card key={area.id} style={styles.recentFocusCard}>
-            <Text style={styles.recentFocusEmoji}>{area.emoji}</Text>
-            <Text style={styles.recentFocusLabel}>{area.label}</Text>
-          </Card>
-        ))}
-      </ScrollView>
-
-      {/* Daily Intention */}
-      <Card style={styles.intentionCard}>
-        <Text style={styles.intentionTitle}>Daily Intention</Text>
-        <Text style={styles.intentionQuote}>"{dailyAffirmation}"</Text>
-        <View style={styles.intentionActions}>
-          <Pressable style={styles.intentionActionButton}>
-            <Ionicons name="share-outline" size={18} color={RUST} />
-            <Text style={styles.intentionActionText}>SHARE</Text>
-          </Pressable>
-          <Pressable style={styles.intentionActionButton}>
-            <Ionicons name="bookmark-outline" size={18} color={RUST} />
-            <Text style={styles.intentionActionText}>SAVE</Text>
-          </Pressable>
-        </View>
-      </Card>
+      </Animated.View>
     </>
   );
 };
@@ -319,11 +338,11 @@ const ReturningUserDashboard = ({ navigation, name, stats, sessions }) => {
 
 export const HomeScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-  const { stats, preferences, user, sessions } = useApp();
+  const { stats, sessions } = useApp();
+  const emotionalContext = useEmotionalContext();
   const [selectedMood, setSelectedMood] = useState(null);
 
   const isNewUser = stats.totalSessions < 3;
-  const name = getUserName(user, preferences);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -335,14 +354,14 @@ export const HomeScreen = ({ navigation }) => {
         {isNewUser ? (
           <NewUserDashboard
             navigation={navigation}
-            name={name}
+            emotionalContext={emotionalContext}
             selectedMood={selectedMood}
             onMoodSelect={setSelectedMood}
           />
         ) : (
           <ReturningUserDashboard
             navigation={navigation}
-            name={name}
+            emotionalContext={emotionalContext}
             stats={stats}
             sessions={sessions}
           />
@@ -389,13 +408,16 @@ const styles = StyleSheet.create({
   rustText: {
     color: RUST,
   },
-  subtitleText: {
-    fontSize: 16,
+  emotionalSubtitle: {
+    fontFamily: SERIF_ITALIC,
+    fontSize: 17,
+    fontStyle: 'italic',
     color: TEXT_SECONDARY,
-    marginTop: 6,
+    lineHeight: 26,
+    marginTop: 8,
   },
 
-  // Mood Pills
+  // Mood Pills (new user)
   moodPillsScroll: {
     marginBottom: 28,
     marginHorizontal: -20,
@@ -485,7 +507,7 @@ const styles = StyleSheet.create({
     // inherits PrimaryButton styling
   },
 
-  // Momentum Card (returning user)
+  // Momentum Card — narrative-first (returning user)
   momentumCard: {
     marginBottom: 20,
     paddingVertical: 20,
@@ -499,13 +521,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 8,
   },
-  welcomeBackMessage: {
+  rhythmNarrative: {
+    fontFamily: SERIF_ITALIC,
     fontSize: 17,
     fontStyle: 'italic',
     color: TEXT_PRIMARY,
     lineHeight: 26,
     marginBottom: 16,
-    fontFamily: 'serif',
   },
   streakRow: {
     flexDirection: 'row',
@@ -513,12 +535,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   streakNumber: {
-    fontSize: 48,
+    fontSize: 24,
     fontWeight: '700',
     color: TEXT_PRIMARY,
   },
   streakUnit: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '500',
     color: TEXT_SECONDARY,
     marginLeft: 6,
@@ -536,13 +558,18 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   streakBarSegment: {
-    height: 6,
-    borderRadius: 3,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: BORDER_COLOR,
     width: '80%',
   },
   streakBarSegmentActive: {
     backgroundColor: RUST,
+    shadowColor: RUST,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 2,
   },
   streakBarDayLabel: {
     fontSize: 10,
@@ -557,37 +584,32 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  // Recent Focus (returning user)
-  recentFocusScroll: {
-    marginBottom: 20,
-    marginHorizontal: -20,
-  },
-  recentFocusContainer: {
+  // What Resonated (returning user)
+  resonanceCard: {
+    paddingVertical: 20,
     paddingHorizontal: 20,
-    gap: 12,
+    marginBottom: 20,
   },
-  recentFocusCard: {
-    width: 110,
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 10,
-  },
-  recentFocusEmoji: {
-    fontSize: 24,
-    marginBottom: 6,
-  },
-  recentFocusLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+  resonanceQuote: {
+    fontFamily: SERIF_ITALIC,
+    fontSize: 18,
+    fontStyle: 'italic',
     color: TEXT_PRIMARY,
-    textAlign: 'center',
+    lineHeight: 28,
+    marginBottom: 10,
+  },
+  resonanceContext: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: TEXT_MUTED,
+    letterSpacing: 0.3,
   },
 
   // Daily Intention (returning user)
   intentionCard: {
     paddingVertical: 20,
     paddingHorizontal: 20,
-    marginBottom: 8,
+    marginBottom: 20,
   },
   intentionTitle: {
     fontSize: 13,
@@ -595,11 +617,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     color: TEXT_SECONDARY,
     textTransform: 'uppercase',
-    marginBottom: 12,
+    marginBottom: 8,
+  },
+  intentionContextLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: RUST,
+    marginBottom: 8,
   },
   intentionQuote: {
+    fontFamily: SERIF_ITALIC,
     fontSize: 18,
-    fontWeight: '400',
     fontStyle: 'italic',
     color: TEXT_PRIMARY,
     lineHeight: 28,
