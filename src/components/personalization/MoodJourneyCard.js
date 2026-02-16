@@ -64,7 +64,7 @@ export const MoodJourneyCard = () => {
 const styles = StyleSheet.create({
   card: { gap: 12 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  title: { color: '#2D2A26', fontSize: 16, fontWeight: '600' },
   timeline: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   narrative: {
-    color: '#CBD5F5',
+    color: '#7A756E',
     fontSize: 13,
     fontStyle: 'italic',
     lineHeight: 18,

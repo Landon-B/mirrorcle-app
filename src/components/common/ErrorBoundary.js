@@ -40,19 +40,19 @@ export class ErrorBoundary extends React.Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#F5F2EE',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
     gap: 16,
   },
   title: {
-    color: '#fff',
+    color: '#2D2A26',
     fontSize: 22,
     fontWeight: '600',
   },
   subtitle: {
-    color: '#94A3B8',
+    color: '#7A756E',
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,

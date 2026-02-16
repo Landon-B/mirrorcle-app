@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  label: { color: '#94A3B8', fontSize: 12 },
-  value: { color: '#fff', fontSize: 18, fontWeight: '600', marginTop: 6 },
+  label: { color: '#7A756E', fontSize: 12 },
+  value: { color: '#2D2A26', fontSize: 18, fontWeight: '600', marginTop: 6 },
   iconWrap: { padding: 8, borderRadius: 12 },
 });

@@ -44,6 +44,6 @@ const styles = StyleSheet.create({
   },
   word: { color: '#E2E8F0' },
   spoken: { color: '#34D399' },
-  current: { color: '#C084FC', fontWeight: '700' },
+  current: { color: '#E8A090', fontWeight: '700' },
   pending: { color: '#E2E8F0' },
 });

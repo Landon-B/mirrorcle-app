@@ -45,14 +45,14 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   title: {
-    color: '#fff',
+    color: '#2D2A26',
     fontSize: 28,
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 16,
   },
   subtitle: {
-    color: '#CBD5F5',
+    color: '#7A756E',
     fontSize: 18,
     textAlign: 'center',
     lineHeight: 26,
@@ -66,10 +66,10 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#475569',
+    backgroundColor: '#E8E4DF',
   },
   dotActive: {
     width: 24,
-    backgroundColor: '#C084FC',
+    backgroundColor: '#C17666',
   },
 });

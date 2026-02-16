@@ -42,7 +42,7 @@ export const PaywallModal = ({ visible, onClose, feature }) => {
           <View style={styles.features}>
             {FEATURES.map((item, index) => (
               <View key={index} style={styles.featureRow}>
-                <Ionicons name={item.icon} size={20} color="#A855F7" />
+                <Ionicons name={item.icon} size={20} color="#C17666" />
                 <Text style={styles.featureText}>{item.title}</Text>
                 <Ionicons name="checkmark-circle" size={20} color="#22C55E" />
               </View>
@@ -67,12 +67,12 @@ export const PaywallModal = ({ visible, onClose, feature }) => {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   backdropPress: { flex: 1 },
   sheet: {
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 24,
@@ -86,8 +86,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { color: '#fff', fontSize: 22, fontWeight: '700' },
-  subtitle: { color: '#94A3B8', fontSize: 14 },
+  title: { color: '#2D2A26', fontSize: 22, fontWeight: '700' },
+  subtitle: { color: '#7A756E', fontSize: 14 },
   features: { gap: 12 },
   featureRow: {
     flexDirection: 'row',
@@ -95,14 +95,14 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 8,
   },
-  featureText: { flex: 1, color: '#fff', fontSize: 16 },
+  featureText: { flex: 1, color: '#2D2A26', fontSize: 16 },
   priceCard: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'center',
     gap: 4,
   },
-  priceMain: { color: '#fff', fontSize: 32, fontWeight: '700' },
-  pricePeriod: { color: '#94A3B8', fontSize: 16 },
+  priceMain: { color: '#2D2A26', fontSize: 32, fontWeight: '700' },
+  pricePeriod: { color: '#7A756E', fontSize: 16 },
   actions: { gap: 12 },
 });

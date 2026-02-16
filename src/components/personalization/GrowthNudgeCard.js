@@ -14,7 +14,7 @@ export const GrowthNudgeCard = ({ message, onDismiss }) => (
       </View>
       {onDismiss && (
         <Pressable onPress={onDismiss} style={styles.dismiss}>
-          <Ionicons name="close" size={16} color="#64748B" />
+          <Ionicons name="close" size={16} color="#B0AAA2" />
         </Pressable>
       )}
     </View>
@@ -23,24 +23,29 @@ export const GrowthNudgeCard = ({ message, onDismiss }) => (
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.25)',
+    borderColor: '#E8E4DF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   iconWrap: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(52, 211, 153, 0.12)',
+    backgroundColor: 'rgba(52, 211, 153, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   textWrap: { flex: 1 },
   label: { color: '#34D399', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', marginBottom: 4 },
-  message: { color: '#CBD5F5', fontSize: 14, lineHeight: 20 },
+  message: { color: '#7A756E', fontSize: 14, lineHeight: 20 },
   dismiss: {
     width: 24,
     height: 24,
