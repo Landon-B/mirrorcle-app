@@ -349,7 +349,7 @@ export const GrowthDashboardScreen = ({ navigation }) => {
           <View style={styles.headerRight}>
             <Pressable
               style={styles.headerIcon}
-              onPress={() => navigation.getParent()?.navigate('ProfileTab', { screen: 'NotificationSettings' })}
+              onPress={() => navigation.navigate('ProfileTab', { screen: 'NotificationSettings' })}
               hitSlop={8}
             >
               <Ionicons name="notifications-outline" size={22} color={COLORS.textPrimary} />
