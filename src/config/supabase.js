@@ -6,7 +6,15 @@ const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl;
 const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase configuration. Check your .env file.');
+  console.error(
+    'Missing Supabase configuration. Check your .env file has SUPABASE_URL and SUPABASE_API_KEY set.'
+  );
+}
+
+if (__DEV__ && (!supabaseUrl || !supabaseAnonKey)) {
+  console.warn(
+    '[Supabase] Client created with empty credentials — all auth and database operations will fail.'
+  );
 }
 
 export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {

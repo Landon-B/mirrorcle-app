@@ -19,7 +19,12 @@ class SessionService {
     if (!user) throw new Error('Not authenticated');
 
     // Ensure profile exists (handles missing trigger case)
-    await userProfileService.ensureProfile();
+    try {
+      await userProfileService.ensureProfile();
+    } catch (profileError) {
+      console.error('Error ensuring profile exists:', profileError);
+      throw profileError;
+    }
 
     // Create the session
     const { data: session, error: sessionError } = await supabase
@@ -36,13 +41,21 @@ class SessionService {
 
     if (sessionError) throw sessionError;
 
-    // Record mood history
+    // Record mood history (non-blocking — session is already saved)
     if (feelingId) {
-      await this.recordMood(feelingId, session.id);
+      try {
+        await this.recordMood(feelingId, session.id);
+      } catch (moodError) {
+        console.error('Error recording mood for session:', moodError);
+      }
     }
 
-    // Update user profile stats
-    await this._updateProfileStats(durationSeconds);
+    // Update user profile stats (non-blocking — session is already saved)
+    try {
+      await this._updateProfileStats(durationSeconds);
+    } catch (statsError) {
+      console.error('Error updating profile stats:', statsError);
+    }
 
     return this._transformSession(session);
   }

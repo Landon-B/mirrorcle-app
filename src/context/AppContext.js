@@ -32,7 +32,7 @@ export const AppProvider = ({ children }) => {
   const [preferences, setPreferences] = useState(initialPreferences);
   const [favorites, setFavorites] = useState([]);
   const [sessions, setSessions] = useState([]);
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [unlockedThemes, setUnlockedThemes] = useState([]);
@@ -41,13 +41,13 @@ export const AppProvider = ({ children }) => {
     loadAppData();
 
     // Listen for auth state changes
-    const { data: { subscription } } = authService.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = authService.onAuthStateChange(async (event, session) => {
       const newUser = session?.user ?? null;
       setUser(newUser);
       if (newUser) {
         setHasCompletedOnboarding(true);
         // Reload data from Supabase when user logs in
-        loadSupabaseData();
+        await loadSupabaseData();
       }
     });
 
@@ -282,7 +282,14 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   const isPro = preferences.isPro;
-  const refreshData = user ? loadSupabaseData : loadAppData;
+
+  const refreshData = useCallback(async () => {
+    if (user) {
+      await loadSupabaseData();
+    } else {
+      await loadAppData();
+    }
+  }, [user]);
 
   const value = useMemo(() => ({
     stats,
@@ -304,7 +311,7 @@ export const AppProvider = ({ children }) => {
   }), [
     stats, preferences, favorites, sessions, hasCompletedOnboarding,
     isLoading, isPro, user, unlockedThemes,
-    updateStats, updatePreferences, addSession, completeOnboarding, signOut,
+    updateStats, updatePreferences, addSession, completeOnboarding, signOut, refreshData,
   ]);
 
   return (

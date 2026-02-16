@@ -35,7 +35,7 @@ export const useNotifications = () => {
         clearTimeout(scheduleTimerRef.current);
       }
     };
-  }, [stats.currentStreak, stats.feelingsHistory.length]);
+  }, [isEnabled, notificationTime, stats.currentStreak, stats.feelingsHistory.length]);
 
   const checkPermission = async () => {
     try {
