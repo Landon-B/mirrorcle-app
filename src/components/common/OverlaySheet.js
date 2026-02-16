@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, Modal, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { PrimaryButton } from './PrimaryButton';
 
@@ -17,21 +16,21 @@ export const OverlaySheet = ({ visible, title, subtitle, items, onClose }) => (
             <Text style={styles.overlaySubtitle}>{subtitle}</Text>
           </View>
           <Pressable onPress={onClose} style={styles.overlayCloseButton} accessibilityRole="button" accessibilityLabel="Close">
-            <Ionicons name="close" size={20} color="#fff" />
+            <Ionicons name="close" size={20} color="#7A756E" />
           </Pressable>
         </View>
         <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={styles.overlayContent}>
           {items.map((item) => (
             <Pressable key={item.label} onPress={item.onPress} style={styles.overlayItem} accessibilityRole="button" accessibilityLabel={item.label}>
-              <LinearGradient colors={item.colors} style={styles.overlayIconWrap}>
-                <Ionicons name={item.icon} size={20} color="#fff" />
-              </LinearGradient>
+              <View style={[styles.overlayIconWrap, { backgroundColor: item.bgColor || '#E8D0C6' }]}>
+                <Ionicons name={item.icon} size={20} color="#C17666" />
+              </View>
               <View style={styles.overlayTextWrap}>
                 <Text style={styles.overlayItemTitle}>{item.label}</Text>
                 <Text style={styles.overlayItemSubtitle}>{item.subtitle}</Text>
               </View>
               {item.rightIcon && (
-                <Ionicons name={item.rightIcon} size={20} color="#94A3B8" />
+                <Ionicons name={item.rightIcon} size={20} color="#B0AAA2" />
               )}
             </Pressable>
           ))}
@@ -45,10 +44,10 @@ export const OverlaySheet = ({ visible, title, subtitle, items, onClose }) => (
 );
 
 const styles = StyleSheet.create({
-  overlayBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  overlayBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'flex-end' },
   overlayBackdropPress: { flex: 1 },
   overlaySheet: {
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     maxHeight: SCREEN_HEIGHT * 0.8,
@@ -59,28 +58,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(71, 85, 105, 0.5)',
+    borderBottomColor: '#E8E4DF',
   },
-  overlayTitle: { color: '#fff', fontSize: 22, fontWeight: '600' },
-  overlaySubtitle: { color: '#94A3B8', marginTop: 4 },
+  overlayTitle: { color: '#2D2A26', fontSize: 22, fontWeight: '600' },
+  overlaySubtitle: { color: '#7A756E', marginTop: 4 },
   overlayCloseButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(51, 65, 85, 0.6)',
+    backgroundColor: '#F0ECE7',
     alignItems: 'center',
     justifyContent: 'center',
   },
   overlayContent: { padding: 20, gap: 14 },
   overlayItem: {
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    backgroundColor: '#F9F7F5',
     borderRadius: 20,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
     borderWidth: 1,
-    borderColor: 'rgba(71, 85, 105, 0.6)',
+    borderColor: '#E8E4DF',
   },
   overlayIconWrap: {
     width: 46,
@@ -90,7 +89,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   overlayTextWrap: { flex: 1 },
-  overlayItemTitle: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  overlayItemSubtitle: { color: '#94A3B8', marginTop: 4, fontSize: 12 },
+  overlayItemTitle: { color: '#2D2A26', fontSize: 16, fontWeight: '600' },
+  overlayItemSubtitle: { color: '#7A756E', marginTop: 4, fontSize: 12 },
   overlayFooter: { padding: 20 },
 });

@@ -1,16 +1,42 @@
-export { HomeScreen } from './HomeScreen';
-export { AffirmationHomeScreen } from './AffirmationHomeScreen';
-export { FeelingsScreen } from './FeelingsScreen';
-export { CameraSessionScreen } from './CameraSessionScreen';
-export { ReflectionScreen } from './ReflectionScreen';
-export { FavoritesScreen } from './FavoritesScreen';
-export { TrendsScreen } from './TrendsScreen';
-export { ThemesScreen } from './ThemesScreen';
-export { OnboardingScreen } from './OnboardingScreen';
-export { PaywallScreen } from './PaywallScreen';
-export { NotificationSettingsScreen } from './NotificationSettingsScreen';
+// Auth & Onboarding
 export { WelcomeScreen } from './WelcomeScreen';
 export { CreateAccountScreen } from './CreateAccountScreen';
 export { LoginScreen } from './LoginScreen';
 export { ForgotPasswordScreen } from './ForgotPasswordScreen';
+export { OnboardingScreen } from './OnboardingScreen';
+export { LegalAgreementScreen } from './LegalAgreementScreen';
+export { PowerOfReflectionScreen } from './PowerOfReflectionScreen';
+
+// Home Tab
+export { HomeScreen } from './HomeScreen';
+
+// Affirm Tab
+export { AffirmationHomeScreen } from './AffirmationHomeScreen';
+export { FocusSelectionScreen } from './FocusSelectionScreen';
+export { MoodCheckInScreen } from './MoodCheckInScreen';
+export { BreathingPrepScreen } from './BreathingPrepScreen';
+export { CameraSessionScreen } from './CameraSessionScreen';
+export { PostMoodReflectionScreen } from './PostMoodReflectionScreen';
+export { SuccessCelebrationScreen } from './SuccessCelebrationScreen';
+
+// Growth Tab
+export { GrowthDashboardScreen } from './GrowthDashboardScreen';
+export { ActivityCalendarScreen } from './ActivityCalendarScreen';
+
+// Profile Tab
+export { ProfileScreen } from './ProfileScreen';
+export { FavoritesScreen } from './FavoritesScreen';
+export { ThemesScreen } from './ThemesScreen';
 export { CustomAffirmationsScreen } from './CustomAffirmationsScreen';
+export { NotificationSettingsScreen } from './NotificationSettingsScreen';
+export { PrivacyScreen } from './PrivacyScreen';
+
+// Modals
+export { PaywallScreen } from './PaywallScreen';
+export { MilestoneCelebrationScreen } from './MilestoneCelebrationScreen';
+export { CameraPermissionDeniedScreen } from './CameraPermissionDeniedScreen';
+
+// Legacy (deprecated, kept for backward compat)
+export { FeelingsScreen } from './FeelingsScreen';
+export { ReflectionScreen } from './ReflectionScreen';
+export { TrendsScreen } from './TrendsScreen';

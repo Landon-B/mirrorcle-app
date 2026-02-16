@@ -14,14 +14,14 @@ export const GhostButton = ({ title, onPress, style, accessibilityLabel }) => (
 
 const styles = StyleSheet.create({
   ghostButton: {
-    borderRadius: 999,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: '#E8E4DF',
     paddingVertical: 14,
     paddingHorizontal: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ghostButtonText: { color: '#fff', fontSize: 16 },
+  ghostButtonText: { color: '#C17666', fontSize: 16, fontWeight: '500' },
   buttonPressed: { transform: [{ scale: 0.98 }] },
 });

@@ -22,7 +22,7 @@ export const PrimaryButton = ({ title, icon, onPress, disabled, style, accessibi
       ]}
     >
       <LinearGradient
-        colors={disabled ? ['#475569', '#475569'] : theme.primary}
+        colors={disabled ? ['#D4CFC9', '#D4CFC9'] : (theme.buttonGradient || theme.primary)}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.primaryButtonGradient}
@@ -37,7 +37,7 @@ export const PrimaryButton = ({ title, icon, onPress, disabled, style, accessibi
 const styles = StyleSheet.create({
   primaryButton: {},
   primaryButtonGradient: {
-    borderRadius: 999,
+    borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 24,
     flexDirection: 'row',

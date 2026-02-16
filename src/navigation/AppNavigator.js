@@ -1,23 +1,15 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
-  HomeScreen,
-  AffirmationHomeScreen,
-  FeelingsScreen,
-  CameraSessionScreen,
-  ReflectionScreen,
-  FavoritesScreen,
-  TrendsScreen,
-  ThemesScreen,
-  OnboardingScreen,
-  PaywallScreen,
-  NotificationSettingsScreen,
   WelcomeScreen,
   CreateAccountScreen,
   LoginScreen,
   ForgotPasswordScreen,
-  CustomAffirmationsScreen,
+  OnboardingScreen,
+  PaywallScreen,
+  MilestoneCelebrationScreen,
 } from '../screens';
+import { MainTabNavigator } from './MainTabNavigator';
 import { useApp } from '../context/AppContext';
 import { ErrorBoundary } from '../components/common';
 
@@ -27,14 +19,14 @@ export const AppNavigator = () => {
   const { hasCompletedOnboarding, isLoading } = useApp();
 
   if (isLoading) {
-    return null; // Or a loading screen
+    return null;
   }
 
   return (
     <ErrorBoundary>
       <Stack.Navigator
         screenOptions={{ headerShown: false }}
-        initialRouteName={hasCompletedOnboarding ? 'Home' : 'Welcome'}
+        initialRouteName={hasCompletedOnboarding ? 'MainTabs' : 'Welcome'}
       >
         {/* Auth Flow */}
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
@@ -43,24 +35,18 @@ export const AppNavigator = () => {
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
 
-        {/* Main Flow */}
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="AffirmationHome" component={AffirmationHomeScreen} />
-        <Stack.Screen name="Feelings" component={FeelingsScreen} />
-        <Stack.Screen name="Session" component={CameraSessionScreen} />
-        <Stack.Screen name="Reflection" component={ReflectionScreen} />
+        {/* Main App with Bottom Tabs */}
+        <Stack.Screen name="MainTabs" component={MainTabNavigator} />
 
-        {/* Profile Screens */}
-        <Stack.Screen name="Favorites" component={FavoritesScreen} />
-        <Stack.Screen name="Trends" component={TrendsScreen} />
-        <Stack.Screen name="Themes" component={ThemesScreen} />
-        <Stack.Screen name="CustomAffirmations" component={CustomAffirmationsScreen} />
-
-        {/* Settings Screens */}
-        <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+        {/* Modals */}
         <Stack.Screen
           name="Paywall"
           component={PaywallScreen}
+          options={{ presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="MilestoneCelebration"
+          component={MilestoneCelebrationScreen}
           options={{ presentation: 'modal' }}
         />
       </Stack.Navigator>

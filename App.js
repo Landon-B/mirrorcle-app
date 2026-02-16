@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider } from './src/context/ThemeContext';
@@ -13,7 +14,15 @@ const linking = {
   prefixes: ['mirrorcle://'],
   config: {
     screens: {
-      Home: 'home',
+      MainTabs: {
+        screens: {
+          HomeTab: {
+            screens: {
+              Home: 'home',
+            },
+          },
+        },
+      },
     },
   },
 };
@@ -31,6 +40,7 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <StatusBar style="dark" />
       <ThemeProvider>
         <AppProvider>
           <NavigationContainer ref={navigationRef} linking={linking}>

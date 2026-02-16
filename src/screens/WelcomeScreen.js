@@ -1,145 +1,196 @@
-import React from 'react';
-import { View, Text, StyleSheet, StatusBar, Animated } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  StatusBar,
+  Platform,
+  Pressable,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { GradientBackground, PrimaryButton, GhostButton } from '../components/common';
+import { AFFIRMATIONS } from '../constants';
+import { FALLBACK_AFFIRMATIONS } from '../constants';
+
+const COLORS = {
+  background: '#F5F2EE',
+  textPrimary: '#2D2A26',
+  textMuted: '#B0AAA2',
+  accent: '#C17666',
+  cardBackground: '#FFFFFF',
+};
+
+const serifItalic = {
+  fontFamily: Platform.OS === 'ios' ? 'Georgia-Italic' : 'serif',
+  fontStyle: 'italic',
+};
 
 export const WelcomeScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
+
+  const affirmationText = useMemo(() => {
+    if (AFFIRMATIONS && AFFIRMATIONS.length > 0) {
+      const index = Math.floor(Math.random() * AFFIRMATIONS.length);
+      return AFFIRMATIONS[index].text;
+    }
+    const index = Math.floor(Math.random() * FALLBACK_AFFIRMATIONS.length);
+    return FALLBACK_AFFIRMATIONS[index];
+  }, []);
+
   return (
-    <GradientBackground>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" />
-        <View style={styles.container}>
-          <View style={styles.heroSection}>
-            <LinearGradient
-              colors={['#A855F7', '#EC4899']}
-              style={styles.iconContainer}
-            >
-              <Ionicons name="sparkles" size={48} color="#fff" />
-            </LinearGradient>
+    <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
-            <Text style={styles.title}>Mirrorcle</Text>
-            <Text style={styles.tagline}>Reflect, affirm, transform</Text>
+      <View style={styles.container}>
+        {/* Brand */}
+        <View style={styles.brandSection}>
+          <Text style={styles.brandTitle}>Mirrorcle</Text>
+          <Text style={styles.brandSubtitle}>REFLECT. EVOLVE. REPEAT.</Text>
+        </View>
 
-            <View style={styles.quoteCard}>
-              <Text style={styles.quoteText}>
-                "The most powerful relationship you will ever have is the relationship with yourself."
-              </Text>
-              <Text style={styles.quoteAuthor}>— Steve Maraboli</Text>
-            </View>
-          </View>
-
-          <View style={styles.featuresRow}>
-            <View style={styles.featureItem}>
-              <LinearGradient colors={['#3B82F6', '#06B6D4']} style={styles.featureIcon}>
-                <Ionicons name="mic" size={20} color="#fff" />
-              </LinearGradient>
-              <Text style={styles.featureText}>Speak</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <LinearGradient colors={['#22C55E', '#10B981']} style={styles.featureIcon}>
-                <Ionicons name="eye" size={20} color="#fff" />
-              </LinearGradient>
-              <Text style={styles.featureText}>Reflect</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <LinearGradient colors={['#F97316', '#FACC15']} style={styles.featureIcon}>
-                <Ionicons name="trending-up" size={20} color="#fff" />
-              </LinearGradient>
-              <Text style={styles.featureText}>Grow</Text>
-            </View>
-          </View>
-
-          <View style={styles.buttonSection}>
-            <PrimaryButton
-              title="Get Started"
-              icon="arrow-forward"
-              onPress={() => navigation.navigate('CreateAccount')}
-            />
-            <GhostButton
-              title="I already have an account"
-              onPress={() => navigation.navigate('Login')}
-            />
+        {/* Affirmation Card */}
+        <View style={styles.cardWrapper}>
+          <View style={styles.card}>
+            <Text style={styles.quoteMark}>{'\u201C'}</Text>
+            <Text style={styles.cardText}>{affirmationText}</Text>
           </View>
         </View>
-      </SafeAreaView>
-    </GradientBackground>
+
+        {/* Actions */}
+        <View style={styles.actionSection}>
+          <Pressable
+            onPress={() => navigation.navigate('Onboarding')}
+            accessibilityRole="button"
+            accessibilityLabel="Begin my journey"
+            style={({ pressed }) => [
+              styles.ctaButton,
+              pressed && styles.ctaButtonPressed,
+            ]}
+          >
+            <Text style={styles.ctaButtonText}>Begin my journey</Text>
+            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+          </Pressable>
+
+          <Pressable
+            onPress={() => navigation.navigate('Login')}
+            accessibilityRole="button"
+            accessibilityLabel="Sign in"
+            style={styles.signInButton}
+          >
+            <Text style={styles.signInText}>ALREADY A MEMBER? SIGN IN</Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
+  screen: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
   container: {
     flex: 1,
-    padding: 24,
+    paddingHorizontal: 28,
     justifyContent: 'space-between',
   },
-  heroSection: {
+
+  /* Brand */
+  brandSection: {
     alignItems: 'center',
-    marginTop: 40,
+    marginTop: 48,
   },
-  iconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  brandTitle: {
+    fontSize: 48,
+    color: COLORS.textPrimary,
+    ...serifItalic,
+    marginBottom: 10,
+  },
+  brandSubtitle: {
+    fontSize: 11,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    color: COLORS.textMuted,
+  },
+
+  /* Affirmation Card */
+  cardWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    flex: 1,
   },
-  title: {
-    fontSize: 52,
-    fontWeight: '700',
-    color: '#E9D5FF',
-    marginBottom: 8,
-  },
-  tagline: {
-    fontSize: 18,
-    color: '#CBD5F5',
-    marginBottom: 32,
-  },
-  quoteCard: {
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
-    borderRadius: 20,
-    padding: 24,
-    marginTop: 8,
-  },
-  quoteText: {
-    color: '#fff',
-    fontSize: 16,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  quoteAuthor: {
-    color: '#94A3B8',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 12,
-  },
-  featuresRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 32,
-    marginVertical: 32,
-  },
-  featureItem: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  featureIcon: {
-    width: 48,
-    height: 48,
+  card: {
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 24,
+    paddingHorizontal: 32,
+    paddingTop: 28,
+    paddingBottom: 36,
+    width: '100%',
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  quoteMark: {
+    fontSize: 56,
+    color: COLORS.textMuted,
+    ...serifItalic,
+    lineHeight: 56,
+    marginBottom: 4,
+    opacity: 0.4,
+  },
+  cardText: {
+    fontSize: 24,
+    color: COLORS.textPrimary,
+    ...serifItalic,
+    textAlign: 'center',
+    lineHeight: 34,
+  },
+
+  /* Actions */
+  actionSection: {
+    alignItems: 'center',
+    marginBottom: 24,
+    gap: 16,
+  },
+  ctaButton: {
+    backgroundColor: COLORS.accent,
+    borderRadius: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 28,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+    gap: 10,
   },
-  featureText: {
-    color: '#CBD5F5',
-    fontSize: 14,
+  ctaButtonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
-  buttonSection: {
-    gap: 12,
-    marginBottom: 20,
+  ctaButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  signInButton: {
+    paddingVertical: 8,
+  },
+  signInText: {
+    fontSize: 11,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    color: COLORS.textMuted,
   },
 });

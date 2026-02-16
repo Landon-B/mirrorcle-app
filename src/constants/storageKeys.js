@@ -7,4 +7,8 @@ export const STORAGE_KEYS = {
   theme: 'mirrorcle-theme',
   onboarding: 'mirrorcle-onboarding-completed',
   notifications: 'mirrorcle-notifications',
+  focusAreas: 'mirrorcle-focus-areas',
+  practiceFrequency: 'mirrorcle-practice-frequency',
+  lastMood: 'mirrorcle-last-mood',
+  legalAccepted: 'mirrorcle-legal-accepted',
 };

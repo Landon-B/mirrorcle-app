@@ -1,287 +1,558 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, StatusBar, Animated, PanResponder, Dimensions, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { GradientBackground, PrimaryButton } from '../components/common';
-import { AFFIRMATIONS } from '../constants';
+import React, { useState, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  StatusBar,
+  ScrollView,
+  Pressable,
+  Dimensions,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useApp } from '../context/AppContext';
+import { PrimaryButton, Card } from '../components/common';
+import { MOODS } from '../constants/feelings';
+import { FOCUS_AREAS } from '../constants/focusAreas';
+import { AFFIRMATIONS, FALLBACK_AFFIRMATIONS } from '../constants';
 
-const SWIPE_THRESHOLD = 50;
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-export const HomeScreen = ({ navigation }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
-  const autoAdvanceRef = useRef(null);
-  const resumeTimerRef = useRef(null);
-  const indexRef = useRef(currentIndex);
-  const goToNextRef = useRef(null);
+const RUST = '#C17666';
+const CREAM = '#F5F2EE';
+const BORDER_COLOR = '#E8E4DF';
+const TEXT_PRIMARY = '#2C2520';
+const TEXT_SECONDARY = '#7A7267';
+const TEXT_MUTED = '#B0AAA2';
 
-  // Keep ref in sync with state
-  useEffect(() => {
-    indexRef.current = currentIndex;
-  }, [currentIndex]);
+// --- Helpers ---
 
-  const current = AFFIRMATIONS[currentIndex];
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
-  // Smooth transition animation
-  const animateTransition = useCallback((direction, newIndex) => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: direction * -30,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setCurrentIndex(newIndex);
-      slideAnim.setValue(direction * 30);
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-        Animated.spring(slideAnim, {
-          toValue: 0,
-          friction: 8,
-          tension: 40,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    });
-  }, [fadeAnim, slideAnim]);
+function getUserName(user, preferences) {
+  return user?.user_metadata?.name || preferences?.name || null;
+}
 
-  const goToNext = useCallback(() => {
-    const idx = indexRef.current;
-    const nextIndex = idx < AFFIRMATIONS.length - 1 ? idx + 1 : 0;
-    animateTransition(1, nextIndex);
-  }, [animateTransition]);
-
-  const goToPrev = useCallback(() => {
-    const idx = indexRef.current;
-    const prevIndex = idx > 0 ? idx - 1 : AFFIRMATIONS.length - 1;
-    animateTransition(-1, prevIndex);
-  }, [animateTransition]);
-
-  // Keep ref updated so PanResponder always has latest function
-  useEffect(() => {
-    goToNextRef.current = goToNext;
-  }, [goToNext]);
-
-  const startAutoAdvance = useCallback(() => {
-    if (autoAdvanceRef.current) {
-      clearInterval(autoAdvanceRef.current);
-    }
-    autoAdvanceRef.current = setInterval(() => {
-      if (goToNextRef.current) goToNextRef.current();
-    }, 5000);
-  }, []);
-
-  // Pan responder for swipe gestures
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 15,
-      onPanResponderGrant: () => {
-        // Pause auto-advance when user starts swiping
-        if (autoAdvanceRef.current) {
-          clearInterval(autoAdvanceRef.current);
-          autoAdvanceRef.current = null;
-        }
-        if (resumeTimerRef.current) {
-          clearTimeout(resumeTimerRef.current);
-          resumeTimerRef.current = null;
-        }
-      },
-      onPanResponderRelease: (_, gesture) => {
-        if (gesture.dy < -SWIPE_THRESHOLD) {
-          const idx = indexRef.current;
-          const nextIndex = idx < AFFIRMATIONS.length - 1 ? idx + 1 : 0;
-          // Use refs to access latest animation functions
-          Animated.parallel([
-            Animated.timing(fadeAnim, {
-              toValue: 0,
-              duration: 200,
-              useNativeDriver: true,
-            }),
-            Animated.timing(slideAnim, {
-              toValue: -30,
-              duration: 200,
-              useNativeDriver: true,
-            }),
-          ]).start(() => {
-            setCurrentIndex(nextIndex);
-            slideAnim.setValue(30);
-            Animated.parallel([
-              Animated.timing(fadeAnim, {
-                toValue: 1,
-                duration: 250,
-                useNativeDriver: true,
-              }),
-              Animated.spring(slideAnim, {
-                toValue: 0,
-                friction: 8,
-                tension: 40,
-                useNativeDriver: true,
-              }),
-            ]).start();
-          });
-        } else if (gesture.dy > SWIPE_THRESHOLD) {
-          const idx = indexRef.current;
-          const prevIndex = idx > 0 ? idx - 1 : AFFIRMATIONS.length - 1;
-          Animated.parallel([
-            Animated.timing(fadeAnim, {
-              toValue: 0,
-              duration: 200,
-              useNativeDriver: true,
-            }),
-            Animated.timing(slideAnim, {
-              toValue: 30,
-              duration: 200,
-              useNativeDriver: true,
-            }),
-          ]).start(() => {
-            setCurrentIndex(prevIndex);
-            slideAnim.setValue(-30);
-            Animated.parallel([
-              Animated.timing(fadeAnim, {
-                toValue: 1,
-                duration: 250,
-                useNativeDriver: true,
-              }),
-              Animated.spring(slideAnim, {
-                toValue: 0,
-                friction: 8,
-                tension: 40,
-                useNativeDriver: true,
-              }),
-            ]).start();
-          });
-        }
-        // Resume auto-advance after a delay, reusing startAutoAdvance
-        resumeTimerRef.current = setTimeout(() => {
-          if (autoAdvanceRef.current) {
-            clearInterval(autoAdvanceRef.current);
-          }
-          autoAdvanceRef.current = setInterval(() => {
-            if (goToNextRef.current) goToNextRef.current();
-          }, 5000);
-        }, 500);
-      },
-    })
-  ).current;
-
-  useEffect(() => {
-    startAutoAdvance();
-    return () => {
-      if (autoAdvanceRef.current) {
-        clearInterval(autoAdvanceRef.current);
-      }
-      if (resumeTimerRef.current) {
-        clearTimeout(resumeTimerRef.current);
-      }
-    };
-  }, [startAutoAdvance]);
-
-  if (!current) {
-    return null;
+function getDailyAffirmation() {
+  // Use date-based seed for consistent daily quote
+  const today = new Date();
+  const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  const allAffirmations = AFFIRMATIONS.length > 0 ? AFFIRMATIONS : [];
+  if (allAffirmations.length > 0) {
+    return allAffirmations[seed % allAffirmations.length].text;
   }
+  return FALLBACK_AFFIRMATIONS[seed % FALLBACK_AFFIRMATIONS.length];
+}
+
+function getWeeklyActivity(sessions) {
+  // Returns array of 7 booleans for Mon-Sun of current week
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0 = Sun, 1 = Mon, ...
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + mondayOffset);
+  monday.setHours(0, 0, 0, 0);
+
+  const activity = Array(7).fill(false);
+
+  sessions.forEach((session) => {
+    const sessionDate = new Date(session.date);
+    sessionDate.setHours(0, 0, 0, 0);
+    const diff = Math.floor((sessionDate - monday) / (1000 * 60 * 60 * 24));
+    if (diff >= 0 && diff < 7) {
+      activity[diff] = true;
+    }
+  });
+
+  return activity;
+}
+
+// --- New User Dashboard ---
+
+const NewUserDashboard = ({ navigation, name, selectedMood, onMoodSelect }) => {
+  const displayFocusAreas = FOCUS_AREAS.slice(0, 4);
 
   return (
-    <GradientBackground>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" />
-        <View style={styles.centeredContainer} {...panResponder.panHandlers}>
-          <View style={styles.brandHeader}>
-            <Text style={styles.brandTitle}>Mirrorcle</Text>
-            <Text style={styles.brandSubtitle}>Reflect. Affirm. Transform.</Text>
-          </View>
+    <>
+      {/* Greeting */}
+      <View style={styles.greetingSection}>
+        <Text style={styles.greetingText}>
+          {getGreeting()},{' '}
+          {name ? <Text style={styles.rustText}>{name}</Text> : <Text style={styles.rustText}>friend</Text>}.
+        </Text>
+        <Text style={styles.subtitleText}>How are you feeling right now?</Text>
+      </View>
 
-          <Animated.View
-            style={[
-              styles.affirmationWrapper,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }],
-              }
-            ]}
-          >
-            <LinearGradient colors={current.colors} style={styles.affirmationGradient}>
-              <View style={styles.affirmationCard}>
-                <Text style={styles.affirmationText}>
-                  "{current.text}"
-                </Text>
-              </View>
-            </LinearGradient>
-          </Animated.View>
+      {/* Mood Pills */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.moodPillsContainer}
+        style={styles.moodPillsScroll}
+      >
+        {MOODS.map((mood) => {
+          const isSelected = selectedMood === mood.id;
+          return (
+            <Pressable
+              key={mood.id}
+              onPress={() => onMoodSelect(mood.id)}
+              style={[
+                styles.moodPill,
+                isSelected && styles.moodPillSelected,
+              ]}
+            >
+              <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+              <Text
+                style={[
+                  styles.moodLabel,
+                  isSelected && styles.moodLabelSelected,
+                ]}
+              >
+                {mood.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
-          <View style={styles.indicators}>
-            <View style={styles.dotsRow}>
-              {AFFIRMATIONS.map((_, idx) => (
-                <View
-                  key={idx}
-                  style={[styles.dot, idx === currentIndex && styles.dotActive]}
-                />
-              ))}
-            </View>
-            <Text style={styles.swipeHint}>Swipe to explore</Text>
-          </View>
+      {/* Daily Focus Areas */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Daily Focus Areas</Text>
+        <Pressable onPress={() => navigation.navigate('AffirmTab')}>
+          <Text style={styles.viewAllLink}>View All</Text>
+        </Pressable>
+      </View>
 
-          <View style={styles.buttonWrapper}>
-            <PrimaryButton
-              title="Start Your Affirmation"
-              icon="sparkles"
-              onPress={() => navigation.navigate("Feelings")}
-            />
-          </View>
+      <View style={styles.focusGrid}>
+        {displayFocusAreas.map((area) => (
+          <Card key={area.id} style={styles.focusCard}>
+            <Text style={styles.focusEmoji}>{area.emoji}</Text>
+            <Text style={styles.focusLabel}>{area.label}</Text>
+            <Text style={styles.focusSubtitle}>Explore</Text>
+          </Card>
+        ))}
+      </View>
 
-          <Pressable
-            onPress={() => navigation.navigate('AffirmationHome')}
-            style={styles.skipButton}
-          >
-            <Text style={styles.skipButtonText}>Skip Affirmation</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    </GradientBackground>
+      {/* Start Session CTA */}
+      <View style={styles.ctaSection}>
+        <PrimaryButton
+          title="START MIRROR SESSION"
+          icon="videocam"
+          onPress={() => navigation.navigate('AffirmTab', { screen: 'FocusSelection' })}
+          style={styles.ctaButton}
+        />
+      </View>
+    </>
   );
 };
 
+// --- Returning User Dashboard ---
+
+const StreakProgressBar = ({ weeklyActivity }) => {
+  const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  return (
+    <View style={styles.streakBarContainer}>
+      {weeklyActivity.map((active, index) => (
+        <View key={index} style={styles.streakBarDayColumn}>
+          <View
+            style={[
+              styles.streakBarSegment,
+              active && styles.streakBarSegmentActive,
+            ]}
+          />
+          <Text style={styles.streakBarDayLabel}>{dayLabels[index]}</Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const ReturningUserDashboard = ({ navigation, name, stats, sessions }) => {
+  const weeklyActivity = useMemo(() => getWeeklyActivity(sessions), [sessions]);
+  const activeDays = weeklyActivity.filter(Boolean).length;
+  const dailyAffirmation = useMemo(() => getDailyAffirmation(), []);
+
+  // Rough consistency percentile
+  const consistencyLabel = activeDays >= 5
+    ? 'TOP 5% CONSISTENCY THIS WEEK'
+    : activeDays >= 3
+      ? 'TOP 20% CONSISTENCY THIS WEEK'
+      : activeDays >= 1
+        ? 'BUILDING MOMENTUM THIS WEEK'
+        : 'START YOUR WEEK STRONG';
+
+  return (
+    <>
+      {/* Brand Label */}
+      <Text style={styles.brandLabel}>MIRRORCLE</Text>
+
+      {/* Greeting */}
+      <View style={styles.greetingSection}>
+        <Text style={styles.greetingText}>
+          Welcome back,{' '}
+          {name ? <Text style={styles.rustText}>{name}</Text> : <Text style={styles.rustText}>friend</Text>}.
+        </Text>
+      </View>
+
+      {/* Active Momentum Card */}
+      <Card style={styles.momentumCard}>
+        <Text style={styles.momentumTitle}>Active Momentum</Text>
+        <View style={styles.streakRow}>
+          <Text style={styles.streakNumber}>{stats.currentStreak}</Text>
+          <Text style={styles.streakUnit}>days</Text>
+        </View>
+        <StreakProgressBar weeklyActivity={weeklyActivity} />
+        <Text style={styles.consistencyLabel}>{consistencyLabel}</Text>
+      </Card>
+
+      {/* Begin CTA */}
+      <View style={styles.ctaSection}>
+        <PrimaryButton
+          title="Begin Today's Ritual"
+          icon="play"
+          onPress={() => navigation.navigate('AffirmTab', { screen: 'FocusSelection' })}
+          style={styles.ctaButton}
+        />
+      </View>
+
+      {/* Recent Focus */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Recent Focus</Text>
+      </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.recentFocusContainer}
+        style={styles.recentFocusScroll}
+      >
+        {FOCUS_AREAS.map((area) => (
+          <Card key={area.id} style={styles.recentFocusCard}>
+            <Text style={styles.recentFocusEmoji}>{area.emoji}</Text>
+            <Text style={styles.recentFocusLabel}>{area.label}</Text>
+          </Card>
+        ))}
+      </ScrollView>
+
+      {/* Daily Intention */}
+      <Card style={styles.intentionCard}>
+        <Text style={styles.intentionTitle}>Daily Intention</Text>
+        <Text style={styles.intentionQuote}>"{dailyAffirmation}"</Text>
+        <View style={styles.intentionActions}>
+          <Pressable style={styles.intentionActionButton}>
+            <Ionicons name="share-outline" size={18} color={RUST} />
+            <Text style={styles.intentionActionText}>SHARE</Text>
+          </Pressable>
+          <Pressable style={styles.intentionActionButton}>
+            <Ionicons name="bookmark-outline" size={18} color={RUST} />
+            <Text style={styles.intentionActionText}>SAVE</Text>
+          </Pressable>
+        </View>
+      </Card>
+    </>
+  );
+};
+
+// --- Main HomeScreen ---
+
+export const HomeScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
+  const { stats, preferences, user, sessions } = useApp();
+  const [selectedMood, setSelectedMood] = useState(null);
+
+  const isNewUser = stats.totalSessions < 3;
+  const name = getUserName(user, preferences);
+
+  return (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {isNewUser ? (
+          <NewUserDashboard
+            navigation={navigation}
+            name={name}
+            selectedMood={selectedMood}
+            onMoodSelect={setSelectedMood}
+          />
+        ) : (
+          <ReturningUserDashboard
+            navigation={navigation}
+            name={name}
+            stats={stats}
+            sessions={sessions}
+          />
+        )}
+      </ScrollView>
+    </View>
+  );
+};
+
+// --- Styles ---
+
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
-  centeredContainer: {
+  container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
+    backgroundColor: CREAM,
   },
-  brandHeader: { alignItems: 'center', marginBottom: 32 },
-  brandTitle: {
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+
+  // Brand label (returning user)
+  brandLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 2,
+    color: TEXT_MUTED,
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 4,
+  },
+
+  // Greeting
+  greetingSection: {
+    marginTop: 20,
+    marginBottom: 24,
+  },
+  greetingText: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
+    lineHeight: 36,
+  },
+  rustText: {
+    color: RUST,
+  },
+  subtitleText: {
+    fontSize: 16,
+    color: TEXT_SECONDARY,
+    marginTop: 6,
+  },
+
+  // Mood Pills
+  moodPillsScroll: {
+    marginBottom: 28,
+    marginHorizontal: -20,
+  },
+  moodPillsContainer: {
+    paddingHorizontal: 20,
+    gap: 10,
+  },
+  moodPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: BORDER_COLOR,
+    backgroundColor: '#FFFFFF',
+  },
+  moodPillSelected: {
+    backgroundColor: RUST,
+    borderColor: RUST,
+  },
+  moodEmoji: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  moodLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: TEXT_PRIMARY,
+  },
+  moodLabelSelected: {
+    color: '#FFFFFF',
+  },
+
+  // Section Header
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: TEXT_PRIMARY,
+  },
+  viewAllLink: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: RUST,
+  },
+
+  // Focus Grid (new user)
+  focusGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 28,
+  },
+  focusCard: {
+    width: (SCREEN_WIDTH - 40 - 12) / 2,
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 12,
+  },
+  focusEmoji: {
+    fontSize: 28,
+    marginBottom: 8,
+  },
+  focusLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: TEXT_PRIMARY,
+    marginBottom: 2,
+  },
+  focusSubtitle: {
+    fontSize: 12,
+    color: TEXT_MUTED,
+  },
+
+  // CTA
+  ctaSection: {
+    marginBottom: 28,
+  },
+  ctaButton: {
+    // inherits PrimaryButton styling
+  },
+
+  // Momentum Card (returning user)
+  momentumCard: {
+    marginBottom: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+  },
+  momentumTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    color: TEXT_SECONDARY,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  streakRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 16,
+  },
+  streakNumber: {
     fontSize: 48,
     fontWeight: '700',
-    color: '#E9D5FF',
+    color: TEXT_PRIMARY,
   },
-  brandSubtitle: { color: '#CBD5F5', marginTop: 6, fontSize: 16 },
-  affirmationWrapper: { width: '100%', marginBottom: 20 },
-  affirmationGradient: { borderRadius: 24, padding: 2 },
-  affirmationCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-    borderRadius: 22,
-    paddingVertical: 40,
-    paddingHorizontal: 28,
-    minHeight: 140,
-    justifyContent: 'center',
+  streakUnit: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: TEXT_SECONDARY,
+    marginLeft: 6,
   },
-  affirmationText: { color: '#fff', fontSize: 22, textAlign: 'center', lineHeight: 32 },
-  indicators: { alignItems: 'center', marginBottom: 28 },
-  dotsRow: { flexDirection: 'row', gap: 6 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#475569' },
-  dotActive: { width: 20, backgroundColor: '#C084FC' },
-  swipeHint: { color: '#64748B', fontSize: 12, marginTop: 10 },
-  buttonWrapper: { width: '100%' },
-  skipButton: { marginTop: 20, paddingVertical: 8, paddingHorizontal: 16, opacity: 0.5 },
-  skipButtonText: { color: '#fff', fontSize: 14 },
+
+  // Streak Progress Bar
+  streakBarContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  streakBarDayColumn: {
+    alignItems: 'center',
+    flex: 1,
+    gap: 6,
+  },
+  streakBarSegment: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: BORDER_COLOR,
+    width: '80%',
+  },
+  streakBarSegmentActive: {
+    backgroundColor: RUST,
+  },
+  streakBarDayLabel: {
+    fontSize: 10,
+    fontWeight: '500',
+    color: TEXT_MUTED,
+  },
+  consistencyLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    color: RUST,
+    marginTop: 4,
+  },
+
+  // Recent Focus (returning user)
+  recentFocusScroll: {
+    marginBottom: 20,
+    marginHorizontal: -20,
+  },
+  recentFocusContainer: {
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  recentFocusCard: {
+    width: 110,
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 10,
+  },
+  recentFocusEmoji: {
+    fontSize: 24,
+    marginBottom: 6,
+  },
+  recentFocusLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: TEXT_PRIMARY,
+    textAlign: 'center',
+  },
+
+  // Daily Intention (returning user)
+  intentionCard: {
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    marginBottom: 8,
+  },
+  intentionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    color: TEXT_SECONDARY,
+    textTransform: 'uppercase',
+    marginBottom: 12,
+  },
+  intentionQuote: {
+    fontSize: 18,
+    fontWeight: '400',
+    fontStyle: 'italic',
+    color: TEXT_PRIMARY,
+    lineHeight: 28,
+    marginBottom: 16,
+  },
+  intentionActions: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  intentionActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  intentionActionText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    color: RUST,
+  },
 });

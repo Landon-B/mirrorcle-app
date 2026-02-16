@@ -1,22 +1,22 @@
 export const colors = {
   // Base
-  background: '#0F172A',
-  surface: 'rgba(30, 41, 59, 0.6)',
-  surfaceSolid: '#1E293B',
+  background: '#F5F2EE',
+  surface: '#FFFFFF',
+  surfaceSolid: '#FFFFFF',
 
   // Text
-  textPrimary: '#FFFFFF',
-  textSecondary: '#CBD5F5',
-  textMuted: '#94A3B8',
-  textAccent: '#E9D5FF',
+  textPrimary: '#2D2A26',
+  textSecondary: '#7A756E',
+  textMuted: '#B0AAA2',
+  textAccent: '#C17666',
 
   // Borders
-  border: 'rgba(71, 85, 105, 0.6)',
-  borderSolid: '#475569',
+  border: '#E8E4DF',
+  borderSolid: '#DDD8D2',
 
-  // Primary gradient
-  primaryStart: '#A855F7',
-  primaryEnd: '#EC4899',
+  // Primary
+  primaryStart: '#C17666',
+  primaryEnd: '#E8A090',
 
   // Status colors
   success: '#22C55E',
@@ -25,15 +25,25 @@ export const colors = {
   info: '#3B82F6',
 
   // Overlay
-  overlay: 'rgba(0, 0, 0, 0.6)',
+  overlay: 'rgba(0, 0, 0, 0.3)',
 
   // Disabled
-  disabled: '#475569',
+  disabled: '#D4CFC9',
+
+  // V2 semantic tokens
+  cardBackground: '#FFFFFF',
+  cardShadow: 'rgba(0, 0, 0, 0.06)',
+  selectedMoodBg: '#EDE4DC',
+  accentPeach: '#E8D0C6',
+  accentRust: '#C17666',
+  accentOrange: '#D4845A',
+  tabActive: '#C17666',
+  tabInactive: '#B0AAA2',
 };
 
 export const gradients = {
-  primary: ['#A855F7', '#EC4899'],
-  background: ['#0F172A', '#4C1D95', '#0F172A'],
+  primary: ['#C17666', '#E8A090'],
+  background: ['#F9F7F5', '#F5F2EE'],
   success: ['#22C55E', '#10B981'],
   warning: ['#F59E0B', '#F97316'],
   error: ['#EF4444', '#FB7185'],

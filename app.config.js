@@ -8,11 +8,11 @@ export default {
     scheme: "mirrorcle",
     orientation: "portrait",
     icon: "./assets/icon.png",
-    userInterfaceStyle: "dark",
+    userInterfaceStyle: "light",
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
-      backgroundColor: "#0F172A"
+      backgroundColor: "#F5F2EE"
     },
     ios: {
       supportsTablet: true,
@@ -27,7 +27,7 @@ export default {
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#0F172A"
+        backgroundColor: "#F5F2EE"
       },
       edgeToEdgeEnabled: true,
       permissions: [
@@ -44,7 +44,7 @@ export default {
         "expo-notifications",
         {
           icon: "./assets/notification-icon.png",
-          color: "#A855F7"
+          color: "#C17666"
         }
       ],
       [

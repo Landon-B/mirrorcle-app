@@ -15,7 +15,7 @@ export const IconButton = ({ icon, size = 20, onPress, style, active, accessibil
       style,
     ]}
   >
-    <Ionicons name={icon} size={size} color="#fff" />
+    <Ionicons name={icon} size={size} color={active ? '#fff' : '#7A756E'} />
   </Pressable>
 );
 
@@ -24,12 +24,12 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    backgroundColor: '#F0ECE7',
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconCircleButtonActive: {
-    backgroundColor: '#EF4444',
+    backgroundColor: '#C17666',
   },
   buttonPressed: { transform: [{ scale: 0.98 }] },
 });
