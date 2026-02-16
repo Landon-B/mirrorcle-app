@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Share,
-  Platform,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -23,24 +23,175 @@ import Animated, {
   FadeInUp,
 } from 'react-native-reanimated';
 import { useApp } from '../context/AppContext';
-import { PrimaryButton, Card } from '../components/common';
+import { PrimaryButton } from '../components/common';
+import { PowerPhraseCard } from '../components/personalization/PowerPhraseCard';
+import { GrowthNudgeCard } from '../components/personalization/GrowthNudgeCard';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
 import { useHaptics } from '../hooks/useHaptics';
+import { getMoodById, getMoodEmoji, FEELING_COLORS } from '../constants/feelings';
+import { personalizationService } from '../services/personalization';
 
-const MOTIVATIONAL_QUOTES = [
-  { text: 'The real voyage of discovery consists not in seeking new landscapes, but in having new eyes.', author: 'Marcel Proust' },
-  { text: 'You yourself, as much as anybody in the entire universe, deserve your love and affection.', author: 'Buddha' },
-  { text: 'What lies behind us and what lies before us are tiny matters compared to what lies within us.', author: 'Ralph Waldo Emerson' },
-  { text: 'The most beautiful thing you can wear is confidence.', author: 'Blake Lively' },
-  { text: 'To love oneself is the beginning of a lifelong romance.', author: 'Oscar Wilde' },
-];
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+const PARTICLE_COUNT = 14;
+const PARTICLE_COLORS = ['#C17666', '#E8A090', '#D4A574', '#C9956B', '#E0BCA8'];
 
 const formatDuration = (seconds) => {
-  if (!seconds || seconds < 60) return `${seconds || 0}s`;
+  if (!seconds || seconds < 60) return `${seconds || 0} seconds`;
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+  if (mins === 1) return secs > 0 ? `1 minute ${secs}s` : '1 minute';
+  return secs > 0 ? `${mins} minutes` : `${mins} minutes`;
+};
+
+const getStreakMessage = (streak) => {
+  if (!streak || streak <= 1) return 'Every session is a step forward.';
+  if (streak < 7) return `${streak} days of showing up for yourself.`;
+  if (streak < 14) return `${streak} days of choosing yourself \u2014 that takes real courage.`;
+  if (streak < 30) return `${streak} days strong. This practice is becoming part of who you are.`;
+  return `${streak} days. You\u2019ve made self-reflection a way of life.`;
+};
+
+// --- Floating Particles ---
+const Particle = ({ index }) => {
+  const startX = useMemo(() => Math.random() * SCREEN_WIDTH, []);
+  const size = useMemo(() => 4 + Math.random() * 4, []);
+  const color = useMemo(() => PARTICLE_COLORS[index % PARTICLE_COLORS.length], [index]);
+  const duration = useMemo(() => 4000 + Math.random() * 3000, []);
+  const swayAmount = useMemo(() => 20 + Math.random() * 30, []);
+  const delay = useMemo(() => Math.random() * 3000, []);
+
+  const translateY = useSharedValue(0);
+  const translateX = useSharedValue(0);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    // Vertical float upward
+    translateY.value = withDelay(
+      delay,
+      withRepeat(
+        withTiming(-SCREEN_HEIGHT * 0.8, { duration, easing: Easing.linear }),
+        -1,
+        false
+      )
+    );
+    // Horizontal sway
+    translateX.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(swayAmount, { duration: duration / 2, easing: Easing.inOut(Easing.ease) }),
+          withTiming(-swayAmount, { duration: duration / 2, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        true
+      )
+    );
+    // Fade in then stay
+    opacity.value = withDelay(delay, withTiming(0.4, { duration: 800 }));
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    // Fade out as particle rises (based on translateY progress)
+    const progress = Math.abs(translateY.value) / (SCREEN_HEIGHT * 0.8);
+    const fadedOpacity = opacity.value * (1 - progress);
+
+    return {
+      transform: [
+        { translateY: translateY.value },
+        { translateX: translateX.value },
+      ],
+      opacity: Math.max(0, fadedOpacity),
+    };
+  });
+
+  return (
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          bottom: -20,
+          left: startX,
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: color,
+        },
+        animatedStyle,
+      ]}
+    />
+  );
+};
+
+const FloatingParticles = () => (
+  <View style={styles.particlesContainer} pointerEvents="none">
+    {Array.from({ length: PARTICLE_COUNT }, (_, i) => (
+      <Particle key={i} index={i} />
+    ))}
+  </View>
+);
+
+// --- Mood Shift Visualization ---
+const MoodShiftSection = ({ preMood, postMood }) => {
+  const preMoodData = typeof preMood === 'string' ? getMoodById(preMood) : preMood;
+  const postMoodData = postMood;
+
+  if (!preMoodData || !postMoodData) {
+    // Fallback: no mood shift data
+    return (
+      <View style={styles.moodShiftFallback}>
+        <Animated.View
+          entering={FadeInDown.delay(200).springify().damping(12)}
+          style={styles.sparkleCircle}
+        >
+          <Ionicons name="sparkles" size={32} color="#C17666" />
+        </Animated.View>
+        <Animated.Text entering={FadeInDown.delay(400).duration(500)} style={styles.heading}>
+          You showed up for yourself today.
+        </Animated.Text>
+        <Animated.Text entering={FadeInDown.delay(600).duration(500)} style={styles.subtitle}>
+          That alone makes a difference.
+        </Animated.Text>
+      </View>
+    );
+  }
+
+  const preColor = FEELING_COLORS[preMoodData.id] || '#B0AAA2';
+  const postColor = FEELING_COLORS[postMoodData.id] || '#B0AAA2';
+  const isSameMood = preMoodData.id === postMoodData.id;
+
+  return (
+    <View style={styles.moodShiftContainer}>
+      {/* Emoji circles with arrow */}
+      <View style={styles.moodRow}>
+        <Animated.View
+          entering={FadeInDown.delay(200).springify().damping(12)}
+          style={[styles.moodCircle, { borderColor: preColor }]}
+        >
+          <Text style={styles.moodEmoji}>{preMoodData.emoji || getMoodEmoji(preMoodData.id)}</Text>
+        </Animated.View>
+
+        <Animated.View entering={FadeIn.delay(600).duration(400)}>
+          <Ionicons name="arrow-forward" size={20} color="#D4CFC9" />
+        </Animated.View>
+
+        <Animated.View
+          entering={FadeInDown.delay(800).springify().damping(12)}
+          style={[styles.moodCircle, { borderColor: postColor }]}
+        >
+          <Text style={styles.moodEmoji}>{postMoodData.emoji}</Text>
+        </Animated.View>
+      </View>
+
+      {/* Narrative text */}
+      <Animated.Text entering={FadeIn.delay(1000).duration(500)} style={styles.moodNarrative}>
+        {isSameMood
+          ? `You arrived feeling ${preMoodData.label.toLowerCase()} \u2014 and you honored that feeling.`
+          : `You arrived feeling ${preMoodData.label.toLowerCase()}. You\u2019re leaving feeling ${postMoodData.label.toLowerCase()}.`}
+      </Animated.Text>
+    </View>
+  );
 };
 
 export const SuccessCelebrationScreen = ({ navigation, route }) => {
@@ -48,48 +199,35 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
     completedPrompts = 0,
     duration = 0,
     feeling,
+    preMood,
     postMood,
+    reflection,
   } = route.params || {};
 
-  const { stats } = useApp();
+  const { stats, user } = useApp();
   const { celebrationBurst } = useHaptics();
 
-  // Sparkle breathe animation
-  const sparkleScale = useSharedValue(0);
+  // Personalization data
+  const [powerPhrase, setPowerPhrase] = useState(null);
+  const [growthNudge, setGrowthNudge] = useState(null);
 
   useEffect(() => {
-    // Celebration haptic on mount
     celebrationBurst();
 
-    // Entrance animation for sparkle
-    sparkleScale.value = withSpring(1, {
-      damping: 10,
-      stiffness: 120,
-      mass: 0.5,
-    });
-
-    // Start breathing pulse after entrance
-    const breatheTimer = setTimeout(() => {
-      sparkleScale.value = withRepeat(
-        withSequence(
-          withTiming(1.08, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
-          withTiming(1.0, { duration: 2000, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        false
-      );
-    }, 600);
-
-    return () => clearTimeout(breatheTimer);
-  }, []);
-
-  const sparkleAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: sparkleScale.value }],
-  }));
-
-  const quote = useMemo(() => {
-    const randomIndex = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);
-    return MOTIVATIONAL_QUOTES[randomIndex];
+    // Load personalization data
+    if (user?.id) {
+      Promise.allSettled([
+        personalizationService.getPowerPhrase(user.id),
+        personalizationService.getGrowthNudge(user.id),
+      ]).then(([phraseResult, nudgeResult]) => {
+        if (phraseResult.status === 'fulfilled' && phraseResult.value) {
+          setPowerPhrase(phraseResult.value);
+        }
+        if (nudgeResult.status === 'fulfilled' && nudgeResult.value) {
+          setGrowthNudge(nudgeResult.value);
+        }
+      });
+    }
   }, []);
 
   const handleBackToHome = () => {
@@ -104,89 +242,92 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `I just completed a Mirrorcle session! ${completedPrompts} truths spoken about myself. My light is shining brighter.`,
+        message: `I just completed a Mirrorcle session \u2014 ${completedPrompts} truths spoken about myself. My light is shining brighter.`,
       });
     } catch (error) {
       // User cancelled or share failed silently
     }
   };
 
+  const streakMessage = getStreakMessage(stats.currentStreak);
+
   return (
     <View style={styles.container}>
+      {/* Floating particles behind content */}
+      <FloatingParticles />
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Sparkle icon with entrance + breathe animation */}
-        <Animated.View style={[styles.sparkleContainer, sparkleAnimatedStyle]}>
-          <View style={styles.sparkleCircle}>
-            <Ionicons name="sparkles" size={32} color="#C17666" />
+        {/* Mood shift visualization */}
+        <MoodShiftSection preMood={preMood || feeling} postMood={postMood} />
+
+        {/* Session insight card */}
+        <Animated.View
+          entering={FadeInUp.delay(1200).duration(600)}
+          style={styles.insightCard}
+        >
+          <Text style={styles.insightText}>
+            You spoke{' '}
+            <Text style={styles.insightBold}>{completedPrompts} truth{completedPrompts !== 1 ? 's' : ''}</Text>
+            {' '}about yourself today
+          </Text>
+          <Text style={styles.insightDuration}>
+            in {formatDuration(duration)} of presence
+          </Text>
+
+          <View style={styles.insightDivider} />
+
+          <View style={styles.streakRow}>
+            <Ionicons name="flame" size={16} color="#C17666" />
+            <Text style={styles.streakText}>{streakMessage}</Text>
           </View>
         </Animated.View>
 
-        {/* Heading with staggered entrance */}
-        <Animated.Text
-          entering={FadeInDown.delay(200).duration(500)}
-          style={styles.heading}
-        >
-          Beautifully done.
-        </Animated.Text>
-        <Animated.Text
-          entering={FadeInDown.delay(400).duration(500)}
-          style={styles.subtitle}
-        >
-          Your light is shining brighter.
-        </Animated.Text>
-
-        {/* Session stats card */}
-        <Animated.View
-          entering={FadeInUp.delay(600).duration(600)}
-          style={styles.statsCard}
-        >
-          <Text style={styles.statsLabel}>TODAY'S SESSION</Text>
-
-          <Text style={styles.statsCount}>{completedPrompts}</Text>
-          <Text style={styles.statsDescription}>
-            truths spoken{'\n'}about yourself
-          </Text>
-
-          <View style={styles.statsDivider} />
-
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Ionicons name="time-outline" size={18} color="#B0AAA2" />
-              <Text style={styles.statValue}>{formatDuration(duration)}</Text>
-              <Text style={styles.statLabel}>duration</Text>
+        {/* Reflection note (if user wrote one) */}
+        {reflection && (
+          <Animated.View
+            entering={FadeIn.delay(1400).duration(500)}
+            style={styles.reflectionCard}
+          >
+            <View style={styles.reflectionHeader}>
+              <Ionicons name="create-outline" size={14} color="#B0AAA2" />
+              <Text style={styles.reflectionLabel}>YOUR REFLECTION</Text>
             </View>
+            <Text style={styles.reflectionText}>{reflection}</Text>
+          </Animated.View>
+        )}
 
-            <View style={styles.statDot} />
+        {/* Power phrase card */}
+        {powerPhrase && (
+          <Animated.View
+            entering={FadeInUp.delay(1600).duration(500)}
+            style={styles.personalizationCard}
+          >
+            <PowerPhraseCard
+              text={powerPhrase.text}
+              count={powerPhrase.count}
+              colors={powerPhrase.colors}
+            />
+          </Animated.View>
+        )}
 
-            <View style={styles.statItem}>
-              <Ionicons name="flame-outline" size={18} color="#C17666" />
-              <Text style={[styles.statValue, styles.statValueAccent]}>
-                {stats.currentStreak || 1}
-              </Text>
-              <Text style={styles.statLabel}>day streak</Text>
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* Motivational quote */}
-        <Animated.View
-          entering={FadeIn.delay(1000).duration(600)}
-          style={styles.quoteContainer}
-        >
-          <Text style={styles.quoteText}>
-            {'\u201C'}{quote.text}{'\u201D'}
-          </Text>
-          <Text style={styles.quoteAuthor}>{'\u2014'} {quote.author}</Text>
-        </Animated.View>
+        {/* Growth nudge card */}
+        {growthNudge && (
+          <Animated.View
+            entering={FadeInUp.delay(1800).duration(500)}
+            style={styles.personalizationCard}
+          >
+            <GrowthNudgeCard message={growthNudge.message} />
+          </Animated.View>
+        )}
       </ScrollView>
 
       {/* Footer actions */}
       <Animated.View
-        entering={FadeIn.delay(1200).duration(400)}
+        entering={FadeIn.delay(2000).duration(400)}
         style={styles.footer}
       >
         <PrimaryButton
@@ -220,11 +361,53 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 80,
     paddingBottom: 24,
+  },
+
+  // --- Particles ---
+  particlesContainer: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
+  },
+
+  // --- Mood shift ---
+  moodShiftContainer: {
     alignItems: 'center',
+    marginBottom: 32,
   },
-  sparkleContainer: {
-    marginBottom: 28,
+  moodShiftFallback: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
+  moodRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+    marginBottom: 20,
+  },
+  moodCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.card,
+  },
+  moodEmoji: {
+    fontSize: 32,
+  },
+  moodNarrative: {
+    fontFamily: typography.fontFamily.serifItalic,
+    fontSize: 17,
+    fontStyle: 'italic',
+    color: '#7A756E',
+    textAlign: 'center',
+    lineHeight: 26,
+    paddingHorizontal: 12,
+  },
+
+  // --- Fallback (no mood data) ---
   sparkleCircle: {
     width: 72,
     height: 72,
@@ -232,6 +415,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8D0C6',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 20,
   },
   heading: {
     fontSize: 28,
@@ -244,91 +428,87 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#7A756E',
     textAlign: 'center',
-    marginBottom: 36,
+    marginBottom: 12,
   },
-  statsCard: {
+
+  // --- Insight card ---
+  insightCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    paddingVertical: 28,
+    paddingVertical: 24,
     paddingHorizontal: 24,
     width: '100%',
     alignItems: 'center',
+    marginBottom: 16,
     ...shadows.card,
   },
-  statsLabel: {
+  insightText: {
+    fontSize: 17,
+    color: '#2D2A26',
+    textAlign: 'center',
+    lineHeight: 26,
+  },
+  insightBold: {
+    fontWeight: '700',
+    color: '#C17666',
+  },
+  insightDuration: {
+    fontSize: 14,
+    color: '#B0AAA2',
+    marginTop: 4,
+  },
+  insightDivider: {
+    width: '60%',
+    height: 1,
+    backgroundColor: '#F0ECE7',
+    marginVertical: 16,
+  },
+  streakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  streakText: {
+    fontSize: 14,
+    color: '#7A756E',
+    fontStyle: 'italic',
+  },
+
+  // --- Reflection card ---
+  reflectionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    ...shadows.card,
+  },
+  reflectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  reflectionLabel: {
     fontSize: 11,
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     color: '#B0AAA2',
-    marginBottom: 16,
   },
-  statsCount: {
-    fontSize: 56,
-    fontWeight: '700',
-    color: '#C17666',
-    lineHeight: 64,
-  },
-  statsDescription: {
-    fontSize: 15,
-    color: '#7A756E',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginTop: 4,
-  },
-  statsDivider: {
-    width: '80%',
-    height: 1,
-    backgroundColor: '#F0ECE7',
-    marginVertical: 20,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statItem: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#2D2A26',
-    marginTop: 4,
-  },
-  statValueAccent: {
-    color: '#C17666',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#B0AAA2',
-    marginTop: 2,
-  },
-  statDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#D4CFC9',
-  },
-  quoteContainer: {
-    marginTop: 32,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-  },
-  quoteText: {
+  reflectionText: {
     fontFamily: typography.fontFamily.serifItalic,
-    fontSize: 16,
+    fontSize: 15,
     fontStyle: 'italic',
-    color: '#7A756E',
-    textAlign: 'center',
+    color: '#2D2A26',
     lineHeight: 24,
   },
-  quoteAuthor: {
-    fontSize: 13,
-    color: '#B0AAA2',
-    marginTop: 8,
+
+  // --- Personalization cards ---
+  personalizationCard: {
+    marginBottom: 16,
   },
+
+  // --- Footer ---
   footer: {
     paddingHorizontal: 20,
     paddingBottom: 36,

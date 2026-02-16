@@ -3,7 +3,13 @@ import { View, Text, StyleSheet, FlatList, Dimensions, StatusBar, Pressable } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+} from 'react-native-reanimated';
 import { PrimaryButton } from '../components/common';
+import { typography } from '../styles/typography';
 import { useApp } from '../context/AppContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -11,31 +17,32 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SLIDES = [
   {
     id: '1',
-    title: 'Welcome to Mirrorcle',
-    subtitle: 'Your daily companion for self-affirmation and growth',
-    icon: 'sparkles',
+    title: 'Speaking to yourself in a mirror might feel strange.',
+    subtitle: "That\u2019s okay. Most people have never truly paused to look at themselves.",
+    icon: 'eye-outline',
     colors: ['#C17666', '#E8A090'],
   },
   {
     id: '2',
-    title: 'Check In With Yourself',
-    subtitle: 'Start each session by reflecting on how you feel right now',
-    icon: 'heart',
+    title: 'Your voice has power.',
+    subtitle: 'When you speak truth aloud, you hear it differently. It becomes real.',
+    icon: 'mic-outline',
     colors: ['#E8A090', '#D4845A'],
   },
   {
     id: '3',
-    title: 'Mirror Sessions',
-    subtitle: 'Look yourself in the eye and speak powerful affirmations',
-    icon: 'camera',
+    title: '60 seconds can change your day.',
+    subtitle: "One moment of presence. One affirmation spoken with intention. That\u2019s all it takes.",
+    icon: 'time-outline',
     colors: ['#D4845A', '#C17666'],
   },
   {
     id: '4',
-    title: 'Track Your Growth',
-    subtitle: 'Watch your streak grow and celebrate your consistency',
-    icon: 'trending-up',
-    colors: ['#22C55E', '#10B981'],
+    title: 'Ready to meet yourself?',
+    subtitle: null, // Social proof handled separately
+    icon: 'sparkles',
+    colors: ['#C17666', '#B86456'],
+    socialProof: '"I cried the first time. Not from sadness \u2014 from finally hearing myself."',
   },
 ];
 
@@ -55,18 +62,42 @@ export const OnboardingScreen = ({ navigation }) => {
     navigation.replace('MainTabs');
   };
 
-  const handleGetStarted = async () => {
-    await completeOnboarding();
-    navigation.replace('MainTabs');
+  const handleBeginFirstSession = () => {
+    navigation.replace('GuidedFirstSession');
   };
 
   const renderSlide = ({ item }) => (
     <View style={styles.slide}>
-      <LinearGradient colors={item.colors} style={styles.iconWrapper}>
-        <Ionicons name={item.icon} size={48} color="#fff" />
-      </LinearGradient>
-      <Text style={styles.slideTitle}>{item.title}</Text>
-      <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
+      <Animated.View entering={FadeInDown.duration(500).springify().damping(12)}>
+        <LinearGradient colors={item.colors} style={styles.iconWrapper}>
+          <Ionicons name={item.icon} size={48} color="#fff" />
+        </LinearGradient>
+      </Animated.View>
+
+      <Animated.Text
+        entering={FadeInDown.delay(150).duration(500)}
+        style={styles.slideTitle}
+      >
+        {item.title}
+      </Animated.Text>
+
+      {item.subtitle && (
+        <Animated.Text
+          entering={FadeIn.delay(350).duration(500)}
+          style={styles.slideSubtitle}
+        >
+          {item.subtitle}
+        </Animated.Text>
+      )}
+
+      {item.socialProof && (
+        <Animated.View
+          entering={FadeInUp.delay(400).duration(600)}
+          style={styles.socialProofContainer}
+        >
+          <Text style={styles.socialProofText}>{item.socialProof}</Text>
+        </Animated.View>
+      )}
     </View>
   );
 
@@ -115,7 +146,11 @@ export const OnboardingScreen = ({ navigation }) => {
 
           <View style={styles.buttonContainer}>
             {isLastSlide ? (
-              <PrimaryButton title="Get Started" icon="arrow-forward" onPress={handleGetStarted} />
+              <PrimaryButton
+                title="Begin Your First Session"
+                icon="arrow-forward"
+                onPress={handleBeginFirstSession}
+              />
             ) : (
               <PrimaryButton title="Next" icon="arrow-forward" onPress={handleNext} />
             )}
@@ -158,14 +193,27 @@ const styles = StyleSheet.create({
   },
   slideTitle: {
     color: '#2D2A26',
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 16,
+    lineHeight: 34,
   },
   slideSubtitle: {
     color: '#7A756E',
-    fontSize: 18,
+    fontSize: 17,
+    textAlign: 'center',
+    lineHeight: 26,
+  },
+  socialProofContainer: {
+    marginTop: 8,
+    paddingHorizontal: 8,
+  },
+  socialProofText: {
+    fontFamily: typography.fontFamily.serifItalic,
+    fontSize: 17,
+    fontStyle: 'italic',
+    color: '#7A756E',
     textAlign: 'center',
     lineHeight: 26,
   },

@@ -7,6 +7,8 @@ export { CreateAccountScreen } from './CreateAccountScreen';
 export { LoginScreen } from './LoginScreen';
 export { ForgotPasswordScreen } from './ForgotPasswordScreen';
 export { OnboardingScreen } from './OnboardingScreen';
+export { GuidedFirstSessionScreen } from './GuidedFirstSessionScreen';
+export { GuidedFirstCelebrationScreen } from './GuidedFirstCelebrationScreen';
 export { LegalAgreementScreen } from './LegalAgreementScreen';
 export { PowerOfReflectionScreen } from './PowerOfReflectionScreen';
 
