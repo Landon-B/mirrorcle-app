@@ -5,6 +5,7 @@ export { SplashScreen } from './SplashScreen';
 export { WelcomeScreen } from './WelcomeScreen';
 export { CreateAccountScreen } from './CreateAccountScreen';
 export { LoginScreen } from './LoginScreen';
+export { WelcomeBackScreen } from './WelcomeBackScreen';
 export { ForgotPasswordScreen } from './ForgotPasswordScreen';
 export { OnboardingScreen } from './OnboardingScreen';
 export { GuidedFirstSessionScreen } from './GuidedFirstSessionScreen';

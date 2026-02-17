@@ -13,46 +13,77 @@ import {
   TouchableWithoutFeedback,
   Alert,
   ActivityIndicator,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { authService } from '../services/auth';
+import { PrimaryButton } from '../components/common';
 import { useColors } from '../hooks/useColors';
-import { useGradients } from '../hooks/useColors';
+import { typography } from '../styles/typography';
 
-const QUOTES = [
-  {
-    text: "Every morning brings new potential, but if you dwell on the misfortunes of the day before, you tend to overlook tremendous opportunities.",
-    author: "Harvey Mackay",
-  },
-  {
-    text: "Believe you can and you're halfway there.",
-    author: "Theodore Roosevelt",
-  },
-  {
-    text: "The future belongs to those who believe in the beauty of their dreams.",
-    author: "Eleanor Roosevelt",
-  },
-];
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState(null); // 'apple' | 'google' | 'email'
+  const [emailExpanded, setEmailExpanded] = useState(false);
   const { updatePreferences, completeOnboarding } = useApp();
   const c = useColors();
-  const g = useGradients();
 
-  const [randomQuote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+  const handleAppleSignIn = async () => {
+    setIsLoading(true);
+    setLoadingProvider('apple');
+    try {
+      const { user } = await authService.signInWithApple();
+      const userName = user?.user_metadata?.name || 'Friend';
+      await updatePreferences({ userName });
+      await completeOnboarding();
+      navigation.replace('WelcomeBack', { userName });
+    } catch (error) {
+      // Apple auth canceled — don't show error
+      if (error.code !== 'ERR_REQUEST_CANCELED' && error.code !== 'ERR_CANCELED') {
+        Alert.alert('Sign In Error', error.message);
+      }
+    } finally {
+      setIsLoading(false);
+      setLoadingProvider(null);
+    }
+  };
 
-  const handleLogin = async () => {
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setLoadingProvider('google');
+    try {
+      const { user } = await authService.signInWithGoogle();
+      const userName = user?.user_metadata?.name || user?.user_metadata?.full_name || 'Friend';
+      await updatePreferences({ userName });
+      await completeOnboarding();
+      navigation.replace('WelcomeBack', { userName });
+    } catch (error) {
+      if (error.code !== 'ERR_SIGN_IN_CANCELLED' && error.code !== 'SIGN_IN_CANCELLED') {
+        Alert.alert('Sign In Error', error.message);
+      }
+    } finally {
+      setIsLoading(false);
+      setLoadingProvider(null);
+    }
+  };
+
+  const handleEmailSignIn = async () => {
     if (!email.trim() || !password.trim()) return;
 
     Keyboard.dismiss();
     setIsLoading(true);
+    setLoadingProvider('email');
 
     try {
       const { user } = await authService.signIn({
@@ -62,12 +93,18 @@ export const LoginScreen = ({ navigation }) => {
       const userName = user?.user_metadata?.name || 'Friend';
       await updatePreferences({ userName });
       await completeOnboarding();
-      navigation.replace('MainTabs');
+      navigation.replace('WelcomeBack', { userName });
     } catch (error) {
       Alert.alert('Sign In Error', error.message);
     } finally {
       setIsLoading(false);
+      setLoadingProvider(null);
     }
+  };
+
+  const toggleEmailSection = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setEmailExpanded(!emailExpanded);
   };
 
   const handleBack = () => {
@@ -75,41 +112,26 @@ export const LoginScreen = ({ navigation }) => {
     navigation.goBack();
   };
 
-  const isLoginDisabled = isLoading || !email.trim() || !password.trim();
+  const isEmailDisabled = isLoading || !email.trim() || !password.trim();
 
   return (
     <View style={[styles.background, { backgroundColor: c.background }]}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <StatusBar barStyle={c.statusBarStyle} />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.container}
           keyboardVerticalOffset={0}
         >
-          {/* Fixed Header with Navigation */}
-          <View style={[styles.header, { borderBottomColor: c.border }]}>
-            <Pressable onPress={handleBack} style={styles.headerButton}>
-              <Ionicons name="arrow-back" size={24} color={c.textPrimary} />
-              <Text style={[styles.headerButtonText, { color: c.textPrimary }]}>Back</Text>
-            </Pressable>
-
+          {/* Back Button */}
+          <View style={styles.headerRow}>
             <Pressable
-              onPress={handleLogin}
-              style={[styles.headerButton, styles.headerButtonRight, isLoginDisabled && styles.headerButtonDisabled]}
-              disabled={isLoginDisabled}
+              onPress={handleBack}
+              style={[styles.backButton, { backgroundColor: c.surfaceSecondary }]}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
             >
-              <Text style={[styles.headerButtonText, styles.headerButtonTextRight, { color: c.accentRust }, isLoginDisabled && { color: c.disabled }]}>
-                {isLoading ? 'Signing in...' : 'Sign In'}
-              </Text>
-              {isLoading ? (
-                <ActivityIndicator size="small" color={c.accentRust} />
-              ) : (
-                <Ionicons
-                  name="log-in-outline"
-                  size={20}
-                  color={isLoginDisabled ? c.disabled : c.accentRust}
-                />
-              )}
+              <Ionicons name="chevron-back" size={20} color={c.textSecondary} />
             </Pressable>
           </View>
 
@@ -119,68 +141,145 @@ export const LoginScreen = ({ navigation }) => {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              <View style={styles.headerContent}>
-                <LinearGradient
-                  colors={g.primary}
-                  style={styles.iconContainer}
-                >
-                  <Ionicons name="sparkles" size={32} color="#fff" />
-                </LinearGradient>
-                <Text style={[styles.title, { color: c.textPrimary }]}>Welcome back</Text>
-                <Text style={[styles.subtitle, { color: c.textSecondary }]}>Continue your journey of self-discovery</Text>
+              {/* Brand */}
+              <View style={styles.brandSection}>
+                <Text style={[styles.brandTitle, { color: c.textPrimary }]}>
+                  Mirrorcle
+                </Text>
+                <Text style={[styles.brandSubtitle, { color: c.textSecondary }]}>
+                  Welcome back to your practice
+                </Text>
               </View>
 
-              <View style={[styles.quoteCard, { backgroundColor: c.surface }]}>
-                <Text style={[styles.quoteText, { color: c.textPrimary }]}>"{randomQuote.text}"</Text>
-                <Text style={[styles.quoteAuthor, { color: c.textSecondary }]}>— {randomQuote.author}</Text>
-              </View>
-
-              <View style={styles.formContainer}>
-                <View style={[styles.inputWrapper, { backgroundColor: c.inputBackground, borderColor: c.inputBorder }]}>
-                  <Ionicons name="mail-outline" size={22} color={c.textMuted} style={styles.inputIcon} />
-                  <TextInput
-                    style={[styles.input, { color: c.textPrimary }]}
-                    placeholder="Email address"
-                    placeholderTextColor={c.inputPlaceholder}
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    returnKeyType="next"
-                  />
-                </View>
-
-                <View style={[styles.inputWrapper, { backgroundColor: c.inputBackground, borderColor: c.inputBorder }]}>
-                  <Ionicons name="lock-closed-outline" size={22} color={c.textMuted} style={styles.inputIcon} />
-                  <TextInput
-                    style={[styles.input, { color: c.textPrimary }]}
-                    placeholder="Password"
-                    placeholderTextColor={c.inputPlaceholder}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    returnKeyType="done"
-                    onSubmitEditing={handleLogin}
-                  />
-                  <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
-                    <Ionicons
-                      name={showPassword ? "eye-off-outline" : "eye-outline"}
-                      size={22}
-                      color={c.textMuted}
-                    />
+              {/* Social Auth Buttons */}
+              <View style={styles.socialSection}>
+                {/* Apple Sign In — iOS only */}
+                {Platform.OS === 'ios' && (
+                  <Pressable
+                    onPress={handleAppleSignIn}
+                    disabled={isLoading}
+                    style={({ pressed }) => [
+                      styles.socialButton,
+                      styles.appleButton,
+                      pressed && styles.socialButtonPressed,
+                      isLoading && styles.socialButtonDisabled,
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Continue with Apple"
+                  >
+                    {loadingProvider === 'apple' ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <>
+                        <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
+                        <Text style={styles.appleButtonText}>Continue with Apple</Text>
+                      </>
+                    )}
                   </Pressable>
-                </View>
+                )}
 
-                <Pressable style={styles.forgotPassword} onPress={() => navigation.navigate('ForgotPassword')}>
-                  <Text style={[styles.forgotPasswordText, { color: c.accentRust }]}>Forgot password?</Text>
+                {/* Google Sign In */}
+                <Pressable
+                  onPress={handleGoogleSignIn}
+                  disabled={isLoading}
+                  style={({ pressed }) => [
+                    styles.socialButton,
+                    styles.googleButton,
+                    { backgroundColor: c.surface, borderColor: c.border },
+                    pressed && styles.socialButtonPressed,
+                    isLoading && styles.socialButtonDisabled,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Continue with Google"
+                >
+                  {loadingProvider === 'google' ? (
+                    <ActivityIndicator size="small" color={c.textPrimary} />
+                  ) : (
+                    <>
+                      <Ionicons name="logo-google" size={18} color={c.textPrimary} />
+                      <Text style={[styles.googleButtonText, { color: c.textPrimary }]}>
+                        Continue with Google
+                      </Text>
+                    </>
+                  )}
                 </Pressable>
               </View>
 
+              {/* Divider */}
+              <Pressable onPress={toggleEmailSection} style={styles.divider}>
+                <View style={[styles.dividerLine, { backgroundColor: c.border }]} />
+                <Text style={[styles.dividerText, { color: c.textMuted }]}>
+                  or sign in with email
+                </Text>
+                <View style={[styles.dividerLine, { backgroundColor: c.border }]} />
+              </Pressable>
+
+              {/* Email Form — Collapsible */}
+              {emailExpanded && (
+                <View style={styles.formContainer}>
+                  <View style={[styles.inputWrapper, { backgroundColor: c.inputBackground, borderColor: c.inputBorder }]}>
+                    <Ionicons name="mail-outline" size={20} color={c.textMuted} style={styles.inputIcon} />
+                    <TextInput
+                      style={[styles.input, { color: c.textPrimary }]}
+                      placeholder="Email address"
+                      placeholderTextColor={c.inputPlaceholder}
+                      value={email}
+                      onChangeText={setEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoComplete="email"
+                      returnKeyType="next"
+                      autoFocus
+                    />
+                  </View>
+
+                  <View style={[styles.inputWrapper, { backgroundColor: c.inputBackground, borderColor: c.inputBorder }]}>
+                    <Ionicons name="lock-closed-outline" size={20} color={c.textMuted} style={styles.inputIcon} />
+                    <TextInput
+                      style={[styles.input, { color: c.textPrimary }]}
+                      placeholder="Password"
+                      placeholderTextColor={c.inputPlaceholder}
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPassword}
+                      returnKeyType="done"
+                      onSubmitEditing={handleEmailSignIn}
+                    />
+                    <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
+                      <Ionicons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={20}
+                        color={c.textMuted}
+                      />
+                    </Pressable>
+                  </View>
+
+                  <Pressable
+                    style={styles.forgotPassword}
+                    onPress={() => navigation.navigate('ForgotPassword')}
+                  >
+                    <Text style={[styles.forgotPasswordText, { color: c.accentRust }]}>
+                      Forgot password?
+                    </Text>
+                  </Pressable>
+
+                  <PrimaryButton
+                    title={loadingProvider === 'email' ? 'Signing in...' : 'Sign In'}
+                    onPress={handleEmailSignIn}
+                    disabled={isEmailDisabled}
+                  />
+                </View>
+              )}
+
+              {/* Footer */}
               <View style={styles.footer}>
-                <Text style={[styles.footerText, { color: c.textSecondary }]}>Don't have an account? </Text>
+                <Text style={[styles.footerText, { color: c.textSecondary }]}>
+                  New here?{' '}
+                </Text>
                 <Pressable onPress={() => navigation.navigate('CreateAccount')}>
-                  <Text style={[styles.footerLink, { color: c.accentRust }]}>Sign up</Text>
+                  <Text style={[styles.footerLink, { color: c.accentRust }]}>
+                    Begin your journey
+                  </Text>
                 </Pressable>
               </View>
             </ScrollView>
@@ -195,88 +294,105 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
   },
-  safeArea: { flex: 1 },
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  headerRow: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
-  headerButton: {
-    flexDirection: 'row',
+  backButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    minWidth: 80,
-  },
-  headerButtonRight: {
-    justifyContent: 'flex-end',
-  },
-  headerButtonDisabled: {
-    opacity: 0.5,
-  },
-  headerButtonText: {
-    fontSize: 16,
-    marginLeft: 6,
-  },
-  headerButtonTextRight: {
-    fontWeight: '600',
-    marginLeft: 0,
-    marginRight: 6,
+    justifyContent: 'center',
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 24,
+    paddingHorizontal: 28,
+    paddingBottom: 24,
   },
-  headerContent: {
+
+  // Brand
+  brandSection: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginTop: 32,
+    marginBottom: 40,
   },
-  iconContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  brandTitle: {
+    fontFamily: typography.fontFamily.serifItalic,
+    fontSize: typography.fontSize.brand,
+    fontStyle: 'italic',
+    marginBottom: 12,
+  },
+  brandSubtitle: {
+    fontFamily: typography.fontFamily.serifItalic,
+    fontSize: 17,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    lineHeight: 26,
+  },
+
+  // Social Auth
+  socialSection: {
+    gap: 12,
+    marginBottom: 28,
+  },
+  socialButton: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  quoteCard: {
+    height: 56,
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 32,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
+    gap: 10,
   },
-  quoteText: {
-    fontSize: 14,
-    fontStyle: 'italic',
-    lineHeight: 22,
-    textAlign: 'center',
+  socialButtonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
-  quoteAuthor: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 10,
+  socialButtonDisabled: {
+    opacity: 0.7,
   },
+  appleButton: {
+    backgroundColor: '#000000',
+  },
+  appleButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  googleButton: {
+    borderWidth: 1,
+  },
+  googleButtonText: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+
+  // Divider
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingVertical: 4,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    fontSize: 13,
+    marginHorizontal: 16,
+  },
+
+  // Email Form
   formContainer: {
-    gap: 16,
+    gap: 14,
     marginBottom: 24,
   },
   inputWrapper: {
@@ -291,18 +407,21 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 18,
-    paddingVertical: 18,
+    fontSize: 17,
+    paddingVertical: 16,
   },
   eyeButton: {
     padding: 4,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
+    marginBottom: 4,
   },
   forgotPasswordText: {
     fontSize: 14,
   },
+
+  // Footer
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',

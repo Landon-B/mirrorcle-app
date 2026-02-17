@@ -6,12 +6,17 @@ import { useApp } from '../context/AppContext';
 import { useColors } from '../hooks/useColors';
 
 export const SplashScreen = ({ navigation }) => {
-  const { hasCompletedOnboarding } = useApp();
+  const { hasCompletedOnboarding, user, preferences } = useApp();
   const c = useColors();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.replace(hasCompletedOnboarding ? 'MainTabs' : 'Welcome');
+      if (hasCompletedOnboarding) {
+        const userName = user?.user_metadata?.name || preferences?.userName || 'Friend';
+        navigation.replace('WelcomeBack', { userName });
+      } else {
+        navigation.replace('Welcome');
+      }
     }, 2000);
 
     return () => clearTimeout(timer);

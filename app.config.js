@@ -1,5 +1,14 @@
 import 'dotenv/config';
 
+// Google Sign-In plugin requires iosUrlScheme at build time.
+// Only include the plugin when credentials are configured.
+const googleSignInPlugin = process.env.GOOGLE_IOS_URL_SCHEME
+  ? [
+      "@react-native-google-signin/google-signin",
+      { iosUrlScheme: process.env.GOOGLE_IOS_URL_SCHEME },
+    ]
+  : null;
+
 export default {
   expo: {
     name: "mirrorcle-ios",
@@ -74,11 +83,15 @@ export default {
             }
           ]
         }
-      ]
+      ],
+      "expo-apple-authentication",
+      ...(googleSignInPlugin ? [googleSignInPlugin] : [])
     ],
     extra: {
       supabaseUrl: process.env.SUPABASE_URL,
       supabaseAnonKey: process.env.SUPABASE_API_KEY,
+      googleIosClientId: process.env.GOOGLE_IOS_CLIENT_ID,
+      googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID,
       eas: {
         projectId: "3473c6ed-a607-4017-9c40-f224d4543c01"
       }

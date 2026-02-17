@@ -149,12 +149,12 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
 
   const handleFinish = async () => {
     await completeOnboarding();
-    navigation.replace('MainTabs');
+    navigation.replace('WelcomeBack', { userName: name.trim() || 'Friend' });
   };
 
   const handleSkip = async () => {
     await completeOnboarding();
-    navigation.replace('MainTabs');
+    navigation.replace('WelcomeBack', { userName: name.trim() || 'Friend' });
   };
 
   // Format OTP with space in middle (1234 5678)
