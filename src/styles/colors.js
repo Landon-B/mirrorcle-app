@@ -1,4 +1,5 @@
-export const colors = {
+// Light palette — warm morning sunlight
+export const lightPalette = {
   // Base
   background: '#F5F2EE',
   surface: '#FFFFFF',
@@ -49,11 +50,76 @@ export const colors = {
   inputBorderFocused: '#C17666',
   inputPlaceholder: '#B0AAA2',
 
-  // Feeling accent (pink, used for mood-related icons)
+  // Feeling accent
   feelingPink: '#E8A090',
+
+  // StatusBar
+  statusBarStyle: 'dark-content',
 };
 
-export const gradients = {
+// Dark palette — evening glow, candlelight on dark wood
+export const darkPalette = {
+  // Base
+  background: '#1C1917',
+  surface: '#292524',
+  surfaceSecondary: '#1F1B18',
+  surfaceTertiary: '#352F2B',
+
+  // Text
+  textPrimary: '#F5F2EE',
+  textSecondary: '#A8A29E',
+  textMuted: '#78716C',
+  textAccent: '#D4956E',
+  textOnPrimary: '#FFFFFF',
+
+  // Borders
+  border: '#3D3835',
+  borderSolid: '#44403C',
+
+  // Primary
+  primaryStart: '#C17666',
+  primaryEnd: '#D4956E',
+
+  // Status colors (brighter for dark bg)
+  success: '#4ADE80',
+  warning: '#FBBF24',
+  error: '#F87171',
+  info: '#60A5FA',
+
+  // Overlay
+  overlay: 'rgba(0, 0, 0, 0.5)',
+  overlayHeavy: 'rgba(0, 0, 0, 0.7)',
+
+  // Disabled
+  disabled: '#44403C',
+
+  // Semantic tokens
+  cardBackground: '#292524',
+  cardShadow: 'rgba(0, 0, 0, 0.3)',
+  selectedMoodBg: '#3D2D27',
+  accentPeach: '#3D2D27',
+  accentRust: '#D4956E',
+  accentOrange: '#D4956E',
+  tabActive: '#D4956E',
+  tabInactive: '#78716C',
+
+  // Interactive states
+  inputBackground: '#292524',
+  inputBorder: '#3D3835',
+  inputBorderFocused: '#D4956E',
+  inputPlaceholder: '#78716C',
+
+  // Feeling accent
+  feelingPink: '#D4956E',
+
+  // StatusBar
+  statusBarStyle: 'light-content',
+};
+
+// Backward compat: `colors` is still the light palette
+export const colors = lightPalette;
+
+export const lightGradients = {
   primary: ['#C17666', '#E8A090'],
   background: ['#F9F7F5', '#F5F2EE'],
   success: ['#22C55E', '#10B981'],
@@ -62,3 +128,16 @@ export const gradients = {
   info: ['#3B82F6', '#06B6D4'],
   disabled: ['#D4CFC9', '#D4CFC9'],
 };
+
+export const darkGradients = {
+  primary: ['#C17666', '#D4956E'],
+  background: ['#231F1C', '#1C1917'],
+  success: ['#4ADE80', '#34D399'],
+  warning: ['#FBBF24', '#F59E0B'],
+  error: ['#F87171', '#FB7185'],
+  info: ['#60A5FA', '#38BDF8'],
+  disabled: ['#44403C', '#44403C'],
+};
+
+// Backward compat
+export const gradients = lightGradients;

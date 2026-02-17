@@ -1,6 +1,21 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { GhostButton } from './GhostButton';
+import { useColors } from '../../hooks/useColors';
+
+const ErrorFallback = ({ errorMessage, onReset }) => {
+  const c = useColors();
+
+  return (
+    <View style={[styles.container, { backgroundColor: c.background }]}>
+      <Text style={[styles.title, { color: c.textPrimary }]}>Something went wrong</Text>
+      <Text style={[styles.subtitle, { color: c.textSecondary }]}>
+        {errorMessage || 'The app encountered an unexpected error. Please try again.'}
+      </Text>
+      <GhostButton title="Try Again" onPress={onReset} />
+    </View>
+  );
+};
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -23,13 +38,10 @@ export class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <View style={styles.container}>
-          <Text style={styles.title}>Something went wrong</Text>
-          <Text style={styles.subtitle}>
-            {this.state.errorMessage || 'The app encountered an unexpected error. Please try again.'}
-          </Text>
-          <GhostButton title="Try Again" onPress={this.handleReset} />
-        </View>
+        <ErrorFallback
+          errorMessage={this.state.errorMessage}
+          onReset={this.handleReset}
+        />
       );
     }
 
@@ -40,19 +52,16 @@ export class ErrorBoundary extends React.Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
     gap: 16,
   },
   title: {
-    color: '#2D2A26',
     fontSize: 22,
     fontWeight: '600',
   },
   subtitle: {
-    color: '#7A756E',
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,

@@ -19,26 +19,13 @@ import { sessionService } from '../services/session';
 import { useFavorites } from '../hooks/useFavorites';
 import { useApp } from '../context/AppContext';
 import { useHaptics } from '../hooks/useHaptics';
+import { useColors } from '../hooks/useColors';
 import { typography } from '../styles/typography';
 import { formatRelativeDate } from '../utils/dateUtils';
 import { getFocusAreaById, FOCUS_AREAS } from '../constants/focusAreas';
 import { getMoodEmoji } from '../constants/feelings';
 
 const SERIF_ITALIC = Platform.OS === 'ios' ? 'Georgia-Italic' : 'serif';
-
-const COLORS = {
-  background: '#F5F2EE',
-  card: '#FFFFFF',
-  textPrimary: '#2D2A26',
-  textSecondary: '#7A756E',
-  textMuted: '#B0AAA2',
-  accent: '#C17666',
-  accentLight: '#E8A090',
-  peach: '#E8D0C6',
-  warmTint: '#FDF5F2',
-  border: '#E8E4DF',
-  surfaceTertiary: '#F0ECE7',
-};
 
 // --- Helpers ---
 
@@ -116,6 +103,7 @@ export const FavoritesScreen = ({ navigation }) => {
   const { favorites, toggleFavorite } = useFavorites();
   const { user, stats } = useApp();
   const { selectionTap } = useHaptics();
+  const c = useColors();
   const [favoriteAffirmations, setFavoriteAffirmations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [removingId, setRemovingId] = useState(null);
@@ -189,15 +177,15 @@ export const FavoritesScreen = ({ navigation }) => {
   // --- Loading State ---
   if (isLoading) {
     return (
-      <View style={styles.container}>
-        <StatusBar barStyle="dark-content" />
+      <View style={[styles.container, { backgroundColor: c.background }]}>
+        <StatusBar barStyle={c.statusBarStyle} />
         <ScreenHeader
           title="Favorites"
           subtitle="Words that moved you"
           onBack={() => navigation.goBack()}
         />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.accent} />
+          <ActivityIndicator size="large" color={c.accentRust} />
         </View>
       </View>
     );
@@ -205,8 +193,8 @@ export const FavoritesScreen = ({ navigation }) => {
 
   // --- Main Content ---
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <View style={[styles.container, { backgroundColor: c.background }]}>
+      <StatusBar barStyle={c.statusBarStyle} />
       <ScreenHeader
         title="Favorites"
         subtitle="Words that moved you"
@@ -215,8 +203,8 @@ export const FavoritesScreen = ({ navigation }) => {
 
       {favoriteAffirmations.length > 0 && (
         <Animated.View entering={FadeIn.duration(400)} style={styles.narrativeHeader}>
-          <Text style={styles.narrativeText}>{collectionNarrative}</Text>
-          <Text style={styles.favoritesCount}>
+          <Text style={[styles.narrativeText, { color: c.textSecondary }]}>{collectionNarrative}</Text>
+          <Text style={[styles.favoritesCount, { color: c.textMuted }]}>
             {favoriteAffirmations.length} affirmation{favoriteAffirmations.length !== 1 ? 's' : ''} saved
           </Text>
         </Animated.View>
@@ -226,9 +214,9 @@ export const FavoritesScreen = ({ navigation }) => {
         /* Enriched Empty State */
         <Animated.View entering={FadeIn.duration(400)} style={styles.emptyState}>
           <FloatingParticles count={8} opacity={0.15} />
-          <Ionicons name="heart-outline" size={48} color={COLORS.border} />
-          <Text style={styles.emptyTitle}>Your Collection</Text>
-          <Text style={styles.emptySubtitle}>
+          <Ionicons name="heart-outline" size={48} color={c.border} />
+          <Text style={[styles.emptyTitle, { color: c.textPrimary }]}>Your Collection</Text>
+          <Text style={[styles.emptySubtitle, { color: c.textSecondary }]}>
             {stats.totalSessions > 0
               ? `You've completed ${stats.totalSessions} session${stats.totalSessions !== 1 ? 's' : ''} \u2014 next time something resonates, hold it here.`
               : 'As you go through sessions, certain words will land differently. Save them here \u2014 over time, this becomes a mirror of what matters most to you.'}
@@ -257,44 +245,44 @@ export const FavoritesScreen = ({ navigation }) => {
 
             return (
               <Animated.View entering={entering} style={[isRemoving && { opacity: 0.4 }]}>
-                <View style={styles.affirmationCard}>
+                <View style={[styles.affirmationCard, { backgroundColor: c.surface, borderLeftColor: c.accentPeach }]}>
                   {/* Context badge row */}
                   {(contextLine || moodEmoji) && (
                     <View style={styles.contextRow}>
                       {moodEmoji && (
-                        <View style={styles.moodBadge}>
+                        <View style={[styles.moodBadge, { backgroundColor: c.surfaceTertiary }]}>
                           <Text style={styles.moodBadgeEmoji}>{moodEmoji}</Text>
                         </View>
                       )}
                       {contextLine && (
-                        <Text style={styles.contextText}>{contextLine}</Text>
+                        <Text style={[styles.contextText, { color: c.textMuted }]}>{contextLine}</Text>
                       )}
                     </View>
                   )}
 
                   {/* Affirmation text */}
-                  <Text style={styles.affirmationText}>{affirmation.text}</Text>
+                  <Text style={[styles.affirmationText, { color: c.textPrimary }]}>{affirmation.text}</Text>
 
                   {/* Action row */}
                   <View style={styles.actionRow}>
                     <Pressable
                       onPress={() => handleShare(affirmation)}
-                      style={styles.actionButton}
+                      style={[styles.actionButton, { backgroundColor: c.surfaceTertiary }]}
                       accessibilityRole="button"
                       accessibilityLabel="Share this affirmation"
                     >
-                      <Ionicons name="share-outline" size={18} color={COLORS.textMuted} />
+                      <Ionicons name="share-outline" size={18} color={c.textMuted} />
                     </Pressable>
                     <Pressable
                       onPress={() => handleRemoveFavorite(affirmation.id)}
-                      style={styles.actionButton}
+                      style={[styles.actionButton, { backgroundColor: c.surfaceTertiary }]}
                       accessibilityRole="button"
                       accessibilityLabel="Remove from favorites"
                     >
                       <Ionicons
                         name={isRemoving ? 'heart-outline' : 'heart'}
                         size={18}
-                        color={isRemoving ? COLORS.textMuted : COLORS.accent}
+                        color={isRemoving ? c.textMuted : c.accentRust}
                       />
                     </Pressable>
                   </View>
@@ -328,7 +316,7 @@ function buildContextLine(affirmation) {
 // --- Styles ---
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1 },
 
   // Narrative header
   narrativeHeader: {
@@ -339,7 +327,6 @@ const styles = StyleSheet.create({
     fontFamily: SERIF_ITALIC,
     fontSize: 16,
     fontStyle: 'italic',
-    color: COLORS.textSecondary,
     lineHeight: 24,
     marginBottom: 6,
   },
@@ -348,7 +335,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
-    color: COLORS.textMuted,
   },
 
   content: { padding: 20, gap: 14 },
@@ -368,7 +354,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   emptyTitle: {
-    color: COLORS.textPrimary,
     fontSize: 20,
     fontWeight: '600',
   },
@@ -376,7 +361,6 @@ const styles = StyleSheet.create({
     fontFamily: SERIF_ITALIC,
     fontSize: 15,
     fontStyle: 'italic',
-    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     maxWidth: 300,
@@ -384,11 +368,9 @@ const styles = StyleSheet.create({
 
   // Affirmation Cards — warm, light, on-palette
   affirmationCard: {
-    backgroundColor: COLORS.card,
     borderRadius: 20,
     padding: 20,
     borderLeftWidth: 3,
-    borderLeftColor: COLORS.peach,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
@@ -407,7 +389,6 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: COLORS.surfaceTertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -417,7 +398,6 @@ const styles = StyleSheet.create({
   contextText: {
     fontSize: 12,
     fontWeight: '500',
-    color: COLORS.textMuted,
     letterSpacing: 0.3,
   },
 
@@ -426,7 +406,6 @@ const styles = StyleSheet.create({
     fontFamily: SERIF_ITALIC,
     fontSize: 18,
     fontStyle: 'italic',
-    color: COLORS.textPrimary,
     lineHeight: 28,
     letterSpacing: 0.2,
     marginBottom: 14,
@@ -443,7 +422,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.surfaceTertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },

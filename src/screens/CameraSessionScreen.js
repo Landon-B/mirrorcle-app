@@ -27,6 +27,7 @@ import { useApp } from '../context/AppContext';
 import { usePersonalization } from '../hooks/usePersonalization';
 import { storageService } from '../services/storage';
 import { useHaptics } from '../hooks/useHaptics';
+import { useColors } from '../hooks/useColors';
 import { typography } from '../styles/typography';
 import {
   GAZE_PROMPTS,
@@ -88,6 +89,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
   const { isPro, user, preferences, stats } = useApp();
   const { timeOfDay } = usePersonalization();
   const { successPulse, celebrationBurst, selectionTap, breathingPulse } = useHaptics();
+  const c = useColors();
 
   const sessionAffirmationCount = preferences.preferredSessionLength || 3;
   const totalCount = preferences.repeatAffirmations ? sessionAffirmationCount * 2 : sessionAffirmationCount;
@@ -249,7 +251,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
       shuffled.slice(0, sessionAffirmationCount).map((text, index) => ({
         id: `local-${index}`,
         text,
-        colors: ['#C17666', '#E8A090'],
+        colors: [c.primaryStart, c.feelingPink],
       }))
     );
   };
@@ -672,7 +674,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
     backgroundColor: interpolateColor(
       progressColorValue.value,
       [0, 1],
-      ['#E8D0C6', '#C17666']
+      [c.accentPeach, c.accentRust]
     ),
   }));
 
@@ -724,8 +726,8 @@ export const CameraSessionScreen = ({ navigation, route }) => {
       <View style={styles.darkContainer}>
         <StatusBar barStyle="light-content" />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#C17666" />
-          <Text style={styles.loadingText}>Preparing your practice...</Text>
+          <ActivityIndicator size="large" color={c.accentRust} />
+          <Text style={[styles.loadingText, { color: c.textMuted }]}>Preparing your practice...</Text>
         </View>
       </View>
     );
@@ -739,7 +741,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
 
   return (
     <View style={styles.darkContainer}>
-      <StatusBar barStyle={isBreathingPhase ? 'dark-content' : 'light-content'} />
+      <StatusBar barStyle={isBreathingPhase ? c.statusBarStyle : 'light-content'} />
 
       {/* Camera — always mounted, renders behind everything */}
       <View style={StyleSheet.absoluteFill}>
@@ -790,18 +792,18 @@ export const CameraSessionScreen = ({ navigation, route }) => {
 
       {/* ===== BREATHING OVERLAY ===== */}
       <Animated.View
-        style={[styles.breathingOverlay, creamOverlayAnimatedStyle]}
+        style={[styles.breathingOverlay, { backgroundColor: c.background }, creamOverlayAnimatedStyle]}
         pointerEvents={isBreathingPhase ? 'auto' : 'none'}
       >
         <SafeAreaView style={styles.breathingContent}>
           {/* Context line */}
-          <Text style={styles.contextLine}>{contextLine}</Text>
+          <Text style={[styles.contextLine, { color: c.textSecondary }]}>{contextLine}</Text>
 
           {/* Breathing circle */}
           <View style={styles.breathingSection}>
             <Animated.View style={[styles.breathingCircle, circleAnimatedStyle]}>
               <View style={styles.breathingCircleInner}>
-                <Text style={styles.breathingPhaseLabel}>{PHASE_LABELS[breathPhase]}</Text>
+                <Text style={[styles.breathingPhaseLabel, { color: c.accentRust }]}>{PHASE_LABELS[breathPhase]}</Text>
               </View>
             </Animated.View>
 
@@ -812,8 +814,9 @@ export const CameraSessionScreen = ({ navigation, route }) => {
                   key={i}
                   style={[
                     styles.progressDot,
-                    i < currentBreath && styles.progressDotFilled,
-                    i === currentBreath && phase === PHASES.BREATHING && styles.progressDotActive,
+                    { backgroundColor: c.accentPeach },
+                    i < currentBreath && { backgroundColor: c.accentRust },
+                    i === currentBreath && phase === PHASES.BREATHING && { backgroundColor: c.feelingPink },
                   ]}
                 />
               ))}
@@ -822,7 +825,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
 
           {/* Skip */}
           <Pressable onPress={handleSkipBreathing} hitSlop={12} style={styles.skipButton}>
-            <Text style={styles.skipText}>Skip</Text>
+            <Text style={[styles.skipText, { color: c.textMuted }]}>Skip</Text>
           </Pressable>
         </SafeAreaView>
       </Animated.View>
@@ -947,7 +950,6 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   loadingText: {
-    color: '#B0AAA2',
     fontSize: 16,
   },
   noCameraBackground: {
@@ -989,10 +991,9 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
 
-  // --- Breathing overlay (cream, sits on top of camera) ---
+  // --- Breathing overlay (sits on top of camera) ---
   breathingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#F5F2EE',
     zIndex: 10,
   },
   breathingContent: {
@@ -1003,7 +1004,6 @@ const styles = StyleSheet.create({
   },
   contextLine: {
     fontSize: 14,
-    color: '#7A756E',
     textAlign: 'center',
     marginBottom: 40,
   },
@@ -1031,7 +1031,6 @@ const styles = StyleSheet.create({
   breathingPhaseLabel: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#C17666',
     textAlign: 'center',
   },
   progressDots: {
@@ -1043,13 +1042,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#E8D0C6',
-  },
-  progressDotFilled: {
-    backgroundColor: '#C17666',
-  },
-  progressDotActive: {
-    backgroundColor: '#E8A090',
   },
   skipButton: {
     position: 'absolute',
@@ -1057,7 +1049,6 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 14,
-    color: '#B0AAA2',
   },
 
   // --- Center overlay (for ritual open, gaze, instruction, ritual close) ---

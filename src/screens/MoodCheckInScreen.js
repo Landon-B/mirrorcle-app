@@ -12,12 +12,14 @@ import { ScreenHeader, PrimaryButton } from '../components/common';
 import { textStyles, typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
 import { useHaptics } from '../hooks/useHaptics';
+import { useColors } from '../hooks/useColors';
 
 export const MoodCheckInScreen = ({ navigation, route }) => {
   const { mode = 'pre-session', focusArea, ...sessionData } = route.params || {};
   const { user } = useApp();
   const [selectedMood, setSelectedMood] = useState(null);
   const { selectionTap } = useHaptics();
+  const c = useColors();
 
   const isPost = mode === 'post-session';
   const userName = user?.user_metadata?.name || 'Friend';
@@ -51,7 +53,7 @@ export const MoodCheckInScreen = ({ navigation, route }) => {
   const activeDot = isPost ? 0 : 1;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.background }]}>
       <ScreenHeader
         label={isPost ? 'POST-SESSION' : 'MIRRORCLE'}
         onBack={() => navigation.goBack()}
@@ -62,8 +64,8 @@ export const MoodCheckInScreen = ({ navigation, route }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.heading}>{heading}</Text>
-        <Text style={styles.subtitle}>Select your current mood</Text>
+        <Text style={[styles.heading, { color: c.textPrimary }]}>{heading}</Text>
+        <Text style={[styles.subtitle, { color: c.textSecondary }]}>Select your current mood</Text>
 
         <View style={styles.grid}>
           {MOODS.map((mood) => {
@@ -77,14 +79,16 @@ export const MoodCheckInScreen = ({ navigation, route }) => {
                 accessibilityState={{ selected: isSelected }}
                 style={({ pressed }) => [
                   styles.moodCard,
-                  isSelected && styles.moodCardSelected,
+                  { backgroundColor: c.selectedMoodBg },
+                  isSelected && [styles.moodCardSelected, { borderColor: c.accentRust, backgroundColor: c.surfaceSecondary }],
                   pressed && styles.cardPressed,
                 ]}
               >
                 <Text style={styles.moodEmoji}>{mood.emoji}</Text>
                 <Text style={[
                   styles.moodLabel,
-                  isSelected && styles.moodLabelSelected,
+                  { color: c.textPrimary },
+                  isSelected && { color: c.accentRust },
                 ]}>
                   {mood.label}
                 </Text>
@@ -108,7 +112,8 @@ export const MoodCheckInScreen = ({ navigation, route }) => {
               key={i}
               style={[
                 styles.dot,
-                i === activeDot && styles.dotActive,
+                { backgroundColor: c.disabled },
+                i === activeDot && [styles.dotActive, { backgroundColor: c.accentRust }],
               ]}
             />
           ))}
@@ -121,7 +126,6 @@ export const MoodCheckInScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
   },
   scrollView: {
     flex: 1,
@@ -133,14 +137,12 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#2D2A26',
     lineHeight: 36,
     marginTop: 16,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#7A756E',
     marginBottom: 28,
   },
   grid: {
@@ -151,7 +153,6 @@ const styles = StyleSheet.create({
   },
   moodCard: {
     width: '47.5%',
-    backgroundColor: '#EDE4DC',
     borderRadius: 20,
     paddingVertical: 24,
     paddingHorizontal: 16,
@@ -161,8 +162,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   moodCardSelected: {
-    borderColor: '#C17666',
-    backgroundColor: '#F5EDE8',
+    // borderColor and backgroundColor applied inline
   },
   cardPressed: {
     transform: [{ scale: 0.97 }],
@@ -174,11 +174,7 @@ const styles = StyleSheet.create({
   moodLabel: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#2D2A26',
     textAlign: 'center',
-  },
-  moodLabelSelected: {
-    color: '#C17666',
   },
   footer: {
     paddingHorizontal: 20,
@@ -196,10 +192,8 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#D4CFC9',
   },
   dotActive: {
-    backgroundColor: '#C17666',
     width: 24,
     borderRadius: 4,
   },

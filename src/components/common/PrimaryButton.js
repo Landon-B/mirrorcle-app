@@ -3,9 +3,11 @@ import { Pressable, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { useColors } from '../../hooks/useColors';
 
 export const PrimaryButton = ({ title, icon, onPress, disabled, style, accessibilityLabel }) => {
   const { theme } = useTheme();
+  const c = useColors();
 
   return (
     <Pressable
@@ -22,7 +24,7 @@ export const PrimaryButton = ({ title, icon, onPress, disabled, style, accessibi
       ]}
     >
       <LinearGradient
-        colors={disabled ? ['#D4CFC9', '#D4CFC9'] : (theme.buttonGradient || theme.primary)}
+        colors={disabled ? [c.disabled, c.disabled] : (theme.buttonGradient || theme.primary)}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.primaryButtonGradient}

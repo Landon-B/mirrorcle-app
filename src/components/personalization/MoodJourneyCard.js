@@ -5,9 +5,11 @@ import { Card } from '../common';
 import { sessionService } from '../../services/session';
 import { useApp } from '../../context/AppContext';
 import { getFeelingColor } from '../../constants/feelings';
+import { useColors } from '../../hooks/useColors';
 
 export const MoodJourneyCard = () => {
   const { user } = useApp();
+  const c = useColors();
   const [moods, setMoods] = useState([]);
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export const MoodJourneyCard = () => {
     <Card style={styles.card}>
       <View style={styles.header}>
         <Ionicons name="heart" size={18} color="#F472B6" />
-        <Text style={styles.title}>Your Mood Journey</Text>
+        <Text style={[styles.title, { color: c.textPrimary }]}>Your Mood Journey</Text>
       </View>
 
       <View style={styles.timeline}>
@@ -56,7 +58,7 @@ export const MoodJourneyCard = () => {
         })}
       </View>
 
-      <Text style={styles.narrative}>{narrative}</Text>
+      <Text style={[styles.narrative, { color: c.textSecondary }]}>{narrative}</Text>
     </Card>
   );
 };
@@ -64,7 +66,7 @@ export const MoodJourneyCard = () => {
 const styles = StyleSheet.create({
   card: { gap: 12 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { color: '#2D2A26', fontSize: 16, fontWeight: '600' },
+  title: { fontSize: 16, fontWeight: '600' },
   timeline: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -82,7 +84,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   narrative: {
-    color: '#7A756E',
     fontSize: 13,
     fontStyle: 'italic',
     lineHeight: 18,

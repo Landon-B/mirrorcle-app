@@ -7,8 +7,10 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import { shadows } from '../../styles/spacing';
+import { useColors } from '../../hooks/useColors';
 
 export const MilestoneProgressCard = ({ title, current, target, index = 0 }) => {
+  const c = useColors();
   const percentage = Math.min(1, current / target);
   const barWidth = useSharedValue(0);
 
@@ -24,12 +26,12 @@ export const MilestoneProgressCard = ({ title, current, target, index = 0 }) => 
   }));
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      <View style={styles.barBackground}>
-        <Animated.View style={[styles.barFill, barStyle]} />
+    <View style={[styles.container, { backgroundColor: c.surface }]}>
+      <Text style={[styles.title, { color: c.textPrimary }]}>{title}</Text>
+      <View style={[styles.barBackground, { backgroundColor: c.surfaceTertiary }]}>
+        <Animated.View style={[styles.barFill, { backgroundColor: c.accentRust }, barStyle]} />
       </View>
-      <Text style={styles.caption}>
+      <Text style={[styles.caption, { color: c.textMuted }]}>
         {current} of {target}
       </Text>
     </View>
@@ -38,7 +40,6 @@ export const MilestoneProgressCard = ({ title, current, target, index = 0 }) => 
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     minWidth: 180,
@@ -47,23 +48,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2D2A26',
     marginBottom: 10,
   },
   barBackground: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#F0ECE7',
     overflow: 'hidden',
     marginBottom: 8,
   },
   barFill: {
     height: '100%',
     borderRadius: 3,
-    backgroundColor: '#C17666',
   },
   caption: {
     fontSize: 12,
-    color: '#B0AAA2',
   },
 });

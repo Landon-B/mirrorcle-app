@@ -11,6 +11,8 @@ import Animated, {
 import { PrimaryButton } from '../components/common';
 import { typography } from '../styles/typography';
 import { useApp } from '../context/AppContext';
+import { useColors } from '../hooks/useColors';
+import { useGradients } from '../hooks/useColors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -20,28 +22,24 @@ const SLIDES = [
     title: 'Speaking to yourself in a mirror might feel strange.',
     subtitle: "That\u2019s okay. Most people have never truly paused to look at themselves.",
     icon: 'eye-outline',
-    colors: ['#C17666', '#E8A090'],
   },
   {
     id: '2',
     title: 'Your voice has power.',
     subtitle: 'When you speak truth aloud, you hear it differently. It becomes real.',
     icon: 'mic-outline',
-    colors: ['#E8A090', '#D4845A'],
   },
   {
     id: '3',
     title: '60 seconds can change your day.',
     subtitle: "One moment of presence. One affirmation spoken with intention. That\u2019s all it takes.",
     icon: 'time-outline',
-    colors: ['#D4845A', '#C17666'],
   },
   {
     id: '4',
     title: 'Ready to meet yourself?',
     subtitle: null, // Social proof handled separately
     icon: 'sparkles',
-    colors: ['#C17666', '#B86456'],
     socialProof: '"I cried the first time. Not from sadness \u2014 from finally hearing myself."',
   },
 ];
@@ -50,6 +48,16 @@ export const OnboardingScreen = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef(null);
   const { completeOnboarding } = useApp();
+  const c = useColors();
+  const g = useGradients();
+
+  // Build slide-specific gradient pairs from palette tokens
+  const slideGradients = [
+    [c.accentRust, c.feelingPink],
+    [c.feelingPink, c.accentOrange],
+    [c.accentOrange, c.accentRust],
+    [c.accentRust, c.primaryStart],
+  ];
 
   const handleNext = () => {
     if (currentIndex < SLIDES.length - 1) {
@@ -66,17 +74,17 @@ export const OnboardingScreen = ({ navigation }) => {
     navigation.replace('GuidedFirstSession');
   };
 
-  const renderSlide = ({ item }) => (
+  const renderSlide = ({ item, index }) => (
     <View style={styles.slide}>
       <Animated.View entering={FadeInDown.duration(500).springify().damping(12)}>
-        <LinearGradient colors={item.colors} style={styles.iconWrapper}>
+        <LinearGradient colors={slideGradients[index] || g.primary} style={styles.iconWrapper}>
           <Ionicons name={item.icon} size={48} color="#fff" />
         </LinearGradient>
       </Animated.View>
 
       <Animated.Text
         entering={FadeInDown.delay(150).duration(500)}
-        style={styles.slideTitle}
+        style={[styles.slideTitle, { color: c.textPrimary }]}
       >
         {item.title}
       </Animated.Text>
@@ -84,7 +92,7 @@ export const OnboardingScreen = ({ navigation }) => {
       {item.subtitle && (
         <Animated.Text
           entering={FadeIn.delay(350).duration(500)}
-          style={styles.slideSubtitle}
+          style={[styles.slideSubtitle, { color: c.textSecondary }]}
         >
           {item.subtitle}
         </Animated.Text>
@@ -95,7 +103,7 @@ export const OnboardingScreen = ({ navigation }) => {
           entering={FadeInUp.delay(400).duration(600)}
           style={styles.socialProofContainer}
         >
-          <Text style={styles.socialProofText}>{item.socialProof}</Text>
+          <Text style={[styles.socialProofText, { color: c.textSecondary }]}>{item.socialProof}</Text>
         </Animated.View>
       )}
     </View>
@@ -104,14 +112,14 @@ export const OnboardingScreen = ({ navigation }) => {
   const isLastSlide = currentIndex === SLIDES.length - 1;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.background }]}>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar barStyle={c.statusBarStyle} />
 
         <View style={styles.header}>
           {!isLastSlide && (
             <Pressable onPress={handleSkip} style={styles.skipButton}>
-              <Text style={styles.skipText}>Skip</Text>
+              <Text style={[styles.skipText, { color: c.textMuted }]}>Skip</Text>
             </Pressable>
           )}
         </View>
@@ -138,7 +146,8 @@ export const OnboardingScreen = ({ navigation }) => {
                 key={index}
                 style={[
                   styles.dot,
-                  index === currentIndex && styles.dotActive,
+                  { backgroundColor: c.border },
+                  index === currentIndex && [styles.dotActive, { backgroundColor: c.accentRust }],
                 ]}
               />
             ))}
@@ -162,7 +171,7 @@ export const OnboardingScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F2EE' },
+  container: { flex: 1 },
   safeArea: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -175,7 +184,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
-  skipText: { color: '#B0AAA2', fontSize: 16 },
+  skipText: { fontSize: 16 },
   flatListContent: {},
   slide: {
     width: SCREEN_WIDTH,
@@ -192,7 +201,6 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   slideTitle: {
-    color: '#2D2A26',
     fontSize: 26,
     fontWeight: '700',
     textAlign: 'center',
@@ -200,7 +208,6 @@ const styles = StyleSheet.create({
     lineHeight: 34,
   },
   slideSubtitle: {
-    color: '#7A756E',
     fontSize: 17,
     textAlign: 'center',
     lineHeight: 26,
@@ -213,7 +220,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.serifItalic,
     fontSize: 17,
     fontStyle: 'italic',
-    color: '#7A756E',
     textAlign: 'center',
     lineHeight: 26,
   },
@@ -231,11 +237,9 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#E8E4DF',
   },
   dotActive: {
     width: 24,
-    backgroundColor: '#C17666',
   },
   buttonContainer: {},
 });

@@ -7,11 +7,14 @@ import { THEMES, getFreeThemes, getPremiumThemes } from '../constants';
 import { useTheme } from '../context/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { usePaywall } from '../hooks/usePaywall';
+import { useColors, useGradients } from '../hooks/useColors';
 
 export const ThemesScreen = ({ navigation }) => {
   const { theme, changeTheme } = useTheme();
   const { isPro, unlockedThemes, stats } = useApp();
   const { openPaywall } = usePaywall();
+  const c = useColors();
+  const g = useGradients();
 
   const freeThemes = getFreeThemes();
   const premiumThemes = getPremiumThemes();
@@ -71,46 +74,46 @@ export const ThemesScreen = ({ navigation }) => {
           )}
           {isMilestoneUnlocked && (
             <View style={styles.unlockedBadge}>
-              <Ionicons name="trophy" size={14} color="#F59E0B" />
+              <Ionicons name="trophy" size={14} color={c.warning} />
             </View>
           )}
           {isSelected && (
-            <View style={styles.checkBadge}>
+            <View style={[styles.checkBadge, { backgroundColor: c.success }]}>
               <Ionicons name="checkmark" size={14} color="#fff" />
             </View>
           )}
         </LinearGradient>
-        <Text style={styles.themeName}>{themeOption.name}</Text>
+        <Text style={[styles.themeName, { color: c.textPrimary }]}>{themeOption.name}</Text>
         {isLocked && themeOption.unlockRequirement && (
           <View style={styles.unlockInfo}>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${(progress || 0) * 100}%` }]} />
+            <View style={[styles.progressTrack, { backgroundColor: c.border }]}>
+              <View style={[styles.progressFill, { width: `${(progress || 0) * 100}%`, backgroundColor: c.accentRust }]} />
             </View>
-            <Text style={styles.unlockLabel}>{themeOption.unlockRequirement.label}</Text>
+            <Text style={[styles.unlockLabel, { color: c.textSecondary }]}>{themeOption.unlockRequirement.label}</Text>
           </View>
         )}
         {isMilestoneUnlocked && (
-          <Text style={styles.unlockedLabel}>Earned</Text>
+          <Text style={[styles.unlockedLabel, { color: c.warning }]}>Earned</Text>
         )}
         {isLocked && !themeOption.unlockRequirement && (
-          <Text style={styles.proBadge}>PRO</Text>
+          <Text style={[styles.proBadge, { color: c.warning }]}>PRO</Text>
         )}
       </Pressable>
     );
   };
 
   return (
-    <View style={styles.container}>
-        <StatusBar barStyle="dark-content" />
+    <View style={[styles.container, { backgroundColor: c.background }]}>
+        <StatusBar barStyle={c.statusBarStyle} />
         <ScreenHeader title="Themes" onBack={() => navigation.goBack()} />
 
         <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.sectionTitle}>Free Themes</Text>
+          <Text style={[styles.sectionTitle, { color: c.textMuted }]}>Free Themes</Text>
           <View style={styles.themesGrid}>
             {freeThemes.map(renderThemeCard)}
           </View>
 
-          <Text style={styles.sectionTitle}>Premium Themes</Text>
+          <Text style={[styles.sectionTitle, { color: c.textMuted }]}>Premium Themes</Text>
           <View style={styles.themesGrid}>
             {premiumThemes.map(renderThemeCard)}
           </View>
@@ -121,7 +124,7 @@ export const ThemesScreen = ({ navigation }) => {
               onPress={() => openPaywall()}
             >
               <LinearGradient
-                colors={['#F59E0B', '#F97316']}
+                colors={g.warning}
                 style={styles.upgradeGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -141,9 +144,9 @@ export const ThemesScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F2EE' },
+  container: { flex: 1 },
   content: { padding: 20, gap: 20 },
-  sectionTitle: { color: '#B0AAA2', fontSize: 14, fontWeight: '600', textTransform: 'uppercase' },
+  sectionTitle: { fontSize: 14, fontWeight: '600', textTransform: 'uppercase' },
   themesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
   themeCard: {
     width: '47%',
@@ -195,35 +198,29 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#22C55E',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  themeName: { color: '#2D2A26', fontSize: 14, fontWeight: '500' },
+  themeName: { fontSize: 14, fontWeight: '500' },
   proBadge: {
-    color: '#F59E0B',
     fontSize: 10,
     fontWeight: '700',
   },
   unlockInfo: { width: '100%', gap: 4 },
   progressTrack: {
     height: 4,
-    backgroundColor: '#E8E4DF',
     borderRadius: 2,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#C17666',
     borderRadius: 2,
   },
   unlockLabel: {
-    color: '#7A756E',
     fontSize: 10,
     textAlign: 'center',
   },
   unlockedLabel: {
-    color: '#F59E0B',
     fontSize: 10,
     fontWeight: '700',
   },

@@ -21,6 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useApp } from '../context/AppContext';
 import { typography } from '../styles/typography';
 import { STORAGE_KEYS } from '../constants';
+import { useColors } from '../hooks/useColors';
 
 const GUIDED_AFFIRMATION = 'I am worthy of love and kindness';
 
@@ -37,7 +38,7 @@ const PHASE_LABELS = {
   exhale: 'Breathe out...',
 };
 
-// Phases: breathing → gaze → affirmation → celebration
+// Phases: breathing -> gaze -> affirmation -> celebration
 const PHASES = {
   BREATHING: 'breathing',
   GAZE: 'gaze',
@@ -54,6 +55,7 @@ export const GuidedFirstSessionScreen = ({ navigation }) => {
   const { completeOnboarding } = useApp();
   const isMountedRef = useRef(true);
   const sessionStartRef = useRef(Date.now());
+  const c = useColors();
 
   // Breathing animation
   const circleScale = useSharedValue(0.6);
@@ -238,7 +240,7 @@ export const GuidedFirstSessionScreen = ({ navigation }) => {
           JSON.stringify(pendingSession)
         );
       } catch (e) {
-        // Non-critical — session save is best-effort
+        // Non-critical -- session save is best-effort
       }
 
       await completeOnboarding();
@@ -268,18 +270,18 @@ export const GuidedFirstSessionScreen = ({ navigation }) => {
   // Breathing phase UI
   if (phase === PHASES.BREATHING) {
     return (
-      <View style={styles.container}>
-        <StatusBar barStyle="dark-content" />
+      <View style={[styles.container, { backgroundColor: c.background }]}>
+        <StatusBar barStyle={c.statusBarStyle} />
         <View style={styles.breathingContent}>
           <Animated.View style={[styles.breathingCircle, circleAnimatedStyle]}>
             <View style={styles.breathingCircleInner}>
-              <Text style={styles.breathingPhaseLabel}>{PHASE_LABELS[breathPhase]}</Text>
+              <Text style={[styles.breathingPhaseLabel, { color: c.accentRust }]}>{PHASE_LABELS[breathPhase]}</Text>
             </View>
           </Animated.View>
 
           <Animated.View style={guidanceAnimatedStyle}>
-            <Text style={styles.guidanceText}>Take a deep breath.</Text>
-            <Text style={styles.guidanceSubtext}>This moment is yours.</Text>
+            <Text style={[styles.guidanceText, { color: c.textPrimary }]}>Take a deep breath.</Text>
+            <Text style={[styles.guidanceSubtext, { color: c.textSecondary }]}>This moment is yours.</Text>
           </Animated.View>
         </View>
       </View>
@@ -382,7 +384,6 @@ const styles = StyleSheet.create({
   // Breathing phase (light bg)
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
   },
   breathingContent: {
     flex: 1,
@@ -412,13 +413,11 @@ const styles = StyleSheet.create({
   breathingPhaseLabel: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#C17666',
     textAlign: 'center',
   },
   guidanceText: {
     fontSize: 22,
     fontWeight: '600',
-    color: '#2D2A26',
     textAlign: 'center',
     marginBottom: 8,
   },
@@ -426,7 +425,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.serifItalic,
     fontSize: 17,
     fontStyle: 'italic',
-    color: '#7A756E',
     textAlign: 'center',
   },
 

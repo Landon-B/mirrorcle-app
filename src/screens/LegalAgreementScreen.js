@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Pressable, StyleSheet, Linking } from 'react-na
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenHeader, PrimaryButton } from '../components/common';
 import { shadows } from '../styles/spacing';
+import { useColors } from '../hooks/useColors';
 
 const AGREEMENTS = [
   {
@@ -21,6 +22,7 @@ const AGREEMENTS = [
 
 export const LegalAgreementScreen = ({ navigation, route }) => {
   const { onAccept } = route.params || {};
+  const c = useColors();
   const [accepted, setAccepted] = useState({});
 
   const allAccepted = AGREEMENTS.every(a => accepted[a.id]);
@@ -37,7 +39,7 @@ export const LegalAgreementScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.background }]}>
       <ScreenHeader
         label="AGREEMENTS"
         onBack={() => navigation.goBack()}
@@ -47,8 +49,8 @@ export const LegalAgreementScreen = ({ navigation, route }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.heading}>Before we begin</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.heading, { color: c.textPrimary }]}>Before we begin</Text>
+        <Text style={[styles.subtitle, { color: c.textSecondary }]}>
           Please review and accept the following to continue
         </Text>
 
@@ -58,24 +60,32 @@ export const LegalAgreementScreen = ({ navigation, route }) => {
             <Pressable
               key={agreement.id}
               onPress={() => toggleAcceptance(agreement.id)}
-              style={[styles.agreementCard, isChecked && styles.agreementCardChecked]}
+              style={[
+                styles.agreementCard,
+                { backgroundColor: c.surface, borderColor: 'transparent' },
+                isChecked && { borderColor: c.accentRust },
+              ]}
             >
               <View style={styles.agreementHeader}>
-                <View style={[styles.checkbox, isChecked && styles.checkboxChecked]}>
+                <View style={[
+                  styles.checkbox,
+                  { borderColor: c.disabled },
+                  isChecked && { backgroundColor: c.accentRust, borderColor: c.accentRust },
+                ]}>
                   {isChecked && (
-                    <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                    <Ionicons name="checkmark" size={14} color={c.textOnPrimary} />
                   )}
                 </View>
-                <Text style={styles.agreementTitle}>{agreement.title}</Text>
+                <Text style={[styles.agreementTitle, { color: c.textPrimary }]}>{agreement.title}</Text>
               </View>
 
-              <Text style={styles.agreementSummary}>{agreement.summary}</Text>
+              <Text style={[styles.agreementSummary, { color: c.textSecondary }]}>{agreement.summary}</Text>
 
               <Pressable
                 onPress={() => Linking.openURL(agreement.url)}
                 hitSlop={8}
               >
-                <Text style={styles.readMore}>Read full document</Text>
+                <Text style={[styles.readMore, { color: c.accentRust }]}>Read full document</Text>
               </Pressable>
             </Pressable>
           );
@@ -97,7 +107,6 @@ export const LegalAgreementScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -106,26 +115,19 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#2D2A26',
     marginTop: 16,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#7A756E',
     marginBottom: 28,
   },
   agreementCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 20,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: 'transparent',
     ...shadows.card,
-  },
-  agreementCardChecked: {
-    borderColor: '#C17666',
   },
   agreementHeader: {
     flexDirection: 'row',
@@ -138,29 +140,21 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#D4CFC9',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: '#C17666',
-    borderColor: '#C17666',
   },
   agreementTitle: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#2D2A26',
   },
   agreementSummary: {
     fontSize: 14,
-    color: '#7A756E',
     lineHeight: 20,
     marginBottom: 12,
   },
   readMore: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#C17666',
   },
   footer: {
     paddingHorizontal: 20,

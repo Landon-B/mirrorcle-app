@@ -16,12 +16,14 @@ import { ScreenHeader, PrimaryButton } from '../components/common';
 import { textStyles, typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
 import { useHaptics } from '../hooks/useHaptics';
+import { useColors } from '../hooks/useColors';
 
 export const FocusSelectionScreen = ({ navigation }) => {
   const [selectedArea, setSelectedArea] = useState(null);
   const [customFocus, setCustomFocus] = useState('');
   const { isPro, checkAccess, PaywallComponent } = useFeatureGate();
   const { selectionTap } = useHaptics();
+  const c = useColors();
 
   const handleContinue = () => {
     if (!selectedArea && !customFocus.trim()) return;
@@ -64,7 +66,7 @@ export const FocusSelectionScreen = ({ navigation }) => {
   const isValid = selectedArea || (isPro && customFocus.trim().length > 0);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.background }]}>
       <ScreenHeader
         label="MIRRORCLE"
         onBack={() => navigation.goBack()}
@@ -76,7 +78,7 @@ export const FocusSelectionScreen = ({ navigation }) => {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.heading}>
+        <Text style={[styles.heading, { color: c.textPrimary }]}>
           What shall we{'\n'}strengthen today?
         </Text>
 
@@ -92,14 +94,16 @@ export const FocusSelectionScreen = ({ navigation }) => {
                 accessibilityState={{ selected: isSelected }}
                 style={({ pressed }) => [
                   styles.focusCard,
-                  isSelected && styles.focusCardSelected,
+                  { backgroundColor: c.surface },
+                  isSelected && { borderColor: c.accentRust },
                   pressed && styles.cardPressed,
                 ]}
               >
                 <Text style={styles.focusEmoji}>{area.emoji}</Text>
                 <Text style={[
                   styles.focusLabel,
-                  isSelected && styles.focusLabelSelected,
+                  { color: c.textPrimary },
+                  isSelected && { color: c.accentRust },
                 ]}>
                   {area.label}
                 </Text>
@@ -110,18 +114,18 @@ export const FocusSelectionScreen = ({ navigation }) => {
 
         <Pressable
           onPress={handleCustomFocusPress}
-          style={styles.searchContainer}
+          style={[styles.searchContainer, { backgroundColor: c.surface }]}
         >
           <Ionicons
             name={isPro ? 'search-outline' : 'lock-closed'}
             size={18}
-            color="#B0AAA2"
+            color={c.textMuted}
             style={styles.searchIcon}
           />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: c.textPrimary }]}
             placeholder={isPro ? 'Or type your own focus...' : 'Type your own focus (Pro)'}
-            placeholderTextColor="#B0AAA2"
+            placeholderTextColor={c.inputPlaceholder}
             value={customFocus}
             onChangeText={handleCustomFocusChange}
             editable={isPro}
@@ -148,7 +152,6 @@ export const FocusSelectionScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
   },
   scrollView: {
     flex: 1,
@@ -160,7 +163,6 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#2D2A26',
     lineHeight: 36,
     marginTop: 16,
     marginBottom: 28,
@@ -173,7 +175,6 @@ const styles = StyleSheet.create({
   },
   focusCard: {
     width: '47.5%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     paddingVertical: 24,
     paddingHorizontal: 16,
@@ -182,9 +183,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
     ...shadows.card,
-  },
-  focusCardSelected: {
-    borderColor: '#C17666',
   },
   cardPressed: {
     transform: [{ scale: 0.97 }],
@@ -196,16 +194,11 @@ const styles = StyleSheet.create({
   focusLabel: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#2D2A26',
     textAlign: 'center',
-  },
-  focusLabelSelected: {
-    color: '#C17666',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingHorizontal: 16,
     marginTop: 24,
@@ -217,7 +210,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#2D2A26',
     paddingVertical: 16,
     fontWeight: '400',
   },

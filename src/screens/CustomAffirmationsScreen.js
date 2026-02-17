@@ -7,12 +7,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { PrimaryButton, GhostButton, Card, ScreenHeader } from '../components/common';
 import { useApp } from '../context/AppContext';
 import { customAffirmationService } from '../services/personalization';
+import { useColors } from '../hooks/useColors';
 
 const MAX_LENGTH = 150;
 const FREE_MAX_COUNT = 3;
 
 export const CustomAffirmationsScreen = ({ navigation }) => {
   const { user, isPro } = useApp();
+  const c = useColors();
   const [affirmations, setAffirmations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newText, setNewText] = useState('');
@@ -107,33 +109,33 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: c.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#C17666" />
+          <ActivityIndicator size="large" color={c.accentRust} />
         </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-        <StatusBar barStyle="dark-content" />
+    <View style={[styles.container, { backgroundColor: c.background }]}>
+        <StatusBar barStyle={c.statusBarStyle} />
         <ScreenHeader title="My Affirmations" onBack={() => navigation.goBack()} />
 
         <ScrollView contentContainerStyle={styles.content}>
           <Card style={styles.inputCard}>
-            <Text style={styles.inputLabel}>Create New Affirmation</Text>
+            <Text style={[styles.inputLabel, { color: c.textPrimary }]}>Create New Affirmation</Text>
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, { backgroundColor: c.inputBackground, color: c.textPrimary, borderColor: c.inputBorder }]}
               placeholder="I am..."
-              placeholderTextColor="#B0AAA2"
+              placeholderTextColor={c.inputPlaceholder}
               value={newText}
               onChangeText={setNewText}
               maxLength={MAX_LENGTH}
               multiline
             />
             <View style={styles.inputFooter}>
-              <Text style={styles.charCount}>{newText.length}/{MAX_LENGTH}</Text>
+              <Text style={[styles.charCount, { color: c.textMuted }]}>{newText.length}/{MAX_LENGTH}</Text>
               <PrimaryButton
                 title="Add"
                 icon="add"
@@ -143,7 +145,7 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
               />
             </View>
             {!isPro && (
-              <Text style={styles.limitText}>
+              <Text style={[styles.limitText, { color: c.textSecondary }]}>
                 {affirmations.length}/{FREE_MAX_COUNT} free affirmations used
               </Text>
             )}
@@ -151,9 +153,9 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
 
           {affirmations.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="create-outline" size={48} color="#E8E4DF" />
-              <Text style={styles.emptyTitle}>No custom affirmations yet</Text>
-              <Text style={styles.emptySubtitle}>
+              <Ionicons name="create-outline" size={48} color={c.border} />
+              <Text style={[styles.emptyTitle, { color: c.textPrimary }]}>No custom affirmations yet</Text>
+              <Text style={[styles.emptySubtitle, { color: c.textSecondary }]}>
                 Create your own affirmations that will appear in your mirror sessions
               </Text>
             </View>
@@ -163,7 +165,7 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
                 {editingId === item.id ? (
                   <View>
                     <TextInput
-                      style={styles.editInput}
+                      style={[styles.editInput, { backgroundColor: c.inputBackground, color: c.textPrimary, borderColor: c.inputBorderFocused }]}
                       value={editText}
                       onChangeText={setEditText}
                       maxLength={MAX_LENGTH}
@@ -177,7 +179,7 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
                   </View>
                 ) : (
                   <View>
-                    <Text style={[styles.affirmationText, !item.isActive && styles.affirmationTextInactive]}>
+                    <Text style={[styles.affirmationText, { color: c.textPrimary }, !item.isActive && { color: c.textMuted }]}>
                       "{item.text}"
                     </Text>
                     <View style={styles.affirmationActions}>
@@ -185,18 +187,18 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
                         <Ionicons
                           name={item.isActive ? 'checkmark-circle' : 'ellipse-outline'}
                           size={22}
-                          color={item.isActive ? '#34D399' : '#E8E4DF'}
+                          color={item.isActive ? c.success : c.border}
                         />
-                        <Text style={[styles.actionText, item.isActive && styles.actionTextActive]}>
+                        <Text style={[styles.actionText, { color: c.textMuted }, item.isActive && { color: c.success }]}>
                           {item.isActive ? 'Active' : 'Inactive'}
                         </Text>
                       </Pressable>
                       <View style={styles.rightActions}>
                         <Pressable onPress={() => startEditing(item)} style={styles.iconAction}>
-                          <Ionicons name="pencil" size={18} color="#7A756E" />
+                          <Ionicons name="pencil" size={18} color={c.textSecondary} />
                         </Pressable>
                         <Pressable onPress={() => handleDelete(item)} style={styles.iconAction}>
-                          <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                          <Ionicons name="trash-outline" size={18} color={c.error} />
                         </Pressable>
                       </View>
                     </View>
@@ -211,46 +213,38 @@ export const CustomAffirmationsScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F2EE' },
+  container: { flex: 1 },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: { padding: 20, gap: 16 },
   inputCard: { gap: 12 },
-  inputLabel: { color: '#2D2A26', fontSize: 16, fontWeight: '600' },
+  inputLabel: { fontSize: 16, fontWeight: '600' },
   textInput: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 14,
-    color: '#2D2A26',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#E8E4DF',
     minHeight: 60,
     textAlignVertical: 'top',
   },
   inputFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  charCount: { color: '#B0AAA2', fontSize: 12 },
+  charCount: { fontSize: 12 },
   addButton: { minWidth: 100 },
-  limitText: { color: '#7A756E', fontSize: 12, marginTop: 4 },
+  limitText: { fontSize: 12, marginTop: 4 },
   emptyState: { alignItems: 'center', paddingVertical: 40, gap: 12 },
-  emptyTitle: { color: '#2D2A26', fontSize: 18, fontWeight: '600' },
-  emptySubtitle: { color: '#7A756E', fontSize: 14, textAlign: 'center' },
+  emptyTitle: { fontSize: 18, fontWeight: '600' },
+  emptySubtitle: { fontSize: 14, textAlign: 'center' },
   affirmationCard: { gap: 12 },
-  affirmationText: { color: '#2D2A26', fontSize: 16, fontStyle: 'italic', lineHeight: 24 },
-  affirmationTextInactive: { color: '#B0AAA2' },
+  affirmationText: { fontSize: 16, fontStyle: 'italic', lineHeight: 24 },
   affirmationActions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   actionButton: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  actionText: { color: '#B0AAA2', fontSize: 13 },
-  actionTextActive: { color: '#34D399' },
+  actionText: { fontSize: 13 },
   rightActions: { flexDirection: 'row', gap: 16 },
   iconAction: { padding: 4 },
   editInput: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 14,
-    color: '#2D2A26',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#C17666',
     minHeight: 60,
     textAlignVertical: 'top',
   },

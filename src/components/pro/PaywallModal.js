@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { PrimaryButton, GhostButton } from '../common';
 import { useApp } from '../../context/AppContext';
 import { typography } from '../../styles/typography';
+import { useColors } from '../../hooks/useColors';
 
 const FEATURE_MESSAGING = {
   custom_affirmations: {
@@ -46,11 +47,11 @@ const VALUE_POINTS = [
 
 export const PaywallModal = ({ visible, onClose, feature }) => {
   const { updatePreferences } = useApp();
+  const c = useColors();
 
   const messaging = FEATURE_MESSAGING[feature] || FEATURE_MESSAGING.default;
 
   const handlePurchase = async () => {
-    // Mock purchase
     await updatePreferences({ isPro: true });
     onClose();
   };
@@ -62,31 +63,31 @@ export const PaywallModal = ({ visible, onClose, feature }) => {
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.backdrop}>
+      <View style={[styles.backdrop, { backgroundColor: c.overlayHeavy }]}>
         <Pressable style={styles.backdropPress} onPress={onClose} />
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { backgroundColor: c.surface }]}>
           <View style={styles.header}>
-            <View style={styles.badge}>
-              <Ionicons name={messaging.icon} size={24} color="#C17666" />
+            <View style={[styles.badge, { backgroundColor: c.accentPeach }]}>
+              <Ionicons name={messaging.icon} size={24} color={c.accentRust} />
             </View>
-            <Text style={styles.title}>{messaging.title}</Text>
-            <Text style={styles.subtitle}>{messaging.subtitle}</Text>
+            <Text style={[styles.title, { color: c.textPrimary }]}>{messaging.title}</Text>
+            <Text style={[styles.subtitle, { color: c.textSecondary }]}>{messaging.subtitle}</Text>
           </View>
 
           <View style={styles.valuePoints}>
             {VALUE_POINTS.map((point, index) => (
               <View key={index} style={styles.valueRow}>
-                <Ionicons name="checkmark" size={18} color="#C17666" />
-                <Text style={styles.valueText}>{point}</Text>
+                <Ionicons name="checkmark" size={18} color={c.accentRust} />
+                <Text style={[styles.valueText, { color: c.textPrimary }]}>{point}</Text>
               </View>
             ))}
           </View>
 
           <View style={styles.pricingRow}>
-            <Text style={styles.priceMain}>$4.99</Text>
-            <Text style={styles.pricePeriod}>/month</Text>
+            <Text style={[styles.priceMain, { color: c.textPrimary }]}>$4.99</Text>
+            <Text style={[styles.pricePeriod, { color: c.textSecondary }]}>/month</Text>
           </View>
-          <Text style={styles.trialNote}>7 days free, then $4.99/month</Text>
+          <Text style={[styles.trialNote, { color: c.textSecondary }]}>7 days free, then $4.99/month</Text>
 
           <View style={styles.actions}>
             <PrimaryButton title="Begin Your Deeper Practice" onPress={handlePurchase} />
@@ -101,14 +102,12 @@ export const PaywallModal = ({ visible, onClose, feature }) => {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   backdropPress: {
     flex: 1,
   },
   sheet: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 24,
@@ -122,12 +121,10 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#E8D0C6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    color: '#2D2A26',
     fontSize: 22,
     fontWeight: '700',
     textAlign: 'center',
@@ -135,7 +132,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: typography.fontFamily.serifItalic,
     fontStyle: 'italic',
-    color: '#7A756E',
     fontSize: 15,
     textAlign: 'center',
     lineHeight: 22,
@@ -151,7 +147,6 @@ const styles = StyleSheet.create({
   },
   valueText: {
     flex: 1,
-    color: '#2D2A26',
     fontSize: 15,
   },
   pricingRow: {
@@ -161,17 +156,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   priceMain: {
-    color: '#2D2A26',
     fontSize: 32,
     fontWeight: '700',
   },
   pricePeriod: {
-    color: '#7A756E',
     fontSize: 16,
   },
   trialNote: {
     fontSize: 13,
-    color: '#7A756E',
     textAlign: 'center',
     marginTop: -12,
   },

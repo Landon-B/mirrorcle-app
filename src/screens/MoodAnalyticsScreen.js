@@ -14,20 +14,10 @@ import { ScreenHeader, Card, PrimaryButton } from '../components/common';
 import { MoodPatternChart } from '../components/personalization/MoodPatternChart';
 import { sessionService } from '../services/session';
 import { getMoodEmoji, getMoodLabel, FEELING_COLORS } from '../constants/feelings';
+import { useColors } from '../hooks/useColors';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
 import { usePaywall } from '../hooks/usePaywall';
-
-const COLORS = {
-  bg: '#F5F2EE',
-  rust: '#C17666',
-  peach: '#E8D0C6',
-  white: '#FFFFFF',
-  textPrimary: '#2D2A26',
-  textSecondary: '#7A756E',
-  textMuted: '#B0AAA2',
-  border: '#F0ECE7',
-};
 
 const TIME_RANGES = [
   { key: 'week', label: 'Week', days: 7 },
@@ -39,6 +29,7 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const { user, isPro } = useApp();
   const { openPaywall } = usePaywall();
+  const c = useColors();
   const [activeRange, setActiveRange] = useState('month');
   const [moodData, setMoodData] = useState(null);
   const [sessions, setSessions] = useState([]);
@@ -91,13 +82,13 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
     const transitions = {};
     for (const s of sessions) {
       if (s.feelingId && s.postMoodId && s.feelingId !== s.postMoodId) {
-        const key = `${s.feelingId}→${s.postMoodId}`;
+        const key = `${s.feelingId}\u2192${s.postMoodId}`;
         transitions[key] = (transitions[key] || 0) + 1;
       }
     }
     return Object.entries(transitions)
       .map(([key, count]) => {
-        const [from, to] = key.split('→');
+        const [from, to] = key.split('\u2192');
         return { from, to, count };
       })
       .sort((a, b) => b.count - a.count)
@@ -123,12 +114,12 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
   }, [moodDistribution, moodTransitions, sessions]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: c.background }]}>
       <ScreenHeader label="MOOD JOURNEY" onBack={() => navigation.goBack()} />
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.rust} />
+          <ActivityIndicator size="large" color={c.accentRust} />
         </View>
       ) : (
         <ScrollView
@@ -136,14 +127,14 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
         >
           {/* Time range selector */}
-          <View style={styles.tabRow}>
+          <View style={[styles.tabRow, { backgroundColor: c.surfaceTertiary }]}>
             {TIME_RANGES.map(range => (
               <Pressable
                 key={range.key}
-                style={[styles.tab, activeRange === range.key && styles.tabActive]}
+                style={[styles.tab, activeRange === range.key && { backgroundColor: c.accentRust }]}
                 onPress={() => setActiveRange(range.key)}
               >
-                <Text style={[styles.tabText, activeRange === range.key && styles.tabTextActive]}>
+                <Text style={[styles.tabText, { color: c.textSecondary }, activeRange === range.key && { color: c.textOnPrimary }]}>
                   {range.label}
                 </Text>
               </Pressable>
@@ -152,9 +143,9 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
 
           {sessions.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="pulse-outline" size={40} color={COLORS.peach} />
-              <Text style={styles.emptyTitle}>No mood data yet</Text>
-              <Text style={styles.emptySubtitle}>
+              <Ionicons name="pulse-outline" size={40} color={c.accentPeach} />
+              <Text style={[styles.emptyTitle, { color: c.textPrimary }]}>No mood data yet</Text>
+              <Text style={[styles.emptySubtitle, { color: c.textSecondary }]}>
                 Complete a few sessions to see your mood patterns.
               </Text>
             </View>
@@ -162,7 +153,7 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
             <>
               {/* Mood Distribution */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>How You've Been Feeling</Text>
+                <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>How You've Been Feeling</Text>
                 <Card style={styles.chartCard}>
                   <MoodPatternChart data={moodDistribution} />
                 </Card>
@@ -171,19 +162,19 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
               {/* Mood Transitions */}
               {moodTransitions.length > 0 && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Your Shifts</Text>
+                  <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>Your Shifts</Text>
                   <View style={styles.transitionsContainer}>
                     {moodTransitions.map((t, index) => (
                       <Card key={index} style={styles.transitionCard}>
                         <View style={styles.transitionEmojis}>
                           <Text style={styles.transitionEmoji}>{getMoodEmoji(t.from)}</Text>
-                          <Ionicons name="arrow-forward" size={14} color={COLORS.textMuted} />
+                          <Ionicons name="arrow-forward" size={14} color={c.textMuted} />
                           <Text style={styles.transitionEmoji}>{getMoodEmoji(t.to)}</Text>
                         </View>
-                        <Text style={styles.transitionLabel}>
-                          {getMoodLabel(t.from)} → {getMoodLabel(t.to)}
+                        <Text style={[styles.transitionLabel, { color: c.textSecondary }]}>
+                          {getMoodLabel(t.from)} \u2192 {getMoodLabel(t.to)}
                         </Text>
-                        <Text style={styles.transitionCount}>
+                        <Text style={[styles.transitionCount, { color: c.accentRust }]}>
                           {t.count} time{t.count !== 1 ? 's' : ''}
                         </Text>
                       </Card>
@@ -195,10 +186,10 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
               {/* Premium gate for extended ranges */}
               {!isPro && activeRange !== 'week' && (
                 <View style={styles.premiumGate}>
-                  <View style={styles.premiumOverlay}>
-                    <Ionicons name="lock-closed" size={24} color={COLORS.rust} />
-                    <Text style={styles.premiumTitle}>Unlock Full Mood Journey</Text>
-                    <Text style={styles.premiumSubtitle}>
+                  <View style={[styles.premiumOverlay, { backgroundColor: c.surface }]}>
+                    <Ionicons name="lock-closed" size={24} color={c.accentRust} />
+                    <Text style={[styles.premiumTitle, { color: c.textPrimary }]}>Unlock Full Mood Journey</Text>
+                    <Text style={[styles.premiumSubtitle, { color: c.textSecondary }]}>
                       See your mood patterns over months and discover deeper insights.
                     </Text>
                     <PrimaryButton
@@ -214,8 +205,8 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
               {insight && (isPro || activeRange === 'week') && (
                 <Card style={styles.insightCard}>
                   <View style={styles.insightRow}>
-                    <Ionicons name="bulb" size={18} color={COLORS.rust} />
-                    <Text style={styles.insightText}>{insight}</Text>
+                    <Ionicons name="bulb" size={18} color={c.accentRust} />
+                    <Text style={[styles.insightText, { color: c.textSecondary }]}>{insight}</Text>
                   </View>
                 </Card>
               )}
@@ -230,7 +221,6 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.bg,
   },
   loadingContainer: {
     flex: 1,
@@ -245,7 +235,6 @@ const styles = StyleSheet.create({
   // Tabs
   tabRow: {
     flexDirection: 'row',
-    backgroundColor: COLORS.border,
     borderRadius: 24,
     padding: 4,
     marginBottom: 24,
@@ -256,16 +245,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
   },
-  tabActive: {
-    backgroundColor: COLORS.rust,
-  },
   tabText: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.textSecondary,
-  },
-  tabTextActive: {
-    color: '#FFFFFF',
   },
 
   // Sections
@@ -275,7 +257,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     marginBottom: 12,
   },
   chartCard: {
@@ -305,13 +286,11 @@ const styles = StyleSheet.create({
   },
   transitionLabel: {
     fontSize: 12,
-    color: COLORS.textSecondary,
     marginBottom: 2,
   },
   transitionCount: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.rust,
   },
 
   // Insight
@@ -329,7 +308,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.serifItalic,
     fontSize: 15,
     fontStyle: 'italic',
-    color: COLORS.textSecondary,
     lineHeight: 22,
   },
 
@@ -339,7 +317,6 @@ const styles = StyleSheet.create({
   },
   premiumOverlay: {
     alignItems: 'center',
-    backgroundColor: COLORS.white,
     borderRadius: 20,
     padding: 28,
     ...shadows.card,
@@ -347,13 +324,11 @@ const styles = StyleSheet.create({
   premiumTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     marginTop: 12,
     marginBottom: 6,
   },
   premiumSubtitle: {
     fontSize: 14,
-    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 16,
@@ -371,13 +346,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 15,
-    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
   },

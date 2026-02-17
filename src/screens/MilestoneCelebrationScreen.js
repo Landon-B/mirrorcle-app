@@ -18,6 +18,7 @@ import { PrimaryButton, FloatingParticles } from '../components/common';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
 import { useHaptics } from '../hooks/useHaptics';
+import { useColors } from '../hooks/useColors';
 
 const MILESTONE_CONFIG = {
   first_session: {
@@ -73,7 +74,7 @@ const DEFAULT_MILESTONE = {
   message: 'You reached a new milestone on your journey of self-reflection.',
 };
 
-const BadgeIcon = ({ icon }) => {
+const BadgeIcon = ({ icon, colors: c }) => {
   const scale = useSharedValue(0);
   const glowOpacity = useSharedValue(0);
 
@@ -105,9 +106,9 @@ const BadgeIcon = ({ icon }) => {
 
   return (
     <View style={styles.badgeWrapper}>
-      <Animated.View style={[styles.glowRing, glowStyle]} />
-      <Animated.View style={[styles.iconCircle, badgeStyle]}>
-        <Ionicons name={icon} size={36} color="#C17666" />
+      <Animated.View style={[styles.glowRing, { backgroundColor: c.accentPeach }, glowStyle]} />
+      <Animated.View style={[styles.iconCircle, { backgroundColor: c.accentPeach }, badgeStyle]}>
+        <Ionicons name={icon} size={36} color={c.accentRust} />
       </Animated.View>
     </View>
   );
@@ -117,6 +118,7 @@ export const MilestoneCelebrationScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
   const { milestoneKey, themeUnlocked, fromSession } = route.params || {};
   const { celebrationBurst } = useHaptics();
+  const c = useColors();
 
   const config = MILESTONE_CONFIG[milestoneKey] || DEFAULT_MILESTONE;
 
@@ -134,22 +136,22 @@ export const MilestoneCelebrationScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 40 }]}>
+    <View style={[styles.container, { paddingTop: insets.top + 40, backgroundColor: c.background }]}>
       <FloatingParticles count={16} opacity={0.35} />
 
       <View style={styles.content}>
-        <BadgeIcon icon={config.icon} />
+        <BadgeIcon icon={config.icon} colors={c} />
 
         <Animated.Text
           entering={FadeInDown.delay(800).springify().damping(12)}
-          style={styles.title}
+          style={[styles.title, { color: c.textPrimary }]}
         >
           {config.title}
         </Animated.Text>
 
         <Animated.Text
           entering={FadeIn.delay(1200).duration(600)}
-          style={styles.message}
+          style={[styles.message, { color: c.textSecondary }]}
         >
           {config.message}
         </Animated.Text>
@@ -157,10 +159,10 @@ export const MilestoneCelebrationScreen = ({ navigation, route }) => {
         {themeUnlocked && (
           <Animated.View
             entering={FadeInUp.delay(1600).duration(500)}
-            style={styles.unlockBadge}
+            style={[styles.unlockBadge, { backgroundColor: c.surface }]}
           >
-            <Ionicons name="color-palette" size={16} color="#C17666" />
-            <Text style={styles.unlockText}>
+            <Ionicons name="color-palette" size={16} color={c.accentRust} />
+            <Text style={[styles.unlockText, { color: c.accentRust }]}>
               New theme unlocked: {themeUnlocked}
             </Text>
           </Animated.View>
@@ -178,7 +180,7 @@ export const MilestoneCelebrationScreen = ({ navigation, route }) => {
         />
 
         <Pressable onPress={handleDismiss} style={styles.dismissButton}>
-          <Text style={styles.dismissText}>DISMISS</Text>
+          <Text style={[styles.dismissText, { color: c.textMuted }]}>DISMISS</Text>
         </Pressable>
       </Animated.View>
     </View>
@@ -188,7 +190,6 @@ export const MilestoneCelebrationScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
   },
   content: {
     flex: 1,
@@ -208,20 +209,17 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#E8D0C6',
   },
   iconCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#E8D0C6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#2D2A26',
     textAlign: 'center',
     marginBottom: 12,
   },
@@ -229,7 +227,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.serifItalic,
     fontSize: 17,
     fontStyle: 'italic',
-    color: '#7A756E',
     textAlign: 'center',
     lineHeight: 26,
     paddingHorizontal: 8,
@@ -237,7 +234,6 @@ const styles = StyleSheet.create({
   unlockBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 16,
@@ -248,7 +244,6 @@ const styles = StyleSheet.create({
   unlockText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#C17666',
   },
   footer: {
     paddingHorizontal: 20,
@@ -264,6 +259,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
-    color: '#B0AAA2',
   },
 });

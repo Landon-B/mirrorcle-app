@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { usePersonalization } from '../hooks/usePersonalization';
+import { useColors } from '../hooks/useColors';
 import { Card } from '../components/common';
 import { MilestoneProgressCard } from '../components/personalization/MilestoneProgressCard';
 import { personalizationService } from '../services/personalization';
@@ -11,26 +12,12 @@ import { quotesService } from '../services/quotes';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const COLORS = {
-  background: '#F5F2EE',
-  cardBg: '#FFFFFF',
-  textPrimary: '#2D2A26',
-  textSecondary: '#7A756E',
-  textMuted: '#B0AAA2',
-  rust: '#C17666',
-  peach: '#E8D0C6',
-  heatmapHigh: '#C17666',
-  heatmapMed: '#E8A090',
-  heatmapLow: '#E8D0C6',
-  heatmapNone: '#F0ECE7',
-};
-
 const TIME_RANGES = ['Week', 'Month', 'Year'];
 const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 // --- Real heatmap from sessions ---
 const buildHeatmapFromSessions = (sessions) => {
-  // Build a map of date string → session count
+  // Build a map of date string -> session count
   const dateCounts = {};
   for (const s of sessions || []) {
     const d = new Date(s.createdAt || s.created_at || s.date);
@@ -39,7 +26,7 @@ const buildHeatmapFromSessions = (sessions) => {
     dateCounts[key] = (dateCounts[key] || 0) + 1;
   }
 
-  // Build 4 weeks × 7 days grid (most recent 28 days)
+  // Build 4 weeks x 7 days grid (most recent 28 days)
   const grid = [];
   const today = new Date();
   for (let week = 0; week < 4; week++) {
@@ -59,15 +46,6 @@ const buildHeatmapFromSessions = (sessions) => {
     grid.push(row);
   }
   return grid;
-};
-
-const heatmapColor = (level) => {
-  switch (level) {
-    case 3: return COLORS.heatmapHigh;
-    case 2: return COLORS.heatmapMed;
-    case 1: return COLORS.heatmapLow;
-    default: return COLORS.heatmapNone;
-  }
 };
 
 // --- Real sessions chart ---
@@ -192,14 +170,14 @@ const formatAvgPerDay = (totalSeconds, totalSessions) => {
 };
 
 // --- Sessions bar chart ---
-const SessionsChart = ({ labels, values, maxVal }) => {
+const SessionsChart = ({ labels, values, maxVal, c }) => {
   const chartHeight = 120;
 
   if (values.every(v => v === 0)) {
     return (
       <View style={chartStyles.emptyChart}>
-        <Ionicons name="bar-chart-outline" size={28} color={COLORS.heatmapLow} />
-        <Text style={chartStyles.emptyText}>Sessions will appear here</Text>
+        <Ionicons name="bar-chart-outline" size={28} color={c.accentPeach} />
+        <Text style={[chartStyles.emptyText, { color: c.textMuted }]}>Sessions will appear here</Text>
       </View>
     );
   }
@@ -216,7 +194,7 @@ const SessionsChart = ({ labels, values, maxVal }) => {
                   chartStyles.bar,
                   {
                     height,
-                    backgroundColor: val > 0 ? COLORS.rust : COLORS.heatmapNone,
+                    backgroundColor: val > 0 ? c.accentRust : c.surfaceTertiary,
                     opacity: val > 0 ? 0.3 + (val / maxVal) * 0.7 : 1,
                   },
                 ]}
@@ -227,7 +205,7 @@ const SessionsChart = ({ labels, values, maxVal }) => {
       </View>
       <View style={chartStyles.xAxis}>
         {labels.map((label, i) => (
-          <Text key={i} style={chartStyles.xLabel}>{label}</Text>
+          <Text key={i} style={[chartStyles.xLabel, { color: c.textSecondary }]}>{label}</Text>
         ))}
       </View>
     </View>
@@ -263,7 +241,6 @@ const chartStyles = StyleSheet.create({
   },
   xLabel: {
     fontSize: 11,
-    color: COLORS.textSecondary,
     fontWeight: '500',
     flex: 1,
     textAlign: 'center',
@@ -276,7 +253,6 @@ const chartStyles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: COLORS.textMuted,
   },
 });
 
@@ -284,6 +260,7 @@ export const GrowthDashboardScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const { stats, sessions, user, isPro } = useApp();
   const { growthNudge } = usePersonalization();
+  const c = useColors();
   const [activeRange, setActiveRange] = useState('Week');
   const [nextMilestones, setNextMilestones] = useState([]);
   const [quote, setQuote] = useState(null);
@@ -333,11 +310,20 @@ export const GrowthDashboardScreen = ({ navigation }) => {
     ? `"${quote.text}"`
     : '"The only person you are destined to become is the person you decide to be."';
   const quoteAuthor = quote
-    ? `— ${quote.author}`
-    : '— Ralph Waldo Emerson';
+    ? `\u2014 ${quote.author}`
+    : '\u2014 Ralph Waldo Emerson';
+
+  const heatmapColor = (level) => {
+    switch (level) {
+      case 3: return c.accentRust;
+      case 2: return c.feelingPink;
+      case 1: return c.accentPeach;
+      default: return c.surfaceTertiary;
+    }
+  };
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
+    <View style={[styles.screen, { paddingTop: insets.top, backgroundColor: c.background }]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -345,36 +331,37 @@ export const GrowthDashboardScreen = ({ navigation }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.heading}>Growth</Text>
+          <Text style={[styles.heading, { color: c.textPrimary }]}>Growth</Text>
           <View style={styles.headerRight}>
             <Pressable
-              style={styles.headerIcon}
+              style={[styles.headerIcon, { backgroundColor: c.surface }]}
               onPress={() => navigation.navigate('ProfileTab', { screen: 'NotificationSettings' })}
               hitSlop={8}
             >
-              <Ionicons name="notifications-outline" size={22} color={COLORS.textPrimary} />
+              <Ionicons name="notifications-outline" size={22} color={c.textPrimary} />
             </Pressable>
-            <View style={styles.avatar}>
-              <Ionicons name="person" size={16} color={COLORS.textSecondary} />
+            <View style={[styles.avatar, { backgroundColor: c.accentPeach }]}>
+              <Ionicons name="person" size={16} color={c.textSecondary} />
             </View>
           </View>
         </View>
 
         {/* Time Range Tabs */}
-        <View style={styles.tabRow}>
+        <View style={[styles.tabRow, { backgroundColor: c.surfaceTertiary }]}>
           {TIME_RANGES.map((range) => (
             <Pressable
               key={range}
               style={[
                 styles.tab,
-                activeRange === range && styles.tabActive,
+                activeRange === range && { backgroundColor: c.accentRust },
               ]}
               onPress={() => setActiveRange(range)}
             >
               <Text
                 style={[
                   styles.tabText,
-                  activeRange === range && styles.tabTextActive,
+                  { color: c.textSecondary },
+                  activeRange === range && { color: c.textOnPrimary },
                 ]}
               >
                 {range}
@@ -386,15 +373,15 @@ export const GrowthDashboardScreen = ({ navigation }) => {
         {/* Sessions Chart */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Sessions</Text>
+            <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>Sessions</Text>
             {trendBadge && (
-              <View style={styles.badge}>
+              <View style={[styles.badge, { backgroundColor: c.surfaceSecondary }]}>
                 <Ionicons
                   name={trendBadge.positive ? 'trending-up' : 'trending-down'}
                   size={12}
-                  color={trendBadge.positive ? COLORS.rust : COLORS.textSecondary}
+                  color={trendBadge.positive ? c.accentRust : c.textSecondary}
                 />
-                <Text style={[styles.badgeText, !trendBadge.positive && { color: COLORS.textSecondary }]}>
+                <Text style={[styles.badgeText, { color: c.accentRust }, !trendBadge.positive && { color: c.textSecondary }]}>
                   {trendBadge.text}
                 </Text>
               </View>
@@ -405,6 +392,7 @@ export const GrowthDashboardScreen = ({ navigation }) => {
               labels={chartData.labels}
               values={chartData.values}
               maxVal={chartData.maxVal}
+              c={c}
             />
           </Card>
         </View>
@@ -412,16 +400,16 @@ export const GrowthDashboardScreen = ({ navigation }) => {
         {/* Stat Cards Row */}
         <View style={styles.statRow}>
           <Card style={styles.statCard}>
-            <Text style={styles.statLabel}>AFFIRMATIONS</Text>
-            <Text style={styles.statValue}>{totalAffirmations}</Text>
-            <Text style={styles.statSubtext}>
+            <Text style={[styles.statLabel, { color: c.textSecondary }]}>AFFIRMATIONS</Text>
+            <Text style={[styles.statValue, { color: c.textPrimary }]}>{totalAffirmations}</Text>
+            <Text style={[styles.statSubtext, { color: c.accentRust }]}>
               {stats.totalSessions} session{stats.totalSessions !== 1 ? 's' : ''}
             </Text>
           </Card>
           <Card style={styles.statCard}>
-            <Text style={styles.statLabel}>REFLECTION TIME</Text>
-            <Text style={styles.statValue}>{formatTotalTime(stats.totalTimeSeconds)}</Text>
-            <Text style={styles.statSubtext}>
+            <Text style={[styles.statLabel, { color: c.textSecondary }]}>REFLECTION TIME</Text>
+            <Text style={[styles.statValue, { color: c.textPrimary }]}>{formatTotalTime(stats.totalTimeSeconds)}</Text>
+            <Text style={[styles.statSubtext, { color: c.accentRust }]}>
               {formatAvgPerDay(stats.totalTimeSeconds, stats.totalSessions)}
             </Text>
           </Card>
@@ -430,7 +418,7 @@ export const GrowthDashboardScreen = ({ navigation }) => {
         {/* Next Milestones */}
         {nextMilestones.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Next Milestones</Text>
+            <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>Next Milestones</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -452,10 +440,10 @@ export const GrowthDashboardScreen = ({ navigation }) => {
         {/* Your Rhythm (Heatmap) */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Your Rhythm</Text>
-            <View style={styles.badge}>
-              <Ionicons name="flame" size={12} color={COLORS.rust} />
-              <Text style={styles.badgeText}>
+            <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>Your Rhythm</Text>
+            <View style={[styles.badge, { backgroundColor: c.surfaceSecondary }]}>
+              <Ionicons name="flame" size={12} color={c.accentRust} />
+              <Text style={[styles.badgeText, { color: c.accentRust }]}>
                 {stats.currentStreak} Day Flow
               </Text>
             </View>
@@ -465,7 +453,7 @@ export const GrowthDashboardScreen = ({ navigation }) => {
               {/* Weekday labels */}
               <View style={styles.heatmapHeader}>
                 {WEEKDAY_LABELS.map((label, i) => (
-                  <Text key={i} style={styles.heatmapDayLabel}>{label}</Text>
+                  <Text key={i} style={[styles.heatmapDayLabel, { color: c.textSecondary }]}>{label}</Text>
                 ))}
               </View>
               {/* Heatmap grid */}
@@ -482,7 +470,7 @@ export const GrowthDashboardScreen = ({ navigation }) => {
                   ))}
                 </View>
               ))}
-              <Text style={styles.heatmapViewAll}>View Full Calendar</Text>
+              <Text style={[styles.heatmapViewAll, { color: c.accentRust }]}>View Full Calendar</Text>
             </Card>
           </Pressable>
         </View>
@@ -490,48 +478,48 @@ export const GrowthDashboardScreen = ({ navigation }) => {
         {/* Journey & Reflection Links */}
         <View style={styles.journeyLinksRow}>
           <Pressable
-            style={styles.journeyLink}
+            style={[styles.journeyLink, { backgroundColor: c.surface }]}
             onPress={() => navigation.navigate('JourneyTimeline')}
           >
-            <Ionicons name="map-outline" size={20} color={COLORS.rust} />
-            <Text style={styles.journeyLinkText}>Your Journey</Text>
-            <Ionicons name="chevron-forward" size={16} color={COLORS.textSecondary} />
+            <Ionicons name="map-outline" size={20} color={c.accentRust} />
+            <Text style={[styles.journeyLinkText, { color: c.textPrimary }]}>Your Journey</Text>
+            <Ionicons name="chevron-forward" size={16} color={c.textSecondary} />
           </Pressable>
           <Pressable
-            style={styles.journeyLink}
+            style={[styles.journeyLink, { backgroundColor: c.surface }]}
             onPress={() => navigation.navigate('MoodAnalytics')}
           >
-            <Ionicons name="pulse-outline" size={20} color={COLORS.rust} />
-            <Text style={styles.journeyLinkText}>Mood Journey</Text>
-            <Ionicons name="chevron-forward" size={16} color={COLORS.textSecondary} />
+            <Ionicons name="pulse-outline" size={20} color={c.accentRust} />
+            <Text style={[styles.journeyLinkText, { color: c.textPrimary }]}>Mood Journey</Text>
+            <Ionicons name="chevron-forward" size={16} color={c.textSecondary} />
           </Pressable>
           <Pressable
-            style={styles.journeyLink}
+            style={[styles.journeyLink, { backgroundColor: c.surface }]}
             onPress={() => navigation.navigate('ReflectionSummary')}
           >
-            <Ionicons name="analytics-outline" size={20} color={COLORS.rust} />
-            <Text style={styles.journeyLinkText}>Monthly Reflection</Text>
-            <Ionicons name="chevron-forward" size={16} color={COLORS.textSecondary} />
+            <Ionicons name="analytics-outline" size={20} color={c.accentRust} />
+            <Text style={[styles.journeyLinkText, { color: c.textPrimary }]}>Monthly Reflection</Text>
+            <Ionicons name="chevron-forward" size={16} color={c.textSecondary} />
           </Pressable>
         </View>
 
         {/* Evolution Insight */}
         <Card style={styles.insightCard}>
           <View style={styles.insightRow}>
-            <View style={styles.insightIconContainer}>
-              <Ionicons name="bulb" size={20} color={COLORS.rust} />
+            <View style={[styles.insightIconContainer, { backgroundColor: c.surfaceSecondary }]}>
+              <Ionicons name="bulb" size={20} color={c.accentRust} />
             </View>
             <View style={styles.insightTextContainer}>
-              <Text style={styles.insightTitle}>Evolution Insight</Text>
-              <Text style={styles.insightBody}>{insightText}</Text>
+              <Text style={[styles.insightTitle, { color: c.textPrimary }]}>Evolution Insight</Text>
+              <Text style={[styles.insightBody, { color: c.textSecondary }]}>{insightText}</Text>
             </View>
           </View>
         </Card>
 
         {/* Motivational Quote */}
         <View style={styles.quoteContainer}>
-          <Text style={styles.quoteText}>{quoteText}</Text>
-          <Text style={styles.quoteAuthor}>{quoteAuthor}</Text>
+          <Text style={[styles.quoteText, { color: c.textSecondary }]}>{quoteText}</Text>
+          <Text style={[styles.quoteAuthor, { color: c.textSecondary }]}>{quoteAuthor}</Text>
         </View>
       </ScrollView>
     </View>
@@ -544,7 +532,6 @@ const STAT_CARD_WIDTH = (SCREEN_WIDTH - 48 - CARD_GAP) / 2;
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   scrollView: {
     flex: 1,
@@ -565,7 +552,6 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 28,
     fontWeight: '700',
-    color: COLORS.textPrimary,
   },
   headerRight: {
     flexDirection: 'row',
@@ -576,7 +562,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.cardBg,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -589,7 +574,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.peach,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -597,7 +581,6 @@ const styles = StyleSheet.create({
   // Tabs
   tabRow: {
     flexDirection: 'row',
-    backgroundColor: COLORS.heatmapNone,
     borderRadius: 24,
     padding: 4,
     marginBottom: 24,
@@ -608,16 +591,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
   },
-  tabActive: {
-    backgroundColor: COLORS.rust,
-  },
   tabText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textSecondary,
-  },
-  tabTextActive: {
-    color: '#FFFFFF',
   },
 
   // Sections
@@ -633,12 +609,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
   },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FDF5F2',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
@@ -647,7 +621,6 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.rust,
   },
 
   // Chart
@@ -671,19 +644,16 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
-    color: COLORS.textSecondary,
     marginBottom: 6,
   },
   statValue: {
     fontSize: 28,
     fontWeight: '800',
-    color: COLORS.textPrimary,
     marginBottom: 4,
   },
   statSubtext: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.rust,
   },
 
   // Milestones
@@ -706,7 +676,6 @@ const styles = StyleSheet.create({
   heatmapDayLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.textSecondary,
     width: 28,
     textAlign: 'center',
   },
@@ -723,7 +692,6 @@ const styles = StyleSheet.create({
   heatmapViewAll: {
     fontSize: 12,
     fontWeight: '500',
-    color: COLORS.rust,
     textAlign: 'center',
     marginTop: 8,
     letterSpacing: 0.5,
@@ -737,7 +705,6 @@ const styles = StyleSheet.create({
   journeyLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.cardBg,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 16,
@@ -752,7 +719,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.textPrimary,
   },
 
   // Insight
@@ -769,7 +735,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FDF5F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -779,13 +744,11 @@ const styles = StyleSheet.create({
   insightTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     marginBottom: 6,
   },
   insightBody: {
     fontSize: 14,
     lineHeight: 20,
-    color: COLORS.textSecondary,
   },
 
   // Quote
@@ -797,14 +760,12 @@ const styles = StyleSheet.create({
   quoteText: {
     fontSize: 15,
     fontStyle: 'italic',
-    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     fontFamily: 'serif',
   },
   quoteAuthor: {
     fontSize: 13,
-    color: COLORS.textSecondary,
     marginTop: 6,
     fontFamily: 'serif',
   },

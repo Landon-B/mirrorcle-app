@@ -25,6 +25,7 @@ import { usePersonalization } from '../hooks/usePersonalization';
 import { getMoodById, getMoodEmoji, MOODS, FEELING_COLORS } from '../constants/feelings';
 import { personalizationService } from '../services/personalization';
 import { sessionService } from '../services/session';
+import { useColors } from '../hooks/useColors';
 
 const THEME_UNLOCK_MAP = {
   seven_day_streak: 'Sunset Glow',
@@ -55,14 +56,14 @@ const getOrdinal = (n) => {
 };
 
 // --- Mood Shift Visualization ---
-const MoodShiftSection = ({ preMood, postMood }) => {
+const MoodShiftSection = ({ preMood, postMood, colors: c }) => {
   const preMoodData = typeof preMood === 'string' ? getMoodById(preMood) : preMood;
   const postMoodData = postMood;
 
   if (!preMoodData || !postMoodData) return null;
 
-  const preColor = FEELING_COLORS[preMoodData.id] || '#B0AAA2';
-  const postColor = FEELING_COLORS[postMoodData.id] || '#B0AAA2';
+  const preColor = FEELING_COLORS[preMoodData.id] || c.textMuted;
+  const postColor = FEELING_COLORS[postMoodData.id] || c.textMuted;
   const isSameMood = preMoodData.id === postMoodData.id;
 
   return (
@@ -71,15 +72,15 @@ const MoodShiftSection = ({ preMood, postMood }) => {
       style={styles.moodShiftContainer}
     >
       <View style={styles.moodRow}>
-        <View style={[styles.moodShiftCircle, { borderColor: preColor }]}>
+        <View style={[styles.moodShiftCircle, { borderColor: preColor, backgroundColor: c.surface }]}>
           <Text style={styles.moodShiftEmoji}>{preMoodData.emoji || getMoodEmoji(preMoodData.id)}</Text>
         </View>
-        <Ionicons name="arrow-forward" size={16} color="#D4CFC9" />
-        <View style={[styles.moodShiftCircle, { borderColor: postColor }]}>
+        <Ionicons name="arrow-forward" size={16} color={c.disabled} />
+        <View style={[styles.moodShiftCircle, { borderColor: postColor, backgroundColor: c.surface }]}>
           <Text style={styles.moodShiftEmoji}>{postMoodData.emoji}</Text>
         </View>
       </View>
-      <Text style={styles.moodNarrative}>
+      <Text style={[styles.moodNarrative, { color: c.textSecondary }]}>
         {isSameMood
           ? `You arrived ${preMoodData.label.toLowerCase()} \u2014 and honored that feeling.`
           : `${preMoodData.label} \u2192 ${postMoodData.label}`}
@@ -100,6 +101,7 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
   const { stats, user } = useApp();
   const { celebrationBurst, selectionTap } = useHaptics();
   const { checkNewMilestones } = usePersonalization();
+  const c = useColors();
 
   // Inline mood state
   const [selectedPostMood, setSelectedPostMood] = useState(null);
@@ -188,7 +190,7 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
   const postMoodData = selectedPostMood ? MOODS.find(m => m.id === selectedPostMood) : null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.background }]}>
       <FloatingParticles count={20} opacity={0.5} />
 
       <ScrollView
@@ -202,10 +204,10 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
           entering={FadeInDown.delay(500).duration(600)}
           style={styles.heroSection}
         >
-          <View style={styles.sparkleCircle}>
-            <Ionicons name="sparkles" size={32} color="#C17666" />
+          <View style={[styles.sparkleCircle, { backgroundColor: c.accentPeach }]}>
+            <Ionicons name="sparkles" size={32} color={c.accentRust} />
           </View>
-          <Text style={styles.heroText}>
+          <Text style={[styles.heroText, { color: c.textPrimary }]}>
             {completedPrompts} truth{completedPrompts !== 1 ? 's' : ''} spoken.{'\n'}You showed up.
           </Text>
         </Animated.View>
@@ -215,7 +217,7 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
           entering={FadeInDown.delay(800).duration(500)}
           style={styles.moodSection}
         >
-          <Text style={styles.moodQuestion}>How do you feel now?</Text>
+          <Text style={[styles.moodQuestion, { color: c.textSecondary }]}>How do you feel now?</Text>
           <View style={styles.moodEmojiRow}>
             {MOODS.map((mood) => {
               const isSelected = selectedPostMood === mood.id;
@@ -228,7 +230,8 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
                   accessibilityState={{ selected: isSelected }}
                   style={[
                     styles.moodEmojiCircle,
-                    isSelected && styles.moodEmojiCircleSelected,
+                    { backgroundColor: c.surface },
+                    isSelected && { borderColor: c.accentRust },
                   ]}
                 >
                   <Text style={styles.moodEmojiText}>{mood.emoji}</Text>
@@ -240,7 +243,7 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
 
         {/* Mood shift visualization (appears when mood selected) */}
         {postMoodData && (
-          <MoodShiftSection preMood={preMood || feeling} postMood={postMoodData} />
+          <MoodShiftSection preMood={preMood || feeling} postMood={postMoodData} colors={c} />
         )}
 
         {/* Optional reflection expander */}
@@ -250,14 +253,14 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
               onPress={() => setShowReflection(true)}
               style={styles.reflectionTrigger}
             >
-              <Text style={styles.reflectionTriggerText}>Add a reflection...</Text>
+              <Text style={[styles.reflectionTriggerText, { color: c.accentRust }]}>Add a reflection...</Text>
             </Pressable>
           ) : (
-            <View style={styles.reflectionInputWrapper}>
+            <View style={[styles.reflectionInputWrapper, { backgroundColor: c.surface }]}>
               <TextInput
-                style={styles.reflectionInput}
+                style={[styles.reflectionInput, { color: c.textPrimary }]}
                 placeholder="What came up for you?"
-                placeholderTextColor="#B0AAA2"
+                placeholderTextColor={c.inputPlaceholder}
                 multiline
                 maxLength={500}
                 value={reflection}
@@ -271,27 +274,27 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
         {/* Session insight card */}
         <Animated.View
           entering={FadeInUp.delay(1400).duration(600)}
-          style={styles.insightCard}
+          style={[styles.insightCard, { backgroundColor: c.surface }]}
         >
-          <Text style={styles.insightText}>
+          <Text style={[styles.insightText, { color: c.textPrimary }]}>
             You spoke{' '}
-            <Text style={styles.insightBold}>{completedPrompts} truth{completedPrompts !== 1 ? 's' : ''}</Text>
+            <Text style={[styles.insightBold, { color: c.accentRust }]}>{completedPrompts} truth{completedPrompts !== 1 ? 's' : ''}</Text>
             {' '}about yourself today
           </Text>
-          <Text style={styles.insightDuration}>
+          <Text style={[styles.insightDuration, { color: c.textMuted }]}>
             in {formatDuration(duration)} of presence
           </Text>
 
-          <View style={styles.insightDivider} />
+          <View style={[styles.insightDivider, { backgroundColor: c.surfaceTertiary }]} />
 
           <View style={styles.streakRow}>
-            <Ionicons name="flame" size={16} color="#C17666" />
-            <Text style={styles.streakText}>{streakMessage}</Text>
+            <Ionicons name="flame" size={16} color={c.accentRust} />
+            <Text style={[styles.streakText, { color: c.textSecondary }]}>{streakMessage}</Text>
           </View>
 
           {/* Day-to-day continuity */}
           {stats.totalSessions > 1 && (
-            <Text style={styles.continuityText}>
+            <Text style={[styles.continuityText, { color: c.textMuted }]}>
               Your {getOrdinal(stats.totalSessions)} session.
             </Text>
           )}
@@ -339,7 +342,7 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
           accessibilityRole="button"
           accessibilityLabel="Share your progress"
         >
-          <Text style={styles.shareText}>SHARE YOUR PROGRESS</Text>
+          <Text style={[styles.shareText, { color: c.accentRust }]}>SHARE YOUR PROGRESS</Text>
         </Pressable>
       </Animated.View>
     </View>
@@ -349,7 +352,6 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
   },
   scrollView: {
     flex: 1,
@@ -369,7 +371,6 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#E8D0C6',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -378,7 +379,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.serifItalic,
     fontSize: 28,
     fontStyle: 'italic',
-    color: '#2D2A26',
     textAlign: 'center',
     lineHeight: 38,
   },
@@ -392,7 +392,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.serifItalic,
     fontSize: 18,
     fontStyle: 'italic',
-    color: '#7A756E',
     marginBottom: 16,
   },
   moodEmojiRow: {
@@ -404,15 +403,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
     ...shadows.card,
-  },
-  moodEmojiCircleSelected: {
-    borderColor: '#C17666',
   },
   moodEmojiText: {
     fontSize: 22,
@@ -433,7 +428,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#FFFFFF',
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
@@ -445,7 +439,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.serifItalic,
     fontSize: 15,
     fontStyle: 'italic',
-    color: '#7A756E',
     textAlign: 'center',
   },
 
@@ -457,10 +450,8 @@ const styles = StyleSheet.create({
   },
   reflectionTriggerText: {
     fontSize: 14,
-    color: '#C17666',
   },
   reflectionInputWrapper: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     marginBottom: 20,
     ...shadows.card,
@@ -469,14 +460,12 @@ const styles = StyleSheet.create({
     minHeight: 80,
     padding: 16,
     fontSize: 15,
-    color: '#2D2A26',
     lineHeight: 22,
     textAlignVertical: 'top',
   },
 
   // --- Insight card ---
   insightCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     paddingVertical: 24,
     paddingHorizontal: 24,
@@ -487,23 +476,19 @@ const styles = StyleSheet.create({
   },
   insightText: {
     fontSize: 17,
-    color: '#2D2A26',
     textAlign: 'center',
     lineHeight: 26,
   },
   insightBold: {
     fontWeight: '700',
-    color: '#C17666',
   },
   insightDuration: {
     fontSize: 14,
-    color: '#B0AAA2',
     marginTop: 4,
   },
   insightDivider: {
     width: '60%',
     height: 1,
-    backgroundColor: '#F0ECE7',
     marginVertical: 16,
   },
   streakRow: {
@@ -513,12 +498,10 @@ const styles = StyleSheet.create({
   },
   streakText: {
     fontSize: 14,
-    color: '#7A756E',
     fontStyle: 'italic',
   },
   continuityText: {
     fontSize: 14,
-    color: '#B0AAA2',
     marginTop: 8,
   },
 
@@ -543,6 +526,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
-    color: '#C17666',
   },
 });

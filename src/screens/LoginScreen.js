@@ -19,6 +19,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { authService } from '../services/auth';
+import { useColors } from '../hooks/useColors';
+import { useGradients } from '../hooks/useColors';
 
 const QUOTES = [
   {
@@ -41,6 +43,8 @@ export const LoginScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { updatePreferences, completeOnboarding } = useApp();
+  const c = useColors();
+  const g = useGradients();
 
   const [randomQuote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)]);
 
@@ -74,19 +78,19 @@ export const LoginScreen = ({ navigation }) => {
   const isLoginDisabled = isLoading || !email.trim() || !password.trim();
 
   return (
-    <View style={styles.background}>
+    <View style={[styles.background, { backgroundColor: c.background }]}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar barStyle={c.statusBarStyle} />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.container}
           keyboardVerticalOffset={0}
         >
           {/* Fixed Header with Navigation */}
-          <View style={styles.header}>
+          <View style={[styles.header, { borderBottomColor: c.border }]}>
             <Pressable onPress={handleBack} style={styles.headerButton}>
-              <Ionicons name="arrow-back" size={24} color="#2D2A26" />
-              <Text style={styles.headerButtonText}>Back</Text>
+              <Ionicons name="arrow-back" size={24} color={c.textPrimary} />
+              <Text style={[styles.headerButtonText, { color: c.textPrimary }]}>Back</Text>
             </Pressable>
 
             <Pressable
@@ -94,16 +98,16 @@ export const LoginScreen = ({ navigation }) => {
               style={[styles.headerButton, styles.headerButtonRight, isLoginDisabled && styles.headerButtonDisabled]}
               disabled={isLoginDisabled}
             >
-              <Text style={[styles.headerButtonText, styles.headerButtonTextRight, isLoginDisabled && styles.headerButtonTextDisabled]}>
+              <Text style={[styles.headerButtonText, styles.headerButtonTextRight, { color: c.accentRust }, isLoginDisabled && { color: c.disabled }]}>
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Text>
               {isLoading ? (
-                <ActivityIndicator size="small" color="#C17666" />
+                <ActivityIndicator size="small" color={c.accentRust} />
               ) : (
                 <Ionicons
                   name="log-in-outline"
                   size={20}
-                  color={isLoginDisabled ? "#D4CFC9" : "#C17666"}
+                  color={isLoginDisabled ? c.disabled : c.accentRust}
                 />
               )}
             </Pressable>
@@ -117,27 +121,27 @@ export const LoginScreen = ({ navigation }) => {
             >
               <View style={styles.headerContent}>
                 <LinearGradient
-                  colors={['#C17666', '#E8A090']}
+                  colors={g.primary}
                   style={styles.iconContainer}
                 >
                   <Ionicons name="sparkles" size={32} color="#fff" />
                 </LinearGradient>
-                <Text style={styles.title}>Welcome back</Text>
-                <Text style={styles.subtitle}>Continue your journey of self-discovery</Text>
+                <Text style={[styles.title, { color: c.textPrimary }]}>Welcome back</Text>
+                <Text style={[styles.subtitle, { color: c.textSecondary }]}>Continue your journey of self-discovery</Text>
               </View>
 
-              <View style={styles.quoteCard}>
-                <Text style={styles.quoteText}>"{randomQuote.text}"</Text>
-                <Text style={styles.quoteAuthor}>— {randomQuote.author}</Text>
+              <View style={[styles.quoteCard, { backgroundColor: c.surface }]}>
+                <Text style={[styles.quoteText, { color: c.textPrimary }]}>"{randomQuote.text}"</Text>
+                <Text style={[styles.quoteAuthor, { color: c.textSecondary }]}>— {randomQuote.author}</Text>
               </View>
 
               <View style={styles.formContainer}>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="mail-outline" size={22} color="#B0AAA2" style={styles.inputIcon} />
+                <View style={[styles.inputWrapper, { backgroundColor: c.inputBackground, borderColor: c.inputBorder }]}>
+                  <Ionicons name="mail-outline" size={22} color={c.textMuted} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: c.textPrimary }]}
                     placeholder="Email address"
-                    placeholderTextColor="#B0AAA2"
+                    placeholderTextColor={c.inputPlaceholder}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -147,12 +151,12 @@ export const LoginScreen = ({ navigation }) => {
                   />
                 </View>
 
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="lock-closed-outline" size={22} color="#B0AAA2" style={styles.inputIcon} />
+                <View style={[styles.inputWrapper, { backgroundColor: c.inputBackground, borderColor: c.inputBorder }]}>
+                  <Ionicons name="lock-closed-outline" size={22} color={c.textMuted} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: c.textPrimary }]}
                     placeholder="Password"
-                    placeholderTextColor="#B0AAA2"
+                    placeholderTextColor={c.inputPlaceholder}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -163,20 +167,20 @@ export const LoginScreen = ({ navigation }) => {
                     <Ionicons
                       name={showPassword ? "eye-off-outline" : "eye-outline"}
                       size={22}
-                      color="#B0AAA2"
+                      color={c.textMuted}
                     />
                   </Pressable>
                 </View>
 
                 <Pressable style={styles.forgotPassword} onPress={() => navigation.navigate('ForgotPassword')}>
-                  <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+                  <Text style={[styles.forgotPasswordText, { color: c.accentRust }]}>Forgot password?</Text>
                 </Pressable>
               </View>
 
               <View style={styles.footer}>
-                <Text style={styles.footerText}>Don't have an account? </Text>
+                <Text style={[styles.footerText, { color: c.textSecondary }]}>Don't have an account? </Text>
                 <Pressable onPress={() => navigation.navigate('CreateAccount')}>
-                  <Text style={styles.footerLink}>Sign up</Text>
+                  <Text style={[styles.footerLink, { color: c.accentRust }]}>Sign up</Text>
                 </Pressable>
               </View>
             </ScrollView>
@@ -190,7 +194,6 @@ export const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
   },
   safeArea: { flex: 1 },
   container: {
@@ -203,7 +206,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E4DF',
   },
   headerButton: {
     flexDirection: 'row',
@@ -219,18 +221,13 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   headerButtonText: {
-    color: '#2D2A26',
     fontSize: 16,
     marginLeft: 6,
   },
   headerButtonTextRight: {
-    color: '#C17666',
     fontWeight: '600',
     marginLeft: 0,
     marginRight: 6,
-  },
-  headerButtonTextDisabled: {
-    color: '#D4CFC9',
   },
   scrollContent: {
     flexGrow: 1,
@@ -251,16 +248,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#2D2A26',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#7A756E',
     textAlign: 'center',
   },
   quoteCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
     marginBottom: 32,
@@ -271,14 +265,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   quoteText: {
-    color: '#2D2A26',
     fontSize: 14,
     fontStyle: 'italic',
     lineHeight: 22,
     textAlign: 'center',
   },
   quoteAuthor: {
-    color: '#7A756E',
     fontSize: 12,
     textAlign: 'center',
     marginTop: 10,
@@ -290,10 +282,8 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E8E4DF',
     paddingHorizontal: 16,
   },
   inputIcon: {
@@ -301,7 +291,6 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#2D2A26',
     fontSize: 18,
     paddingVertical: 18,
   },
@@ -312,7 +301,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   forgotPasswordText: {
-    color: '#C17666',
     fontSize: 14,
   },
   footer: {
@@ -322,11 +310,9 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   footerText: {
-    color: '#7A756E',
     fontSize: 14,
   },
   footerLink: {
-    color: '#C17666',
     fontSize: 14,
     fontWeight: '600',
   },

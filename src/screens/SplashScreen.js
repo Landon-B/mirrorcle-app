@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { useApp } from '../context/AppContext';
+import { useColors } from '../hooks/useColors';
 
 export const SplashScreen = ({ navigation }) => {
   const { hasCompletedOnboarding } = useApp();
+  const c = useColors();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -17,10 +18,10 @@ export const SplashScreen = ({ navigation }) => {
   }, [navigation, hasCompletedOnboarding]);
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <View style={[styles.container, { backgroundColor: c.background }]}>
+      <StatusBar barStyle={c.statusBarStyle} />
       <SafeAreaView style={styles.safeArea}>
-        <Text style={styles.brandText}>MIRRORCLE</Text>
+        <Text style={[styles.brandText, { color: c.textPrimary }]}>MIRRORCLE</Text>
 
         <View style={styles.imageContainer}>
           <Image
@@ -31,8 +32,8 @@ export const SplashScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.taglineContainer}>
-          <Text style={styles.taglineText}>See yourself</Text>
-          <Text style={styles.taglineAccent}>clearly.</Text>
+          <Text style={[styles.taglineText, { color: c.textPrimary }]}>See yourself</Text>
+          <Text style={[styles.taglineAccent, { color: c.textAccent }]}>clearly.</Text>
         </View>
       </SafeAreaView>
     </View>
@@ -42,7 +43,6 @@ export const SplashScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   safeArea: {
     flex: 1,
@@ -51,7 +51,6 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.semibold,
     letterSpacing: 3,
-    color: colors.textPrimary,
     paddingHorizontal: 20,
     paddingTop: 8,
   },
@@ -73,12 +72,10 @@ const styles = StyleSheet.create({
   taglineText: {
     fontSize: 32,
     fontWeight: typography.fontWeight.semibold,
-    color: colors.textPrimary,
   },
   taglineAccent: {
     fontFamily: typography.fontFamily.serifItalic,
     fontSize: 32,
     fontStyle: 'italic',
-    color: colors.textAccent,
   },
 });

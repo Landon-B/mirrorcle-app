@@ -15,9 +15,11 @@ import Animated, {
 import { PrimaryButton } from '../components/common';
 import { typography } from '../styles/typography';
 import { useHaptics } from '../hooks/useHaptics';
+import { useColors } from '../hooks/useColors';
 
 export const GuidedFirstCelebrationScreen = ({ navigation }) => {
   const { celebrationBurst } = useHaptics();
+  const c = useColors();
 
   const sparkleScale = useSharedValue(0);
 
@@ -55,22 +57,22 @@ export const GuidedFirstCelebrationScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.background }]}>
       <View style={styles.content}>
-        <Animated.View style={[styles.sparkleCircle, sparkleAnimatedStyle]}>
-          <Ionicons name="sparkles" size={36} color="#C17666" />
+        <Animated.View style={[styles.sparkleCircle, { backgroundColor: c.accentPeach }, sparkleAnimatedStyle]}>
+          <Ionicons name="sparkles" size={36} color={c.accentRust} />
         </Animated.View>
 
         <Animated.Text
           entering={FadeInDown.delay(300).duration(500)}
-          style={styles.heading}
+          style={[styles.heading, { color: c.textPrimary }]}
         >
           You just did something{'\n'}most people never will.
         </Animated.Text>
 
         <Animated.Text
           entering={FadeInDown.delay(500).duration(500)}
-          style={styles.subtitle}
+          style={[styles.subtitle, { color: c.textSecondary }]}
         >
           That courage? It's already changing you.
         </Animated.Text>
@@ -93,7 +95,6 @@ export const GuidedFirstCelebrationScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
   },
   content: {
     flex: 1,
@@ -105,7 +106,6 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: '#E8D0C6',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 32,
@@ -113,7 +113,6 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 26,
     fontWeight: '700',
-    color: '#2D2A26',
     textAlign: 'center',
     lineHeight: 34,
     marginBottom: 12,
@@ -122,7 +121,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.serifItalic,
     fontSize: 17,
     fontStyle: 'italic',
-    color: '#7A756E',
     textAlign: 'center',
     lineHeight: 26,
   },

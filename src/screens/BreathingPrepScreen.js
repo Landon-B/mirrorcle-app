@@ -20,6 +20,7 @@ import { ScreenHeader, PrimaryButton } from '../components/common';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
 import { useHaptics } from '../hooks/useHaptics';
+import { useColors } from '../hooks/useColors';
 
 const INHALE_DURATION = 4000;
 const HOLD_DURATION = 2000;
@@ -33,9 +34,18 @@ const PHASE_LABELS = {
   exhale: 'Breathe out...',
 };
 
+// Helper to convert hex color to rgba string
+const hexToRgba = (hex, alpha) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 export const BreathingPrepScreen = ({ navigation, route }) => {
   const { focusArea, mood } = route.params || {};
   const { breathingPulse } = useHaptics();
+  const c = useColors();
 
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [currentBreath, setCurrentBreath] = useState(0);
@@ -160,7 +170,7 @@ export const BreathingPrepScreen = ({ navigation, route }) => {
   }));
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.background }]}>
       <ScreenHeader
         label="PREPARATION"
         onBack={() => navigation.goBack()}
@@ -169,17 +179,27 @@ export const BreathingPrepScreen = ({ navigation, route }) => {
       <View style={styles.content}>
         {/* Focus area pill */}
         {focusArea && (
-          <View style={styles.focusPill}>
+          <View style={[styles.focusPill, { backgroundColor: c.surface }]}>
             <Text style={styles.focusPillEmoji}>{focusArea.emoji}</Text>
-            <Text style={styles.focusPillText}>{focusArea.label}</Text>
+            <Text style={[styles.focusPillText, { color: c.accentRust }]}>{focusArea.label}</Text>
           </View>
         )}
 
         {/* Breathing section */}
         <View style={styles.breathingSection}>
-          <Animated.View style={[styles.breathingCircle, circleAnimatedStyle]}>
-            <View style={styles.breathingCircleInner}>
-              <Text style={styles.breathingPhaseLabel}>
+          <Animated.View style={[
+            styles.breathingCircle,
+            {
+              backgroundColor: hexToRgba(c.accentRust, 0.12),
+              borderColor: hexToRgba(c.accentRust, 0.3),
+            },
+            circleAnimatedStyle,
+          ]}>
+            <View style={[
+              styles.breathingCircleInner,
+              { backgroundColor: hexToRgba(c.accentRust, 0.08) },
+            ]}>
+              <Text style={[styles.breathingPhaseLabel, { color: c.accentRust }]}>
                 {isBreathing ? PHASE_LABELS[breathPhase] : 'You are ready.'}
               </Text>
             </View>
@@ -192,8 +212,9 @@ export const BreathingPrepScreen = ({ navigation, route }) => {
                 key={i}
                 style={[
                   styles.progressDot,
-                  i < currentBreath && styles.progressDotFilled,
-                  i === currentBreath && isBreathing && styles.progressDotActive,
+                  { backgroundColor: c.accentPeach },
+                  i < currentBreath && { backgroundColor: c.accentRust },
+                  i === currentBreath && isBreathing && { backgroundColor: c.feelingPink },
                 ]}
               />
             ))}
@@ -201,15 +222,15 @@ export const BreathingPrepScreen = ({ navigation, route }) => {
         </View>
 
         {/* Affirmation preview card */}
-        <View style={styles.affirmationCard}>
+        <View style={[styles.affirmationCard, { backgroundColor: c.surface }]}>
           <View style={styles.quoteMarkContainer}>
-            <Text style={styles.quoteMark}>{'\u201C'}</Text>
+            <Text style={[styles.quoteMark, { color: c.accentPeach }]}>{'\u201C'}</Text>
           </View>
-          <Text style={styles.affirmationText}>
+          <Text style={[styles.affirmationText, { color: c.textPrimary }]}>
             {previewAffirmation}
           </Text>
           <View style={styles.quoteMarkContainerEnd}>
-            <Text style={styles.quoteMark}>{'\u201D'}</Text>
+            <Text style={[styles.quoteMark, { color: c.accentPeach }]}>{'\u201D'}</Text>
           </View>
         </View>
 
@@ -218,7 +239,7 @@ export const BreathingPrepScreen = ({ navigation, route }) => {
         {/* Skip link (only during breathing) */}
         {isBreathing && (
           <Pressable onPress={handleSkip} hitSlop={12}>
-            <Text style={styles.skipText}>Skip</Text>
+            <Text style={[styles.skipText, { color: c.textMuted }]}>Skip</Text>
           </Pressable>
         )}
       </View>
@@ -240,7 +261,6 @@ export const BreathingPrepScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
   },
   content: {
     flex: 1,
@@ -250,7 +270,6 @@ const styles = StyleSheet.create({
   focusPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -265,7 +284,6 @@ const styles = StyleSheet.create({
   focusPillText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#C17666',
   },
   breathingSection: {
     alignItems: 'center',
@@ -275,9 +293,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: 'rgba(193, 118, 102, 0.12)',
     borderWidth: 2,
-    borderColor: 'rgba(193, 118, 102, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -285,14 +301,12 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: 'rgba(193, 118, 102, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   breathingPhaseLabel: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#C17666',
     textAlign: 'center',
   },
   progressDots: {
@@ -304,16 +318,8 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#E8D0C6',
-  },
-  progressDotFilled: {
-    backgroundColor: '#C17666',
-  },
-  progressDotActive: {
-    backgroundColor: '#E8A090',
   },
   affirmationCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     paddingVertical: 28,
     paddingHorizontal: 28,
@@ -332,14 +338,12 @@ const styles = StyleSheet.create({
   quoteMark: {
     fontFamily: typography.fontFamily.serif,
     fontSize: 36,
-    color: '#E8D0C6',
     lineHeight: 40,
   },
   affirmationText: {
     fontFamily: typography.fontFamily.serifItalic,
     fontSize: 22,
     fontStyle: 'italic',
-    color: '#2D2A26',
     textAlign: 'center',
     lineHeight: 32,
     paddingHorizontal: 8,
@@ -349,7 +353,6 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 14,
-    color: '#B0AAA2',
     marginBottom: 8,
   },
   footer: {

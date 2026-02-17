@@ -20,6 +20,7 @@ import { focusService } from '../services/focus';
 import { useFavorites } from '../hooks/useFavorites';
 import { useApp } from '../context/AppContext';
 import { usePaywall } from '../hooks/usePaywall';
+import { useColors } from '../hooks/useColors';
 import { getCardColors } from '../constants/cardPalette';
 import { typography } from '../styles/typography';
 
@@ -43,6 +44,7 @@ export const AffirmationHomeScreen = ({ navigation }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { isPro, preferences, updatePreferences } = useApp();
   const { openPaywall } = usePaywall();
+  const c = useColors();
 
   // Shared values for gesture-driven animations
   const translateY = useSharedValue(0);
@@ -242,10 +244,10 @@ export const AffirmationHomeScreen = ({ navigation }) => {
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: c.background }]}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#C17666" />
+            <ActivityIndicator size="large" color={c.accentRust} />
           </View>
         </SafeAreaView>
       </View>
@@ -254,10 +256,10 @@ export const AffirmationHomeScreen = ({ navigation }) => {
 
   if (!current) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: c.background }]}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
-            <Text style={styles.errorText}>No affirmations available</Text>
+            <Text style={[styles.errorText, { color: c.textSecondary }]}>No affirmations available</Text>
           </View>
         </SafeAreaView>
       </View>
@@ -265,9 +267,9 @@ export const AffirmationHomeScreen = ({ navigation }) => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.background }]}>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar barStyle={c.statusBarStyle} />
         <View style={styles.topBar}>
           <IconButton icon="person" onPress={() => setShowProfile(true)} />
           <IconButton icon="settings" onPress={() => setShowSettings(true)} />
@@ -341,7 +343,7 @@ export const AffirmationHomeScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F2EE' },
+  container: { flex: 1 },
   safeArea: { flex: 1 },
   loadingContainer: {
     flex: 1,
@@ -349,7 +351,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   errorText: {
-    color: '#7A756E',
     fontSize: 16,
   },
   topBar: {

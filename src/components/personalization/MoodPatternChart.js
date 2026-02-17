@@ -7,12 +7,15 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import { getMoodEmoji, getMoodLabel, FEELING_COLORS } from '../../constants/feelings';
+import { useColors } from '../../hooks/useColors';
 
 /**
  * Renders horizontal bars for mood distribution.
  * @param {{ moodId: string, count: number }[]} data - sorted descending by count
  */
 export const MoodPatternChart = ({ data }) => {
+  const c = useColors();
+
   if (!data || data.length === 0) return null;
 
   const maxCount = data[0].count;
@@ -33,9 +36,10 @@ export const MoodPatternChart = ({ data }) => {
 };
 
 const MoodBar = ({ moodId, count, maxCount, index }) => {
+  const c = useColors();
   const percentage = count / maxCount;
   const barWidth = useSharedValue(0);
-  const color = FEELING_COLORS[moodId] || '#C17666';
+  const color = FEELING_COLORS[moodId] || c.accentRust;
 
   useEffect(() => {
     barWidth.value = withDelay(
@@ -52,15 +56,15 @@ const MoodBar = ({ moodId, count, maxCount, index }) => {
     <View style={styles.barRow}>
       <View style={styles.labelContainer}>
         <Text style={styles.emoji}>{getMoodEmoji(moodId)}</Text>
-        <Text style={styles.label}>{getMoodLabel(moodId)}</Text>
+        <Text style={[styles.label, { color: c.textSecondary }]}>{getMoodLabel(moodId)}</Text>
       </View>
       <View style={styles.barContainer}>
-        <View style={styles.barBackground}>
+        <View style={[styles.barBackground, { backgroundColor: c.surfaceTertiary }]}>
           <Animated.View
             style={[styles.barFill, { backgroundColor: color }, barStyle]}
           />
         </View>
-        <Text style={styles.count}>{count}</Text>
+        <Text style={[styles.count, { color: c.textPrimary }]}>{count}</Text>
       </View>
     </View>
   );
@@ -84,7 +88,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#7A756E',
   },
   barContainer: {
     flexDirection: 'row',
@@ -95,7 +98,6 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#F0ECE7',
     overflow: 'hidden',
   },
   barFill: {
@@ -105,7 +107,6 @@ const styles = StyleSheet.create({
   count: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#2D2A26',
     minWidth: 24,
     textAlign: 'right',
   },

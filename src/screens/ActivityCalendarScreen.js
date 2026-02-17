@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { ScreenHeader, Card } from '../components/common';
+import { useColors } from '../hooks/useColors';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
 
@@ -22,17 +23,18 @@ const getActivityLevel = (dateStr, sessionDates) => {
   return 0;
 };
 
-const levelColor = (level) => {
-  switch (level) {
-    case 3: return '#C17666';
-    case 2: return '#E8A090';
-    case 1: return '#E8D0C6';
-    default: return '#F0ECE7';
-  }
-};
-
 export const ActivityCalendarScreen = ({ navigation }) => {
   const { stats, sessions } = useApp();
+  const c = useColors();
+
+  const levelColor = (level) => {
+    switch (level) {
+      case 3: return c.accentRust;
+      case 2: return c.feelingPink;
+      case 1: return c.accentPeach;
+      default: return c.surfaceTertiary;
+    }
+  };
 
   const now = new Date();
   const currentMonth = now.getMonth();
@@ -80,7 +82,7 @@ export const ActivityCalendarScreen = ({ navigation }) => {
     : stats.totalSessions || 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.background }]}>
       <ScreenHeader
         label="ACTIVITY"
         onBack={() => navigation.goBack()}
@@ -91,7 +93,7 @@ export const ActivityCalendarScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         {/* Month header */}
-        <Text style={styles.monthTitle}>
+        <Text style={[styles.monthTitle, { color: c.textPrimary }]}>
           {MONTH_NAMES[currentMonth]} {currentYear}
         </Text>
 
@@ -100,7 +102,7 @@ export const ActivityCalendarScreen = ({ navigation }) => {
           {/* Weekday headers */}
           <View style={styles.weekdayRow}>
             {WEEKDAY_LABELS.map((label, i) => (
-              <Text key={i} style={styles.weekdayLabel}>{label}</Text>
+              <Text key={i} style={[styles.weekdayLabel, { color: c.textMuted }]}>{label}</Text>
             ))}
           </View>
 
@@ -117,15 +119,16 @@ export const ActivityCalendarScreen = ({ navigation }) => {
                     style={[
                       styles.dayCell,
                       { backgroundColor: cell.isFuture ? 'transparent' : levelColor(cell.level) },
-                      cell.isToday && styles.todayCell,
+                      cell.isToday && { borderWidth: 2, borderColor: c.accentRust },
                     ]}
                   >
                     <Text style={[
                       styles.dayText,
-                      cell.level > 0 && styles.dayTextActive,
-                      cell.level >= 3 && styles.dayTextHigh,
-                      cell.isFuture && styles.dayTextFuture,
-                      cell.isToday && styles.dayTextToday,
+                      { color: c.textSecondary },
+                      cell.level > 0 && { color: c.textPrimary, fontWeight: '600' },
+                      cell.level >= 3 && { color: c.textOnPrimary, fontWeight: '700' },
+                      cell.isFuture && { color: c.disabled },
+                      cell.isToday && { color: c.accentRust, fontWeight: '700' },
                     ]}>
                       {cell.day}
                     </Text>
@@ -137,35 +140,35 @@ export const ActivityCalendarScreen = ({ navigation }) => {
 
           {/* Legend */}
           <View style={styles.legend}>
-            <Text style={styles.legendLabel}>Less</Text>
+            <Text style={[styles.legendLabel, { color: c.textMuted }]}>Less</Text>
             {[0, 1, 2, 3].map((level) => (
               <View
                 key={level}
                 style={[styles.legendDot, { backgroundColor: levelColor(level) }]}
               />
             ))}
-            <Text style={styles.legendLabel}>More</Text>
+            <Text style={[styles.legendLabel, { color: c.textMuted }]}>More</Text>
           </View>
         </Card>
 
         {/* Summary stats */}
         <View style={styles.statsRow}>
           <Card style={styles.statCard}>
-            <Ionicons name="calendar-outline" size={20} color="#C17666" />
-            <Text style={styles.statValue}>{activeDays}</Text>
-            <Text style={styles.statLabel}>Active days</Text>
+            <Ionicons name="calendar-outline" size={20} color={c.accentRust} />
+            <Text style={[styles.statValue, { color: c.textPrimary }]}>{activeDays}</Text>
+            <Text style={[styles.statLabel, { color: c.textMuted }]}>Active days</Text>
           </Card>
 
           <Card style={styles.statCard}>
-            <Ionicons name="flame" size={20} color="#C17666" />
-            <Text style={styles.statValue}>{stats.currentStreak || 0}</Text>
-            <Text style={styles.statLabel}>Current streak</Text>
+            <Ionicons name="flame" size={20} color={c.accentRust} />
+            <Text style={[styles.statValue, { color: c.textPrimary }]}>{stats.currentStreak || 0}</Text>
+            <Text style={[styles.statLabel, { color: c.textMuted }]}>Current streak</Text>
           </Card>
 
           <Card style={styles.statCard}>
-            <Ionicons name="trophy-outline" size={20} color="#C17666" />
-            <Text style={styles.statValue}>{stats.longestStreak || 0}</Text>
-            <Text style={styles.statLabel}>Best streak</Text>
+            <Ionicons name="trophy-outline" size={20} color={c.accentRust} />
+            <Text style={[styles.statValue, { color: c.textPrimary }]}>{stats.longestStreak || 0}</Text>
+            <Text style={[styles.statLabel, { color: c.textMuted }]}>Best streak</Text>
           </Card>
         </View>
       </ScrollView>
@@ -176,7 +179,6 @@ export const ActivityCalendarScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -185,7 +187,6 @@ const styles = StyleSheet.create({
   monthTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#2D2A26',
     marginTop: 8,
     marginBottom: 16,
   },
@@ -203,7 +204,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     fontWeight: '600',
-    color: '#B0AAA2',
   },
   weekRow: {
     flexDirection: 'row',
@@ -221,29 +221,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  todayCell: {
-    borderWidth: 2,
-    borderColor: '#C17666',
-  },
   dayText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#7A756E',
-  },
-  dayTextActive: {
-    color: '#2D2A26',
-    fontWeight: '600',
-  },
-  dayTextHigh: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  dayTextFuture: {
-    color: '#D4CFC9',
-  },
-  dayTextToday: {
-    color: '#C17666',
-    fontWeight: '700',
   },
   legend: {
     flexDirection: 'row',
@@ -254,7 +234,6 @@ const styles = StyleSheet.create({
   },
   legendLabel: {
     fontSize: 11,
-    color: '#B0AAA2',
   },
   legendDot: {
     width: 14,
@@ -274,12 +253,10 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#2D2A26',
     marginTop: 6,
   },
   statLabel: {
     fontSize: 11,
-    color: '#B0AAA2',
     marginTop: 4,
     textAlign: 'center',
   },

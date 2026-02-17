@@ -11,6 +11,7 @@ import { MOODS } from '../constants/feelings';
 import { ScreenHeader, PrimaryButton } from '../components/common';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
+import { useColors } from '../hooks/useColors';
 
 export const PostMoodReflectionScreen = ({ navigation, route }) => {
   const {
@@ -22,6 +23,7 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
 
   const [selectedMood, setSelectedMood] = useState(null);
   const [reflection, setReflection] = useState('');
+  const c = useColors();
 
   const handleContinue = () => {
     const postMood = MOODS.find(m => m.id === selectedMood);
@@ -45,7 +47,7 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.background }]}>
       <ScreenHeader label="REFLECTION" />
 
       <ScrollView
@@ -54,8 +56,8 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.heading}>And how do you{'\n'}feel now?</Text>
-        <Text style={styles.subtitle}>Notice any shifts after your practice</Text>
+        <Text style={[styles.heading, { color: c.textPrimary }]}>And how do you{'\n'}feel now?</Text>
+        <Text style={[styles.subtitle, { color: c.textSecondary }]}>Notice any shifts after your practice</Text>
 
         <View style={styles.grid}>
           {MOODS.map((mood) => {
@@ -69,14 +71,16 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
                 accessibilityState={{ selected: isSelected }}
                 style={({ pressed }) => [
                   styles.moodCard,
-                  isSelected && styles.moodCardSelected,
+                  { backgroundColor: c.selectedMoodBg },
+                  isSelected && [styles.moodCardSelected, { borderColor: c.accentRust, backgroundColor: c.surfaceSecondary }],
                   pressed && styles.cardPressed,
                 ]}
               >
                 <Text style={styles.moodEmoji}>{mood.emoji}</Text>
                 <Text style={[
                   styles.moodLabel,
-                  isSelected && styles.moodLabelSelected,
+                  { color: c.textPrimary },
+                  isSelected && { color: c.accentRust },
                 ]}>
                   {mood.label}
                 </Text>
@@ -87,12 +91,12 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
 
         {/* Optional reflection note */}
         <View style={styles.reflectionSection}>
-          <Text style={styles.reflectionLabel}>JOURNAL NOTE (OPTIONAL)</Text>
-          <View style={styles.reflectionInputWrapper}>
+          <Text style={[styles.reflectionLabel, { color: c.textMuted }]}>JOURNAL NOTE (OPTIONAL)</Text>
+          <View style={[styles.reflectionInputWrapper, { backgroundColor: c.surface }]}>
             <TextInput
-              style={styles.reflectionInput}
+              style={[styles.reflectionInput, { color: c.textPrimary }]}
               placeholder="What came up for you during your session?"
-              placeholderTextColor="#B0AAA2"
+              placeholderTextColor={c.inputPlaceholder}
               multiline
               maxLength={500}
               value={reflection}
@@ -111,7 +115,7 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
         />
 
         <Pressable onPress={handleSkip} style={styles.skipButton}>
-          <Text style={styles.skipText}>SKIP FOR NOW</Text>
+          <Text style={[styles.skipText, { color: c.accentRust }]}>SKIP FOR NOW</Text>
         </Pressable>
       </View>
     </View>
@@ -121,7 +125,6 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F2EE',
   },
   scrollView: {
     flex: 1,
@@ -133,14 +136,12 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#2D2A26',
     lineHeight: 36,
     marginTop: 16,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#7A756E',
     marginBottom: 28,
   },
   grid: {
@@ -151,7 +152,6 @@ const styles = StyleSheet.create({
   },
   moodCard: {
     width: '47.5%',
-    backgroundColor: '#EDE4DC',
     borderRadius: 20,
     paddingVertical: 24,
     paddingHorizontal: 16,
@@ -161,8 +161,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   moodCardSelected: {
-    borderColor: '#C17666',
-    backgroundColor: '#F5EDE8',
+    // borderColor and backgroundColor applied inline
   },
   cardPressed: {
     transform: [{ scale: 0.97 }],
@@ -174,11 +173,7 @@ const styles = StyleSheet.create({
   moodLabel: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#2D2A26',
     textAlign: 'center',
-  },
-  moodLabelSelected: {
-    color: '#C17666',
   },
   reflectionSection: {
     marginTop: 28,
@@ -188,11 +183,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
-    color: '#B0AAA2',
     marginBottom: 10,
   },
   reflectionInputWrapper: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     ...shadows.card,
   },
@@ -200,7 +193,6 @@ const styles = StyleSheet.create({
     minHeight: 100,
     padding: 16,
     fontSize: 15,
-    color: '#2D2A26',
     lineHeight: 22,
     textAlignVertical: 'top',
   },
@@ -219,6 +211,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
-    color: '#C17666',
   },
 });

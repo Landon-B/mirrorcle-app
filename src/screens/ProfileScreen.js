@@ -8,25 +8,12 @@ import { useApp } from '../context/AppContext';
 import { usePaywall } from '../hooks/usePaywall';
 import { usePersonalization } from '../hooks/usePersonalization';
 import { useFavorites } from '../hooks/useFavorites';
+import { useColors } from '../hooks/useColors';
+import { useTheme } from '../context/ThemeContext';
 import { getFocusAreaById, FOCUS_AREAS } from '../constants/focusAreas';
 import { typography } from '../styles/typography';
 
 const SERIF_ITALIC = Platform.OS === 'ios' ? 'Georgia-Italic' : 'serif';
-
-const COLORS = {
-  background: '#F5F2EE',
-  card: '#FFFFFF',
-  textPrimary: '#2D2A26',
-  textSecondary: '#7A756E',
-  textMuted: '#B0AAA2',
-  accent: '#C17666',
-  accentLight: '#E8A090',
-  peach: '#E8D0C6',
-  warmTint: '#FDF5F2',
-  border: '#E8E4DF',
-  surfaceTertiary: '#F0ECE7',
-  signOut: '#EF4444',
-};
 
 const getInitials = (name) => {
   if (!name) return '?';
@@ -79,32 +66,71 @@ const getJourneyHeadline = (stats, sessions) => {
   return `${stats.totalSessions} sessions of self-reflection.`;
 };
 
-const SettingsRow = ({ icon, label, detail, onPress, textColor, showChevron = true }) => (
+const SettingsRow = ({ icon, label, detail, onPress, textColor, showChevron = true, c }) => (
   <Pressable
-    style={({ pressed }) => [styles.settingsRow, pressed && styles.settingsRowPressed]}
+    style={({ pressed }) => [styles.settingsRow, pressed && { backgroundColor: c.surfaceSecondary }]}
     onPress={onPress}
   >
     <View style={styles.settingsRowLeft}>
-      <View style={styles.iconCircle}>
-        <Ionicons name={icon} size={20} color={COLORS.accent} />
+      <View style={[styles.iconCircle, { backgroundColor: c.accentPeach }]}>
+        <Ionicons name={icon} size={20} color={c.accentRust} />
       </View>
-      <Text style={[styles.settingsLabel, textColor && { color: textColor }]}>
+      <Text style={[styles.settingsLabel, { color: c.textPrimary }, textColor && { color: textColor }]}>
         {label}
       </Text>
     </View>
     <View style={styles.settingsRowRight}>
       {detail ? (
-        <Text style={styles.settingsDetail}>{detail}</Text>
+        <Text style={[styles.settingsDetail, { color: c.textMuted }]}>{detail}</Text>
       ) : null}
       {showChevron && (
-        <Ionicons name="chevron-forward" size={20} color={COLORS.border} />
+        <Ionicons name="chevron-forward" size={20} color={c.border} />
       )}
     </View>
   </Pressable>
 );
 
-const SectionHeader = ({ title }) => (
-  <Text style={styles.sectionHeader}>{title}</Text>
+const SectionHeader = ({ title, c }) => (
+  <Text style={[styles.sectionHeader, { color: c.textSecondary }]}>{title}</Text>
+);
+
+const APPEARANCE_OPTIONS = [
+  { value: 'light', icon: 'sunny', label: 'Light' },
+  { value: 'dark', icon: 'moon', label: 'Dark' },
+  { value: 'system', icon: 'phone-portrait-outline', label: 'Auto' },
+];
+
+const AppearancePicker = ({ selected, onSelect, c }) => (
+  <View style={[appearanceStyles.container, { backgroundColor: c.surfaceTertiary }]}>
+    {APPEARANCE_OPTIONS.map((opt) => {
+      const isActive = selected === opt.value;
+      return (
+        <Pressable
+          key={opt.value}
+          onPress={() => onSelect(opt.value)}
+          style={[
+            appearanceStyles.option,
+            isActive && [appearanceStyles.optionActive, { backgroundColor: c.surface }],
+          ]}
+        >
+          <Ionicons
+            name={opt.icon}
+            size={16}
+            color={isActive ? c.accentRust : c.textMuted}
+          />
+          <Text
+            style={[
+              appearanceStyles.label,
+              { color: isActive ? c.textPrimary : c.textMuted },
+              isActive && { fontWeight: '600' },
+            ]}
+          >
+            {opt.label}
+          </Text>
+        </Pressable>
+      );
+    })}
+  </View>
 );
 
 export const ProfileScreen = ({ navigation }) => {
@@ -112,6 +138,8 @@ export const ProfileScreen = ({ navigation }) => {
   const { user, preferences, stats, sessions, signOut } = useApp();
   const { powerPhrase } = usePersonalization();
   const { favoritesCount } = useFavorites();
+  const { appearancePref, setAppearance } = useTheme();
+  const c = useColors();
 
   const userName = user?.user_metadata?.name || preferences?.name || 'You';
   const userEmail = user?.email || '';
@@ -148,7 +176,7 @@ export const ProfileScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: c.background }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -161,28 +189,27 @@ export const ProfileScreen = ({ navigation }) => {
               <View style={[
                 styles.journeyRingFill,
                 {
-                  // Use border trick for circular progress
-                  borderColor: COLORS.accent,
+                  borderColor: c.accentRust,
                   borderWidth: journeyProgress > 0 ? 2.5 : 0,
                   opacity: 0.3 + (journeyProgress * 0.7),
                 },
               ]} />
             </View>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{getInitials(userName)}</Text>
+            <View style={[styles.avatar, { backgroundColor: c.accentPeach }]}>
+              <Text style={[styles.avatarText, { color: c.accentRust }]}>{getInitials(userName)}</Text>
             </View>
           </View>
-          <Text style={styles.userName}>{userName}</Text>
+          <Text style={[styles.userName, { color: c.textPrimary }]}>{userName}</Text>
           {userEmail ? (
-            <Text style={styles.userEmail}>{userEmail}</Text>
+            <Text style={[styles.userEmail, { color: c.textSecondary }]}>{userEmail}</Text>
           ) : null}
           {isPro && (
-            <View style={styles.proBadge}>
-              <Ionicons name="star" size={12} color="#FFFFFF" />
-              <Text style={styles.proBadgeText}>PRO</Text>
+            <View style={[styles.proBadge, { backgroundColor: c.accentRust }]}>
+              <Ionicons name="star" size={12} color={c.textOnPrimary} />
+              <Text style={[styles.proBadgeText, { color: c.textOnPrimary }]}>PRO</Text>
             </View>
           )}
-          <Text style={styles.journeyHeadline}>{journeyHeadline}</Text>
+          <Text style={[styles.journeyHeadline, { color: c.textSecondary }]}>{journeyHeadline}</Text>
         </Animated.View>
 
         {/* Your Story So Far — only show if user has done at least one session */}
@@ -192,27 +219,27 @@ export const ProfileScreen = ({ navigation }) => {
               onPress={() => navigation.navigate('GrowthTab', { screen: 'GrowthDashboard' })}
               style={({ pressed }) => [pressed && { opacity: 0.9 }]}
             >
-              <View style={styles.storyCard}>
+              <View style={[styles.storyCard, { backgroundColor: c.surfaceSecondary, borderLeftColor: c.accentRust }]}>
                 <View style={styles.storyStatsRow}>
                   <View style={styles.storyStat}>
-                    <Text style={styles.storyStatNumber}>{stats.totalSessions}</Text>
-                    <Text style={styles.storyStatLabel}>
+                    <Text style={[styles.storyStatNumber, { color: c.accentRust }]}>{stats.totalSessions}</Text>
+                    <Text style={[styles.storyStatLabel, { color: c.textSecondary }]}>
                       session{stats.totalSessions !== 1 ? 's' : ''}
                     </Text>
                   </View>
-                  <View style={styles.storyDivider} />
+                  <View style={[styles.storyDivider, { backgroundColor: c.border }]} />
                   <View style={styles.storyStat}>
-                    <Text style={styles.storyStatNumber}>{stats.totalAffirmations}</Text>
-                    <Text style={styles.storyStatLabel}>
+                    <Text style={[styles.storyStatNumber, { color: c.accentRust }]}>{stats.totalAffirmations}</Text>
+                    <Text style={[styles.storyStatLabel, { color: c.textSecondary }]}>
                       truth{stats.totalAffirmations !== 1 ? 's' : ''} spoken
                     </Text>
                   </View>
                   {totalTime && (
                     <>
-                      <View style={styles.storyDivider} />
+                      <View style={[styles.storyDivider, { backgroundColor: c.border }]} />
                       <View style={styles.storyStat}>
-                        <Text style={styles.storyStatNumber}>{totalTime}</Text>
-                        <Text style={styles.storyStatLabel}>of presence</Text>
+                        <Text style={[styles.storyStatNumber, { color: c.accentRust }]}>{totalTime}</Text>
+                        <Text style={[styles.storyStatLabel, { color: c.textSecondary }]}>of presence</Text>
                       </View>
                     </>
                   )}
@@ -221,16 +248,16 @@ export const ProfileScreen = ({ navigation }) => {
                 {/* Power phrase — most resonant affirmation */}
                 {powerPhrase && (
                   <View style={styles.powerPhraseSection}>
-                    <View style={styles.thinDivider} />
+                    <View style={[styles.thinDivider, { backgroundColor: c.border }]} />
                     <View style={styles.powerPhraseRow}>
-                      <View style={styles.powerPhraseIcon}>
-                        <Ionicons name="mic" size={14} color={COLORS.accent} />
+                      <View style={[styles.powerPhraseIcon, { backgroundColor: c.accentPeach + '30' }]}>
+                        <Ionicons name="mic" size={14} color={c.accentRust} />
                       </View>
                       <View style={styles.powerPhraseContent}>
-                        <Text style={styles.powerPhraseText} numberOfLines={2}>
+                        <Text style={[styles.powerPhraseText, { color: c.textPrimary }]} numberOfLines={2}>
                           "{powerPhrase.text}"
                         </Text>
-                        <Text style={styles.powerPhraseContext}>
+                        <Text style={[styles.powerPhraseContext, { color: c.accentRust }]}>
                           Spoken {powerPhrase.count} times — your anchor phrase
                         </Text>
                       </View>
@@ -239,8 +266,8 @@ export const ProfileScreen = ({ navigation }) => {
                 )}
 
                 <View style={styles.storyViewMore}>
-                  <Text style={styles.storyViewMoreText}>View your growth</Text>
-                  <Ionicons name="arrow-forward" size={14} color={COLORS.accent} />
+                  <Text style={[styles.storyViewMoreText, { color: c.accentRust }]}>View your growth</Text>
+                  <Ionicons name="arrow-forward" size={14} color={c.accentRust} />
                 </View>
               </View>
             </Pressable>
@@ -249,84 +276,100 @@ export const ProfileScreen = ({ navigation }) => {
 
         {/* Your Mirror */}
         <Animated.View entering={FadeInUp.delay(400).duration(500)}>
-          <SectionHeader title="Your Mirror" />
-          <View style={styles.sectionCard}>
+          <SectionHeader title="Your Mirror" c={c} />
+          <View style={[styles.sectionCard, { backgroundColor: c.surface }]}>
             <SettingsRow
               icon="heart-outline"
               label="Favorites"
               detail={favoritesCount > 0 ? `${favoritesCount} saved` : null}
               onPress={() => navigation.navigate('Favorites')}
+              c={c}
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: c.border }]} />
             <SettingsRow
               icon="create-outline"
               label="My Affirmations"
               onPress={() => navigation.navigate('CustomAffirmations')}
+              c={c}
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: c.border }]} />
             <SettingsRow
               icon="color-palette-outline"
               label="Themes"
               onPress={() => navigation.navigate('Themes')}
+              c={c}
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: c.border }]} />
+            <View style={appearanceStyles.wrapper}>
+              <View style={appearanceStyles.topRow}>
+                <View style={[styles.iconCircle, { backgroundColor: c.accentPeach }]}>
+                  <Ionicons name="contrast-outline" size={20} color={c.accentRust} />
+                </View>
+                <Text style={[styles.settingsLabel, { color: c.textPrimary }]}>Appearance</Text>
+              </View>
+              <AppearancePicker selected={appearancePref} onSelect={setAppearance} c={c} />
+            </View>
+            <View style={[styles.divider, { backgroundColor: c.border }]} />
             <SettingsRow
               icon="notifications-outline"
               label="Reminders"
               onPress={() => navigation.navigate('NotificationSettings')}
+              c={c}
             />
           </View>
         </Animated.View>
 
         {/* Account Section */}
         <Animated.View entering={FadeInUp.delay(600).duration(500)}>
-          <SectionHeader title="Account" />
-          <View style={styles.sectionCard}>
+          <SectionHeader title="Account" c={c} />
+          <View style={[styles.sectionCard, { backgroundColor: c.surface }]}>
             {!isPro && (
               <>
                 <Pressable
                   style={({ pressed }) => [
                     styles.deepenRow,
-                    pressed && styles.settingsRowPressed,
+                    pressed && { backgroundColor: c.surfaceSecondary },
                   ]}
                   onPress={openPaywall}
                 >
                   <LinearGradient
-                    colors={[COLORS.accent, COLORS.accentLight]}
+                    colors={[c.accentRust, c.feelingPink]}
                     style={styles.deepenIconCircle}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                   >
-                    <Ionicons name="sparkles" size={18} color="#FFFFFF" />
+                    <Ionicons name="sparkles" size={18} color={c.textOnPrimary} />
                   </LinearGradient>
                   <View style={styles.deepenTextContainer}>
-                    <Text style={styles.deepenLabel}>Deepen Your Journey</Text>
-                    <Text style={styles.deepenSubtitle}>Unlock the full mirror</Text>
+                    <Text style={[styles.deepenLabel, { color: c.accentRust }]}>Deepen Your Journey</Text>
+                    <Text style={[styles.deepenSubtitle, { color: c.textMuted }]}>Unlock the full mirror</Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={20} color={COLORS.border} />
+                  <Ionicons name="chevron-forward" size={20} color={c.border} />
                 </Pressable>
-                <View style={styles.divider} />
+                <View style={[styles.divider, { backgroundColor: c.border }]} />
               </>
             )}
             <SettingsRow
               icon="shield-checkmark-outline"
               label="Privacy & Security"
               onPress={() => navigation.navigate('Privacy')}
+              c={c}
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: c.border }]} />
             <SettingsRow
               icon="log-out-outline"
               label="Sign Out"
-              textColor={COLORS.signOut}
+              textColor={c.error}
               onPress={handleSignOut}
               showChevron={false}
+              c={c}
             />
           </View>
         </Animated.View>
 
         {/* Quiet closing affirmation */}
         <Animated.View entering={FadeIn.delay(800).duration(600)}>
-          <Text style={styles.closingAffirmation}>
+          <Text style={[styles.closingAffirmation, { color: c.textMuted }]}>
             You are worth the time you give yourself here.
           </Text>
         </Animated.View>
@@ -340,7 +383,6 @@ export const ProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -368,36 +410,30 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    borderColor: COLORS.accent,
   },
   avatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: COLORS.peach,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
     fontSize: 28,
     fontWeight: '700',
-    color: COLORS.accent,
   },
   userName: {
     fontSize: 24,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     marginBottom: 4,
   },
   userEmail: {
     fontSize: 14,
-    color: COLORS.textSecondary,
     marginBottom: 8,
   },
   proBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -407,14 +443,12 @@ const styles = StyleSheet.create({
   proBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   journeyHeadline: {
     fontFamily: SERIF_ITALIC,
     fontSize: 15,
     fontStyle: 'italic',
-    color: COLORS.textSecondary,
     textAlign: 'center',
     marginTop: 4,
     maxWidth: 260,
@@ -423,10 +457,8 @@ const styles = StyleSheet.create({
 
   // Your Story So Far
   storyCard: {
-    backgroundColor: COLORS.warmTint,
     borderRadius: 20,
     borderLeftWidth: 4,
-    borderLeftColor: COLORS.accent,
     paddingVertical: 20,
     paddingHorizontal: 20,
     marginBottom: 24,
@@ -448,27 +480,23 @@ const styles = StyleSheet.create({
   storyStatNumber: {
     fontSize: 22,
     fontWeight: '700',
-    color: COLORS.accent,
     marginBottom: 2,
   },
   storyStatLabel: {
     fontSize: 11,
     fontWeight: '500',
-    color: COLORS.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   storyDivider: {
     width: 1,
     height: 28,
-    backgroundColor: COLORS.border,
   },
   powerPhraseSection: {
     marginTop: 4,
   },
   thinDivider: {
     height: 1,
-    backgroundColor: COLORS.border,
     marginVertical: 14,
   },
   powerPhraseRow: {
@@ -480,7 +508,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(193, 118, 102, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
@@ -492,14 +519,12 @@ const styles = StyleSheet.create({
     fontFamily: SERIF_ITALIC,
     fontSize: 15,
     fontStyle: 'italic',
-    color: COLORS.textPrimary,
     lineHeight: 22,
     marginBottom: 4,
   },
   powerPhraseContext: {
     fontSize: 11,
     fontWeight: '500',
-    color: COLORS.accent,
     letterSpacing: 0.3,
   },
   storyViewMore: {
@@ -512,14 +537,12 @@ const styles = StyleSheet.create({
   storyViewMoreText: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.accent,
   },
 
   // Sections
   sectionHeader: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
@@ -527,7 +550,6 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   sectionCard: {
-    backgroundColor: COLORS.card,
     borderRadius: 16,
     marginBottom: 24,
     overflow: 'hidden',
@@ -540,9 +562,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 14,
     paddingHorizontal: 16,
-  },
-  settingsRowPressed: {
-    backgroundColor: '#F9F7F5',
   },
   settingsRowLeft: {
     flexDirection: 'row',
@@ -558,23 +577,19 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.peach,
     alignItems: 'center',
     justifyContent: 'center',
   },
   settingsLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: COLORS.textPrimary,
   },
   settingsDetail: {
     fontSize: 13,
     fontWeight: '500',
-    color: COLORS.textMuted,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: COLORS.border,
     marginLeft: 66,
   },
 
@@ -599,12 +614,10 @@ const styles = StyleSheet.create({
   deepenLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.accent,
   },
   deepenSubtitle: {
     fontSize: 12,
     fontWeight: '500',
-    color: COLORS.textMuted,
     marginTop: 1,
   },
 
@@ -613,7 +626,6 @@ const styles = StyleSheet.create({
     fontFamily: SERIF_ITALIC,
     fontSize: 14,
     fontStyle: 'italic',
-    color: COLORS.textMuted,
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 22,
@@ -622,5 +634,44 @@ const styles = StyleSheet.create({
   // Footer
   footer: {
     height: 20,
+  },
+});
+
+const appearanceStyles = StyleSheet.create({
+  wrapper: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  container: {
+    flexDirection: 'row',
+    borderRadius: 10,
+    padding: 3,
+    marginLeft: 50,
+  },
+  option: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 7,
+    borderRadius: 8,
+    gap: 5,
+  },
+  optionActive: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '500',
   },
 });

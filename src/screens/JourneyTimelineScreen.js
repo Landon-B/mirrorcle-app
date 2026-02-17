@@ -11,102 +11,94 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { ScreenHeader } from '../components/common';
 import { useJourney } from '../hooks/useJourney';
+import { useColors } from '../hooks/useColors';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
-
-const COLORS = {
-  bg: '#F5F2EE',
-  rust: '#C17666',
-  peach: '#E8D0C6',
-  line: '#E8A090',
-  white: '#FFFFFF',
-  textPrimary: '#2D2A26',
-  textSecondary: '#7A756E',
-  textMuted: '#B0AAA2',
-};
 
 const TIMELINE_LEFT = 36;
 
 // --- Timeline Node ---
-const TimelineNode = ({ filled }) => (
+const TimelineNode = ({ filled, c }) => (
   <View
     style={[
       styles.node,
-      filled ? styles.nodeFilled : styles.nodeOutline,
+      filled
+        ? { backgroundColor: c.accentRust }
+        : { backgroundColor: c.background, borderWidth: 2, borderColor: c.feelingPink },
     ]}
   />
 );
 
 // --- Timeline Cards ---
 
-const MilestoneCard = ({ event, index }) => (
+const MilestoneCard = ({ event, index, c }) => (
   <Animated.View
     entering={FadeInUp.delay(100 + index * 80).duration(400)}
     style={styles.eventRow}
   >
     <View style={styles.nodeColumn}>
-      <TimelineNode filled />
+      <TimelineNode filled c={c} />
     </View>
-    <View style={[styles.card, styles.milestoneCard]}>
+    <View style={[styles.card, { backgroundColor: c.surface }, styles.milestoneCard, { borderLeftColor: c.accentRust }]}>
       <View style={styles.milestoneHeader}>
-        <View style={styles.milestoneIconCircle}>
+        <View style={[styles.milestoneIconCircle, { backgroundColor: c.accentPeach }]}>
           <Ionicons
             name={getMilestoneIcon(event.key)}
             size={16}
-            color={COLORS.rust}
+            color={c.accentRust}
           />
         </View>
-        <Text style={styles.milestoneLabel}>MILESTONE</Text>
+        <Text style={[styles.milestoneLabel, { color: c.accentRust }]}>MILESTONE</Text>
       </View>
-      <Text style={styles.milestoneNarrative}>{event.narrative}</Text>
-      <Text style={styles.dateText}>{formatDate(event.date)}</Text>
+      <Text style={[styles.milestoneNarrative, { color: c.textPrimary }]}>{event.narrative}</Text>
+      <Text style={[styles.dateText, { color: c.textMuted }]}>{formatDate(event.date)}</Text>
     </View>
   </Animated.View>
 );
 
-const WeekSummaryCard = ({ event, index }) => (
+const WeekSummaryCard = ({ event, index, c }) => (
   <Animated.View
     entering={FadeInUp.delay(100 + index * 80).duration(400)}
     style={styles.eventRow}
   >
     <View style={styles.nodeColumn}>
-      <TimelineNode filled={false} />
+      <TimelineNode filled={false} c={c} />
     </View>
-    <View style={styles.card}>
-      <Text style={styles.weekLabel}>WEEK {event.weekNumber}</Text>
-      <Text style={styles.weekNarrative}>{event.narrative}</Text>
+    <View style={[styles.card, { backgroundColor: c.surface }]}>
+      <Text style={[styles.weekLabel, { color: c.textMuted }]}>WEEK {event.weekNumber}</Text>
+      <Text style={[styles.weekNarrative, { color: c.textPrimary }]}>{event.narrative}</Text>
       <View style={styles.weekStats}>
         <View style={styles.weekStat}>
-          <Text style={styles.weekStatValue}>{event.stats.sessions}</Text>
-          <Text style={styles.weekStatLabel}>sessions</Text>
+          <Text style={[styles.weekStatValue, { color: c.textPrimary }]}>{event.stats.sessions}</Text>
+          <Text style={[styles.weekStatLabel, { color: c.textMuted }]}>sessions</Text>
         </View>
         <View style={styles.weekStat}>
-          <Text style={styles.weekStatValue}>{event.stats.totalMinutes}</Text>
-          <Text style={styles.weekStatLabel}>minutes</Text>
+          <Text style={[styles.weekStatValue, { color: c.textPrimary }]}>{event.stats.totalMinutes}</Text>
+          <Text style={[styles.weekStatLabel, { color: c.textMuted }]}>minutes</Text>
         </View>
         <View style={styles.weekStat}>
-          <Text style={styles.weekStatValue}>{event.stats.affirmations}</Text>
-          <Text style={styles.weekStatLabel}>truths</Text>
+          <Text style={[styles.weekStatValue, { color: c.textPrimary }]}>{event.stats.affirmations}</Text>
+          <Text style={[styles.weekStatLabel, { color: c.textMuted }]}>truths</Text>
         </View>
       </View>
     </View>
   </Animated.View>
 );
 
-const StreakRecoveryCard = ({ event, index }) => (
+const StreakRecoveryCard = ({ event, index, c }) => (
   <Animated.View
     entering={FadeInUp.delay(100 + index * 80).duration(400)}
     style={styles.eventRow}
   >
     <View style={styles.nodeColumn}>
-      <TimelineNode filled={false} />
+      <TimelineNode filled={false} c={c} />
     </View>
-    <View style={[styles.card, styles.recoveryCard]}>
+    <View style={[styles.card, { backgroundColor: c.surfaceSecondary }]}>
       <View style={styles.recoveryRow}>
-        <Ionicons name="refresh" size={16} color={COLORS.rust} />
-        <Text style={styles.recoveryText}>{event.narrative}</Text>
+        <Ionicons name="refresh" size={16} color={c.accentRust} />
+        <Text style={[styles.recoveryText, { color: c.textSecondary }]}>{event.narrative}</Text>
       </View>
-      <Text style={styles.dateText}>{formatDate(event.date)}</Text>
+      <Text style={[styles.dateText, { color: c.textMuted }]}>{formatDate(event.date)}</Text>
     </View>
   </Animated.View>
 );
@@ -134,13 +126,13 @@ function getMilestoneIcon(key) {
 }
 
 // --- Empty State ---
-const EmptyState = () => (
+const EmptyState = ({ c }) => (
   <View style={styles.emptyState}>
-    <View style={styles.emptyIcon}>
-      <Ionicons name="sparkles" size={32} color={COLORS.rust} />
+    <View style={[styles.emptyIcon, { backgroundColor: c.accentPeach }]}>
+      <Ionicons name="sparkles" size={32} color={c.accentRust} />
     </View>
-    <Text style={styles.emptyTitle}>Your journey is just beginning</Text>
-    <Text style={styles.emptySubtitle}>
+    <Text style={[styles.emptyTitle, { color: c.textPrimary }]}>Your journey is just beginning</Text>
+    <Text style={[styles.emptySubtitle, { color: c.textSecondary }]}>
       Come back after a few sessions to see your transformation unfold.
     </Text>
   </View>
@@ -151,30 +143,31 @@ const EmptyState = () => (
 export const JourneyTimelineScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const { timeline, loading } = useJourney();
+  const c = useColors();
 
   const renderEvent = (event, index) => {
     switch (event.type) {
       case 'milestone':
-        return <MilestoneCard key={`m-${event.key}`} event={event} index={index} />;
+        return <MilestoneCard key={`m-${event.key}`} event={event} index={index} c={c} />;
       case 'week_summary':
-        return <WeekSummaryCard key={`w-${event.weekNumber}`} event={event} index={index} />;
+        return <WeekSummaryCard key={`w-${event.weekNumber}`} event={event} index={index} c={c} />;
       case 'streak_recovery':
-        return <StreakRecoveryCard key={`r-${event.date}`} event={event} index={index} />;
+        return <StreakRecoveryCard key={`r-${event.date}`} event={event} index={index} c={c} />;
       default:
         return null;
     }
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: c.background }]}>
       <ScreenHeader label="YOUR JOURNEY" onBack={() => navigation.goBack()} />
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.rust} />
+          <ActivityIndicator size="large" color={c.accentRust} />
         </View>
       ) : timeline.length === 0 ? (
-        <EmptyState />
+        <EmptyState c={c} />
       ) : (
         <ScrollView
           style={styles.scrollView}
@@ -182,7 +175,7 @@ export const JourneyTimelineScreen = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
         >
           {/* Timeline vertical line */}
-          <View style={styles.timelineLine} />
+          <View style={[styles.timelineLine, { backgroundColor: c.feelingPink }]} />
 
           {timeline.map((event, index) => renderEvent(event, index))}
         </ScrollView>
@@ -194,7 +187,6 @@ export const JourneyTimelineScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.bg,
   },
   scrollView: {
     flex: 1,
@@ -217,7 +209,6 @@ const styles = StyleSheet.create({
     top: 16,
     bottom: 40,
     width: 2,
-    backgroundColor: COLORS.line,
     opacity: 0.4,
   },
 
@@ -238,19 +229,10 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
   },
-  nodeFilled: {
-    backgroundColor: COLORS.rust,
-  },
-  nodeOutline: {
-    backgroundColor: COLORS.bg,
-    borderWidth: 2,
-    borderColor: COLORS.line,
-  },
 
   // Cards
   card: {
     flex: 1,
-    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 16,
     marginLeft: 12,
@@ -260,7 +242,6 @@ const styles = StyleSheet.create({
   // Milestone card
   milestoneCard: {
     borderLeftWidth: 3,
-    borderLeftColor: COLORS.rust,
   },
   milestoneHeader: {
     flexDirection: 'row',
@@ -272,7 +253,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: COLORS.peach,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -280,13 +260,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
-    color: COLORS.rust,
   },
   milestoneNarrative: {
     fontFamily: typography.fontFamily.serifItalic,
     fontSize: 15,
     fontStyle: 'italic',
-    color: COLORS.textPrimary,
     lineHeight: 22,
     marginBottom: 8,
   },
@@ -296,14 +274,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
-    color: COLORS.textMuted,
     marginBottom: 6,
   },
   weekNarrative: {
     fontFamily: typography.fontFamily.serifItalic,
     fontSize: 16,
     fontStyle: 'italic',
-    color: COLORS.textPrimary,
     lineHeight: 24,
     marginBottom: 12,
   },
@@ -317,18 +293,13 @@ const styles = StyleSheet.create({
   weekStatValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
   },
   weekStatLabel: {
     fontSize: 11,
-    color: COLORS.textMuted,
     marginTop: 2,
   },
 
   // Streak recovery card
-  recoveryCard: {
-    backgroundColor: '#FDF8F6',
-  },
   recoveryRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -340,14 +311,12 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.serifItalic,
     fontSize: 14,
     fontStyle: 'italic',
-    color: COLORS.textSecondary,
     lineHeight: 20,
   },
 
   // Date text
   dateText: {
     fontSize: 12,
-    color: COLORS.textMuted,
   },
 
   // Empty state
@@ -361,7 +330,6 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: COLORS.peach,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -369,13 +337,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     textAlign: 'center',
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 15,
-    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
   },

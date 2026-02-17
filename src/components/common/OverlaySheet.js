@@ -2,52 +2,56 @@ import React from 'react';
 import { View, Text, Modal, Pressable, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PrimaryButton } from './PrimaryButton';
+import { useColors } from '../../hooks/useColors';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export const OverlaySheet = ({ visible, title, subtitle, items, onClose }) => (
-  <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-    <View style={styles.overlayBackdrop}>
-      <Pressable style={styles.overlayBackdropPress} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close overlay" />
-      <View style={styles.overlaySheet}>
-        <View style={styles.overlayHeader}>
-          <View>
-            <Text style={styles.overlayTitle}>{title}</Text>
-            <Text style={styles.overlaySubtitle}>{subtitle}</Text>
-          </View>
-          <Pressable onPress={onClose} style={styles.overlayCloseButton} accessibilityRole="button" accessibilityLabel="Close">
-            <Ionicons name="close" size={20} color="#7A756E" />
-          </Pressable>
-        </View>
-        <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={styles.overlayContent}>
-          {items.map((item) => (
-            <Pressable key={item.label} onPress={item.onPress} style={styles.overlayItem} accessibilityRole="button" accessibilityLabel={item.label}>
-              <View style={[styles.overlayIconWrap, { backgroundColor: item.bgColor || '#E8D0C6' }]}>
-                <Ionicons name={item.icon} size={20} color="#C17666" />
-              </View>
-              <View style={styles.overlayTextWrap}>
-                <Text style={styles.overlayItemTitle}>{item.label}</Text>
-                <Text style={styles.overlayItemSubtitle}>{item.subtitle}</Text>
-              </View>
-              {item.rightIcon && (
-                <Ionicons name={item.rightIcon} size={20} color="#B0AAA2" />
-              )}
+export const OverlaySheet = ({ visible, title, subtitle, items, onClose }) => {
+  const c = useColors();
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={[styles.overlayBackdrop, { backgroundColor: c.overlay }]}>
+        <Pressable style={styles.overlayBackdropPress} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close overlay" />
+        <View style={[styles.overlaySheet, { backgroundColor: c.surface }]}>
+          <View style={[styles.overlayHeader, { borderBottomColor: c.border }]}>
+            <View>
+              <Text style={[styles.overlayTitle, { color: c.textPrimary }]}>{title}</Text>
+              <Text style={[styles.overlaySubtitle, { color: c.textSecondary }]}>{subtitle}</Text>
+            </View>
+            <Pressable onPress={onClose} style={[styles.overlayCloseButton, { backgroundColor: c.surfaceTertiary }]} accessibilityRole="button" accessibilityLabel="Close">
+              <Ionicons name="close" size={20} color={c.textSecondary} />
             </Pressable>
-          ))}
-        </ScrollView>
-        <View style={styles.overlayFooter}>
-          <PrimaryButton title="Close" onPress={onClose} />
+          </View>
+          <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={styles.overlayContent}>
+            {items.map((item) => (
+              <Pressable key={item.label} onPress={item.onPress} style={[styles.overlayItem, { backgroundColor: c.surfaceSecondary, borderColor: c.border }]} accessibilityRole="button" accessibilityLabel={item.label}>
+                <View style={[styles.overlayIconWrap, { backgroundColor: item.bgColor || c.accentPeach }]}>
+                  <Ionicons name={item.icon} size={20} color={c.accentRust} />
+                </View>
+                <View style={styles.overlayTextWrap}>
+                  <Text style={[styles.overlayItemTitle, { color: c.textPrimary }]}>{item.label}</Text>
+                  <Text style={[styles.overlayItemSubtitle, { color: c.textSecondary }]}>{item.subtitle}</Text>
+                </View>
+                {item.rightIcon && (
+                  <Ionicons name={item.rightIcon} size={20} color={c.textMuted} />
+                )}
+              </Pressable>
+            ))}
+          </ScrollView>
+          <View style={styles.overlayFooter}>
+            <PrimaryButton title="Close" onPress={onClose} />
+          </View>
         </View>
       </View>
-    </View>
-  </Modal>
-);
+    </Modal>
+  );
+};
 
 const styles = StyleSheet.create({
-  overlayBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'flex-end' },
+  overlayBackdrop: { flex: 1, justifyContent: 'flex-end' },
   overlayBackdropPress: { flex: 1 },
   overlaySheet: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     maxHeight: SCREEN_HEIGHT * 0.8,
@@ -58,28 +62,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E4DF',
   },
-  overlayTitle: { color: '#2D2A26', fontSize: 22, fontWeight: '600' },
-  overlaySubtitle: { color: '#7A756E', marginTop: 4 },
+  overlayTitle: { fontSize: 22, fontWeight: '600' },
+  overlaySubtitle: { marginTop: 4 },
   overlayCloseButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#F0ECE7',
     alignItems: 'center',
     justifyContent: 'center',
   },
   overlayContent: { padding: 20, gap: 14 },
   overlayItem: {
-    backgroundColor: '#F9F7F5',
     borderRadius: 20,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
     borderWidth: 1,
-    borderColor: '#E8E4DF',
   },
   overlayIconWrap: {
     width: 46,
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   overlayTextWrap: { flex: 1 },
-  overlayItemTitle: { color: '#2D2A26', fontSize: 16, fontWeight: '600' },
-  overlayItemSubtitle: { color: '#7A756E', marginTop: 4, fontSize: 12 },
+  overlayItemTitle: { fontSize: 16, fontWeight: '600' },
+  overlayItemSubtitle: { marginTop: 4, fontSize: 12 },
   overlayFooter: { padding: 20 },
 });

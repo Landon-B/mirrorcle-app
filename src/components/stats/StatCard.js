@@ -3,20 +3,25 @@ import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../common/Card';
+import { useColors } from '../../hooks/useColors';
 
-export const StatCard = ({ label, value, icon, colors, style }) => (
-  <Card style={[styles.card, style]}>
-    <View style={styles.row}>
-      <View>
-        <Text style={styles.label}>{label}</Text>
-        <Text style={styles.value}>{value}</Text>
+export const StatCard = ({ label, value, icon, colors, style }) => {
+  const c = useColors();
+
+  return (
+    <Card style={[styles.card, style]}>
+      <View style={styles.row}>
+        <View>
+          <Text style={[styles.label, { color: c.textSecondary }]}>{label}</Text>
+          <Text style={[styles.value, { color: c.textPrimary }]}>{value}</Text>
+        </View>
+        <LinearGradient colors={colors} style={styles.iconWrap}>
+          <Ionicons name={icon} size={18} color="#fff" />
+        </LinearGradient>
       </View>
-      <LinearGradient colors={colors} style={styles.iconWrap}>
-        <Ionicons name={icon} size={18} color="#fff" />
-      </LinearGradient>
-    </View>
-  </Card>
-);
+    </Card>
+  );
+};
 
 const styles = StyleSheet.create({
   card: { width: '48%' },
@@ -25,7 +30,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  label: { color: '#7A756E', fontSize: 12 },
-  value: { color: '#2D2A26', fontSize: 18, fontWeight: '600', marginTop: 6 },
+  label: { fontSize: 12 },
+  value: { fontSize: 18, fontWeight: '600', marginTop: 6 },
   iconWrap: { padding: 8, borderRadius: 12 },
 });

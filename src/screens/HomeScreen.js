@@ -21,26 +21,14 @@ import { useEmotionalContext } from '../hooks/useEmotionalContext';
 import { useFavorites } from '../hooks/useFavorites';
 import { useHaptics } from '../hooks/useHaptics';
 import { usePaywall } from '../hooks/usePaywall';
+import { useColors, useGradients } from '../hooks/useColors';
 import { MOODS } from '../constants/feelings';
 import { FOCUS_AREAS } from '../constants/focusAreas';
 import { formatRelativeDate } from '../utils/dateUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const RUST = '#C17666';
-const RUST_LIGHT = '#E8A090';
-const CREAM = '#F5F2EE';
-const WARM_TINT = '#FDF5F2';
-const BORDER_COLOR = '#E8E4DF';
-const TEXT_PRIMARY = '#2C2520';
-const TEXT_SECONDARY = '#7A7267';
-const TEXT_MUTED = '#B0AAA2';
-
 const SERIF_ITALIC = Platform.OS === 'ios' ? 'Georgia-Italic' : 'serif';
-
-// Warm gradient pairs for colored cards
-const INTENTION_GRADIENT = ['#C17666', '#D4956E'];
-const RHYTHM_GRADIENT_TOP = ['#FBF3EF', '#FFFFFF'];
 
 // --- Helpers ---
 
@@ -68,7 +56,7 @@ function getWeeklyActivity(sessions) {
 
 // --- New User Dashboard ---
 
-const NewUserDashboard = ({ navigation, emotionalContext, selectedMood, onMoodSelect }) => {
+const NewUserDashboard = ({ navigation, emotionalContext, selectedMood, onMoodSelect, c }) => {
   const displayFocusAreas = FOCUS_AREAS.slice(0, 4);
   const { greetingName, greeting, ctaText } = emotionalContext;
 
@@ -76,14 +64,14 @@ const NewUserDashboard = ({ navigation, emotionalContext, selectedMood, onMoodSe
     <>
       {/* Greeting */}
       <Animated.View entering={FadeInUp.duration(500)} style={styles.greetingSection}>
-        <Text style={styles.greetingText}>
+        <Text style={[styles.greetingText, { color: c.textPrimary }]}>
           {greetingName ? (
-            <Text style={styles.rustText}>{greetingName}.</Text>
+            <Text style={{ color: c.accentRust }}>{greetingName}.</Text>
           ) : (
-            <Text style={styles.rustText}>Welcome.</Text>
+            <Text style={{ color: c.accentRust }}>Welcome.</Text>
           )}
         </Text>
-        <Text style={styles.emotionalSubtitle}>{greeting}</Text>
+        <Text style={[styles.emotionalSubtitle, { color: c.textSecondary }]}>{greeting}</Text>
       </Animated.View>
 
       {/* Mood Pills */}
@@ -102,14 +90,16 @@ const NewUserDashboard = ({ navigation, emotionalContext, selectedMood, onMoodSe
                 onPress={() => onMoodSelect(mood.id)}
                 style={[
                   styles.moodPill,
-                  isSelected && styles.moodPillSelected,
+                  { borderColor: c.border, backgroundColor: c.surface },
+                  isSelected && { backgroundColor: c.accentRust, borderColor: c.accentRust },
                 ]}
               >
                 <Text style={styles.moodEmoji}>{mood.emoji}</Text>
                 <Text
                   style={[
                     styles.moodLabel,
-                    isSelected && styles.moodLabelSelected,
+                    { color: c.textPrimary },
+                    isSelected && { color: c.textOnPrimary },
                   ]}
                 >
                   {mood.label}
@@ -123,9 +113,9 @@ const NewUserDashboard = ({ navigation, emotionalContext, selectedMood, onMoodSe
       {/* Daily Focus Areas */}
       <Animated.View entering={FadeInUp.delay(400).duration(500)}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Daily Focus Areas</Text>
+          <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>Daily Focus Areas</Text>
           <Pressable onPress={() => navigation.navigate('AffirmTab')}>
-            <Text style={styles.viewAllLink}>View All</Text>
+            <Text style={[styles.viewAllLink, { color: c.accentRust }]}>View All</Text>
           </Pressable>
         </View>
 
@@ -133,8 +123,8 @@ const NewUserDashboard = ({ navigation, emotionalContext, selectedMood, onMoodSe
           {displayFocusAreas.map((area) => (
             <Card key={area.id} style={styles.focusCard}>
               <Text style={styles.focusEmoji}>{area.emoji}</Text>
-              <Text style={styles.focusLabel}>{area.label}</Text>
-              <Text style={styles.focusSubtitle}>Explore</Text>
+              <Text style={[styles.focusLabel, { color: c.textPrimary }]}>{area.label}</Text>
+              <Text style={[styles.focusSubtitle, { color: c.textMuted }]}>Explore</Text>
             </Card>
           ))}
         </View>
@@ -155,7 +145,7 @@ const NewUserDashboard = ({ navigation, emotionalContext, selectedMood, onMoodSe
 
 // --- Returning User Dashboard ---
 
-const StreakProgressBar = ({ weeklyActivity }) => {
+const StreakProgressBar = ({ weeklyActivity, c }) => {
   const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   return (
     <View style={styles.streakBarContainer}>
@@ -164,43 +154,44 @@ const StreakProgressBar = ({ weeklyActivity }) => {
           <View
             style={[
               styles.streakBarSegment,
-              active && styles.streakBarSegmentActive,
+              { backgroundColor: c.border },
+              active && [styles.streakBarSegmentActive, { backgroundColor: c.accentRust, shadowColor: c.accentRust }],
             ]}
           />
-          <Text style={styles.streakBarDayLabel}>{dayLabels[index]}</Text>
+          <Text style={[styles.streakBarDayLabel, { color: c.textMuted }]}>{dayLabels[index]}</Text>
         </View>
       ))}
     </View>
   );
 };
 
-const TrialDayCard = ({ dayContent, trialDay, daysRemaining, onPress }) => {
+const TrialDayCard = ({ dayContent, trialDay, daysRemaining, onPress, c }) => {
   if (!dayContent) return null;
   return (
-    <Card style={styles.trialCard}>
+    <Card style={[styles.trialCard, { borderLeftColor: c.accentRust }]}>
       <View style={styles.trialHeader}>
-        <View style={styles.trialIconCircle}>
-          <Ionicons name={dayContent.icon} size={20} color={RUST} />
+        <View style={[styles.trialIconCircle, { backgroundColor: c.surfaceSecondary }]}>
+          <Ionicons name={dayContent.icon} size={20} color={c.accentRust} />
         </View>
-        <View style={styles.trialBadge}>
-          <Text style={styles.trialBadgeText}>
+        <View style={[styles.trialBadge, { backgroundColor: c.surfaceSecondary }]}>
+          <Text style={[styles.trialBadgeText, { color: c.accentRust }]}>
             Day {trialDay} · {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} left
           </Text>
         </View>
       </View>
-      <Text style={styles.trialTitle}>{dayContent.title}</Text>
-      <Text style={styles.trialMessage}>{dayContent.message}</Text>
+      <Text style={[styles.trialTitle, { color: c.textPrimary }]}>{dayContent.title}</Text>
+      <Text style={[styles.trialMessage, { color: c.textSecondary }]}>{dayContent.message}</Text>
       {dayContent.cta && (
         <Pressable style={styles.trialCta} onPress={onPress}>
-          <Text style={styles.trialCtaText}>{dayContent.cta}</Text>
-          <Ionicons name="arrow-forward" size={14} color={RUST} />
+          <Text style={[styles.trialCtaText, { color: c.accentRust }]}>{dayContent.cta}</Text>
+          <Ionicons name="arrow-forward" size={14} color={c.accentRust} />
         </Pressable>
       )}
     </Card>
   );
 };
 
-const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions }) => {
+const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions, c, g }) => {
   const weeklyActivity = useMemo(() => getWeeklyActivity(sessions), [sessions]);
   const activeDays = weeklyActivity.filter(Boolean).length;
   const { trialStatus, dayContent } = useTrial();
@@ -217,6 +208,10 @@ const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions 
     intentionContext,
     ctaText,
   } = emotionalContext;
+
+  // Warm gradient pairs for colored cards — derived from palette
+  const INTENTION_GRADIENT = [c.primaryStart, c.accentOrange];
+  const RHYTHM_GRADIENT_TOP = [c.surfaceSecondary, c.surface];
 
   // Compassionate rhythm label
   const consistencyLabel = activeDays >= 5
@@ -238,54 +233,54 @@ const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions 
   return (
     <>
       {/* Brand Label */}
-      <Text style={styles.brandLabel}>MIRRORCLE</Text>
+      <Text style={[styles.brandLabel, { color: c.textMuted }]}>MIRRORCLE</Text>
 
       {/* Emotional Greeting */}
       <Animated.View entering={FadeInUp.duration(500)} style={styles.greetingSection}>
-        <Text style={styles.greetingText}>
+        <Text style={[styles.greetingText, { color: c.textPrimary }]}>
           {greetingName ? (
-            <Text style={styles.rustText}>{greetingName}.</Text>
+            <Text style={{ color: c.accentRust }}>{greetingName}.</Text>
           ) : (
-            <Text style={styles.rustText}>Welcome back.</Text>
+            <Text style={{ color: c.accentRust }}>Welcome back.</Text>
           )}
         </Text>
-        <Text style={styles.emotionalSubtitle}>{greeting}</Text>
+        <Text style={[styles.emotionalSubtitle, { color: c.textSecondary }]}>{greeting}</Text>
       </Animated.View>
 
       {/* Rhythm Card — Narrative-First with warm gradient wash */}
       <Animated.View entering={FadeInUp.delay(200).duration(500)}>
         {isReturning ? (
-          <View style={styles.momentumCardOuter}>
+          <View style={[styles.momentumCardOuter, { backgroundColor: c.surface, shadowColor: c.cardShadow }]}>
             <LinearGradient
               colors={RHYTHM_GRADIENT_TOP}
               style={styles.momentumGradient}
               start={{ x: 0.5, y: 0 }}
               end={{ x: 0.5, y: 1 }}
             >
-              <Text style={styles.momentumTitle}>Your Rhythm</Text>
-              <Text style={styles.rhythmNarrative}>
+              <Text style={[styles.momentumTitle, { color: c.textSecondary }]}>Your Rhythm</Text>
+              <Text style={[styles.rhythmNarrative, { color: c.textPrimary }]}>
                 Life happens. What matters is you came back.
               </Text>
-              <StreakProgressBar weeklyActivity={weeklyActivity} />
-              <Text style={styles.consistencyLabel}>READY WHEN YOU ARE</Text>
+              <StreakProgressBar weeklyActivity={weeklyActivity} c={c} />
+              <Text style={[styles.consistencyLabel, { color: c.accentRust }]}>READY WHEN YOU ARE</Text>
             </LinearGradient>
           </View>
         ) : (
-          <View style={styles.momentumCardOuter}>
+          <View style={[styles.momentumCardOuter, { backgroundColor: c.surface, shadowColor: c.cardShadow }]}>
             <LinearGradient
               colors={RHYTHM_GRADIENT_TOP}
               style={styles.momentumGradient}
               start={{ x: 0.5, y: 0 }}
               end={{ x: 0.5, y: 1 }}
             >
-              <Text style={styles.momentumTitle}>Your Rhythm</Text>
-              <Text style={styles.rhythmNarrative}>{streakEncouragement}</Text>
+              <Text style={[styles.momentumTitle, { color: c.textSecondary }]}>Your Rhythm</Text>
+              <Text style={[styles.rhythmNarrative, { color: c.textPrimary }]}>{streakEncouragement}</Text>
               <View style={styles.streakRow}>
-                <Text style={styles.streakNumber}>{stats.currentStreak}</Text>
-                <Text style={styles.streakUnit}>day flow</Text>
+                <Text style={[styles.streakNumber, { color: c.accentRust }]}>{stats.currentStreak}</Text>
+                <Text style={[styles.streakUnit, { color: c.textSecondary }]}>day flow</Text>
               </View>
-              <StreakProgressBar weeklyActivity={weeklyActivity} />
-              <Text style={styles.consistencyLabel}>{consistencyLabel}</Text>
+              <StreakProgressBar weeklyActivity={weeklyActivity} c={c} />
+              <Text style={[styles.consistencyLabel, { color: c.accentRust }]}>{consistencyLabel}</Text>
             </LinearGradient>
           </View>
         )}
@@ -298,6 +293,7 @@ const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions 
             dayContent={dayContent}
             trialDay={trialStatus.trialDay}
             daysRemaining={trialStatus.daysRemaining}
+            c={c}
             onPress={() => {
               if (dayContent.feature) {
                 openPaywall();
@@ -313,20 +309,20 @@ const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions 
       {resonanceContent && (
         <Animated.View entering={FadeInUp.delay(resonanceDelay).duration(500)}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>What Resonated</Text>
+            <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>What Resonated</Text>
           </View>
-          <View style={styles.resonanceCard}>
+          <View style={[styles.resonanceCard, { backgroundColor: c.surfaceSecondary, borderLeftColor: c.accentRust }]}>
             <View style={styles.resonanceIconRow}>
               <View style={styles.resonanceIconCircle}>
                 <Ionicons
                   name={resonanceContent.type === 'powerPhrase' ? 'mic' : 'heart'}
                   size={16}
-                  color={RUST}
+                  color={c.accentRust}
                 />
               </View>
             </View>
-            <Text style={styles.resonanceQuote}>"{resonanceContent.text}"</Text>
-            <Text style={styles.resonanceContext}>
+            <Text style={[styles.resonanceQuote, { color: c.textPrimary }]}>"{resonanceContent.text}"</Text>
+            <Text style={[styles.resonanceContext, { color: c.accentRust }]}>
               {resonanceContent.type === 'powerPhrase'
                 ? `You've spoken this ${resonanceContent.count} times`
                 : `Saved ${formatRelativeDate(resonanceContent.favoritedAt)}`}
@@ -339,7 +335,7 @@ const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions 
       <Animated.View entering={FadeInUp.delay(intentionDelay).duration(500)}>
         <LinearGradient
           colors={INTENTION_GRADIENT}
-          style={styles.intentionCard}
+          style={[styles.intentionCard, { shadowColor: c.accentRust }]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
@@ -408,12 +404,14 @@ export const HomeScreen = ({ navigation }) => {
   const { stats, sessions } = useApp();
   const emotionalContext = useEmotionalContext();
   const [selectedMood, setSelectedMood] = useState(null);
+  const c = useColors();
+  const g = useGradients();
 
   const isNewUser = stats.totalSessions < 3;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" />
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: c.background }]}>
+      <StatusBar barStyle={c.statusBarStyle} />
       <FloatingParticles count={6} opacity={0.08} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -425,6 +423,7 @@ export const HomeScreen = ({ navigation }) => {
             emotionalContext={emotionalContext}
             selectedMood={selectedMood}
             onMoodSelect={setSelectedMood}
+            c={c}
           />
         ) : (
           <ReturningUserDashboard
@@ -432,6 +431,8 @@ export const HomeScreen = ({ navigation }) => {
             emotionalContext={emotionalContext}
             stats={stats}
             sessions={sessions}
+            c={c}
+            g={g}
           />
         )}
       </ScrollView>
@@ -444,7 +445,6 @@ export const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: CREAM,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -456,7 +456,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 2,
-    color: TEXT_MUTED,
     textAlign: 'center',
     marginTop: 16,
     marginBottom: 4,
@@ -470,17 +469,12 @@ const styles = StyleSheet.create({
   greetingText: {
     fontSize: 28,
     fontWeight: '700',
-    color: TEXT_PRIMARY,
     lineHeight: 36,
-  },
-  rustText: {
-    color: RUST,
   },
   emotionalSubtitle: {
     fontFamily: SERIF_ITALIC,
     fontSize: 17,
     fontStyle: 'italic',
-    color: TEXT_SECONDARY,
     lineHeight: 26,
     marginTop: 8,
   },
@@ -501,12 +495,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 999,
     borderWidth: 1.5,
-    borderColor: BORDER_COLOR,
-    backgroundColor: '#FFFFFF',
-  },
-  moodPillSelected: {
-    backgroundColor: RUST,
-    borderColor: RUST,
   },
   moodEmoji: {
     fontSize: 16,
@@ -515,10 +503,6 @@ const styles = StyleSheet.create({
   moodLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: TEXT_PRIMARY,
-  },
-  moodLabelSelected: {
-    color: '#FFFFFF',
   },
 
   // Section Header
@@ -531,12 +515,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: TEXT_PRIMARY,
   },
   viewAllLink: {
     fontSize: 14,
     fontWeight: '600',
-    color: RUST,
   },
 
   // Focus Grid (new user)
@@ -559,12 +541,10 @@ const styles = StyleSheet.create({
   focusLabel: {
     fontSize: 15,
     fontWeight: '600',
-    color: TEXT_PRIMARY,
     marginBottom: 2,
   },
   focusSubtitle: {
     fontSize: 12,
-    color: TEXT_MUTED,
   },
 
   // CTA
@@ -580,8 +560,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 12,
@@ -596,7 +574,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: 0.5,
-    color: TEXT_SECONDARY,
     textTransform: 'uppercase',
     marginBottom: 8,
   },
@@ -604,7 +581,6 @@ const styles = StyleSheet.create({
     fontFamily: SERIF_ITALIC,
     fontSize: 17,
     fontStyle: 'italic',
-    color: TEXT_PRIMARY,
     lineHeight: 26,
     marginBottom: 16,
   },
@@ -616,12 +592,10 @@ const styles = StyleSheet.create({
   streakNumber: {
     fontSize: 24,
     fontWeight: '700',
-    color: RUST,
   },
   streakUnit: {
     fontSize: 14,
     fontWeight: '500',
-    color: TEXT_SECONDARY,
     marginLeft: 6,
   },
 
@@ -639,12 +613,9 @@ const styles = StyleSheet.create({
   streakBarSegment: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: BORDER_COLOR,
     width: '80%',
   },
   streakBarSegmentActive: {
-    backgroundColor: RUST,
-    shadowColor: RUST,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.35,
     shadowRadius: 4,
@@ -653,22 +624,18 @@ const styles = StyleSheet.create({
   streakBarDayLabel: {
     fontSize: 10,
     fontWeight: '500',
-    color: TEXT_MUTED,
   },
   consistencyLabel: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.8,
-    color: RUST,
     marginTop: 4,
   },
 
   // What Resonated — warm tinted card (returning user)
   resonanceCard: {
-    backgroundColor: WARM_TINT,
     borderRadius: 20,
     borderLeftWidth: 4,
-    borderLeftColor: RUST,
     paddingVertical: 20,
     paddingHorizontal: 20,
     marginBottom: 20,
@@ -693,14 +660,12 @@ const styles = StyleSheet.create({
     fontFamily: SERIF_ITALIC,
     fontSize: 18,
     fontStyle: 'italic',
-    color: TEXT_PRIMARY,
     lineHeight: 28,
     marginBottom: 10,
   },
   resonanceContext: {
     fontSize: 12,
     fontWeight: '500',
-    color: RUST,
     letterSpacing: 0.3,
   },
 
@@ -710,7 +675,6 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     paddingHorizontal: 22,
     marginBottom: 20,
-    shadowColor: RUST,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
@@ -760,7 +724,6 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 18,
     borderLeftWidth: 3,
-    borderLeftColor: RUST,
   },
   trialHeader: {
     flexDirection: 'row',
@@ -772,12 +735,10 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FDF5F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
   trialBadge: {
-    backgroundColor: '#FDF5F2',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
@@ -785,17 +746,14 @@ const styles = StyleSheet.create({
   trialBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: RUST,
   },
   trialTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: TEXT_PRIMARY,
     marginBottom: 4,
   },
   trialMessage: {
     fontSize: 14,
-    color: TEXT_SECONDARY,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -807,6 +765,5 @@ const styles = StyleSheet.create({
   trialCtaText: {
     fontSize: 13,
     fontWeight: '700',
-    color: RUST,
   },
 });

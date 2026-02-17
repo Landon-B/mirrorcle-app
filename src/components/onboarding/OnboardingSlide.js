@@ -2,32 +2,42 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useColors } from '../../hooks/useColors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-export const OnboardingSlide = ({ title, subtitle, icon, colors }) => (
-  <View style={styles.slide}>
-    <LinearGradient colors={colors} style={styles.iconWrapper}>
-      <Ionicons name={icon} size={48} color="#fff" />
-    </LinearGradient>
-    <Text style={styles.title}>{title}</Text>
-    <Text style={styles.subtitle}>{subtitle}</Text>
-  </View>
-);
+export const OnboardingSlide = ({ title, subtitle, icon, colors }) => {
+  const c = useColors();
 
-export const OnboardingDots = ({ total, current }) => (
-  <View style={styles.dotsContainer}>
-    {Array.from({ length: total }, (_, index) => (
-      <View
-        key={index}
-        style={[
-          styles.dot,
-          index === current && styles.dotActive,
-        ]}
-      />
-    ))}
-  </View>
-);
+  return (
+    <View style={styles.slide}>
+      <LinearGradient colors={colors} style={styles.iconWrapper}>
+        <Ionicons name={icon} size={48} color="#fff" />
+      </LinearGradient>
+      <Text style={[styles.title, { color: c.textPrimary }]}>{title}</Text>
+      <Text style={[styles.subtitle, { color: c.textSecondary }]}>{subtitle}</Text>
+    </View>
+  );
+};
+
+export const OnboardingDots = ({ total, current }) => {
+  const c = useColors();
+
+  return (
+    <View style={styles.dotsContainer}>
+      {Array.from({ length: total }, (_, index) => (
+        <View
+          key={index}
+          style={[
+            styles.dot,
+            { backgroundColor: c.border },
+            index === current && [styles.dotActive, { backgroundColor: c.accentRust }],
+          ]}
+        />
+      ))}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   slide: {
@@ -45,14 +55,12 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   title: {
-    color: '#2D2A26',
     fontSize: 28,
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 16,
   },
   subtitle: {
-    color: '#7A756E',
     fontSize: 18,
     textAlign: 'center',
     lineHeight: 26,
@@ -66,10 +74,8 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#E8E4DF',
   },
   dotActive: {
     width: 24,
-    backgroundColor: '#C17666',
   },
 });

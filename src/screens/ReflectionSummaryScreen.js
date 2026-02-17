@@ -12,20 +12,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { ScreenHeader, Card, PrimaryButton } from '../components/common';
 import { useJourney } from '../hooks/useJourney';
+import { useColors } from '../hooks/useColors';
 import { getMoodEmoji } from '../constants/feelings';
 import { usePaywall } from '../hooks/usePaywall';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
-
-const COLORS = {
-  bg: '#F5F2EE',
-  rust: '#C17666',
-  peach: '#E8D0C6',
-  white: '#FFFFFF',
-  textPrimary: '#2D2A26',
-  textSecondary: '#7A756E',
-  textMuted: '#B0AAA2',
-};
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -37,6 +28,7 @@ export const ReflectionSummaryScreen = ({ navigation }) => {
   const { isPro } = useApp();
   const { openPaywall } = usePaywall();
   const { summary, loadSummary } = useJourney();
+  const c = useColors();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
 
@@ -70,33 +62,33 @@ export const ReflectionSummaryScreen = ({ navigation }) => {
   const monthLabel = `${MONTH_NAMES[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: c.background }]}>
       <ScreenHeader label="MONTHLY REFLECTION" onBack={() => navigation.goBack()} />
 
       {/* Month Navigator */}
       <View style={styles.monthNav}>
         <Pressable onPress={goToPreviousMonth} hitSlop={12}>
-          <Ionicons name="chevron-back" size={22} color={COLORS.textPrimary} />
+          <Ionicons name="chevron-back" size={22} color={c.textPrimary} />
         </Pressable>
-        <Text style={styles.monthLabel}>{monthLabel}</Text>
+        <Text style={[styles.monthLabel, { color: c.textPrimary }]}>{monthLabel}</Text>
         <Pressable onPress={goToNextMonth} hitSlop={12} disabled={isCurrentMonth}>
           <Ionicons
             name="chevron-forward"
             size={22}
-            color={isCurrentMonth ? COLORS.textMuted : COLORS.textPrimary}
+            color={isCurrentMonth ? c.textMuted : c.textPrimary}
           />
         </Pressable>
       </View>
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.rust} />
+          <ActivityIndicator size="large" color={c.accentRust} />
         </View>
       ) : !summary || summary.totalSessions === 0 ? (
         <View style={styles.emptyState}>
-          <Ionicons name="calendar-outline" size={40} color={COLORS.peach} />
-          <Text style={styles.emptyTitle}>No sessions this month</Text>
-          <Text style={styles.emptySubtitle}>
+          <Ionicons name="calendar-outline" size={40} color={c.accentPeach} />
+          <Text style={[styles.emptyTitle, { color: c.textPrimary }]}>No sessions this month</Text>
+          <Text style={[styles.emptySubtitle, { color: c.textSecondary }]}>
             Start a session to begin building your monthly reflection.
           </Text>
         </View>
@@ -107,9 +99,9 @@ export const ReflectionSummaryScreen = ({ navigation }) => {
         >
           {/* Hero stat */}
           <View style={styles.heroSection}>
-            <Text style={styles.heroText}>
+            <Text style={[styles.heroText, { color: c.textPrimary }]}>
               You spoke{' '}
-              <Text style={styles.heroBold}>
+              <Text style={[styles.heroBold, { color: c.accentRust }]}>
                 {summary.totalAffirmations} truth{summary.totalAffirmations !== 1 ? 's' : ''}
               </Text>
               {' '}about yourself this month.
@@ -120,9 +112,9 @@ export const ReflectionSummaryScreen = ({ navigation }) => {
           {summary.topFocus && (
             <Card style={styles.summaryCard}>
               <Text style={styles.cardEmoji}>{summary.topFocus.emoji}</Text>
-              <Text style={styles.cardText}>
+              <Text style={[styles.cardText, { color: c.textPrimary }]}>
                 Your most common focus was{' '}
-                <Text style={styles.cardBold}>{summary.topFocus.label.toLowerCase()}</Text>.
+                <Text style={[styles.cardBold, { color: c.accentRust }]}>{summary.topFocus.label.toLowerCase()}</Text>.
               </Text>
             </Card>
           )}
@@ -130,26 +122,26 @@ export const ReflectionSummaryScreen = ({ navigation }) => {
           {/* Mood journey */}
           {summary.moodShiftCount > 0 && (
             <Card style={styles.summaryCard}>
-              <Text style={styles.cardText}>
+              <Text style={[styles.cardText, { color: c.textPrimary }]}>
                 Your mood shifted in a positive direction{' '}
-                <Text style={styles.cardBold}>{summary.moodShiftCount} time{summary.moodShiftCount !== 1 ? 's' : ''}</Text>.
+                <Text style={[styles.cardBold, { color: c.accentRust }]}>{summary.moodShiftCount} time{summary.moodShiftCount !== 1 ? 's' : ''}</Text>.
               </Text>
             </Card>
           )}
 
           {/* Consistency */}
           <Card style={styles.summaryCard}>
-            <Text style={styles.cardText}>
+            <Text style={[styles.cardText, { color: c.textPrimary }]}>
               You showed up{' '}
-              <Text style={styles.cardBold}>
+              <Text style={[styles.cardBold, { color: c.accentRust }]}>
                 {summary.activeDays} out of {summary.totalDays} days
               </Text>.
             </Text>
-            <View style={styles.miniBar}>
+            <View style={[styles.miniBar, { backgroundColor: c.surfaceTertiary }]}>
               <View
                 style={[
                   styles.miniBarFill,
-                  { width: `${(summary.activeDays / summary.totalDays) * 100}%` },
+                  { width: `${(summary.activeDays / summary.totalDays) * 100}%`, backgroundColor: c.accentRust },
                 ]}
               />
             </View>
@@ -157,10 +149,10 @@ export const ReflectionSummaryScreen = ({ navigation }) => {
 
           {/* Session time */}
           <Card style={styles.summaryCard}>
-            <Text style={styles.cardText}>
-              <Text style={styles.cardBold}>{summary.totalSessions} sessions</Text>
+            <Text style={[styles.cardText, { color: c.textPrimary }]}>
+              <Text style={[styles.cardBold, { color: c.accentRust }]}>{summary.totalSessions} sessions</Text>
               {' '}totaling{' '}
-              <Text style={styles.cardBold}>{summary.totalMinutes} minutes</Text>
+              <Text style={[styles.cardBold, { color: c.accentRust }]}>{summary.totalMinutes} minutes</Text>
               {' '}of presence.
             </Text>
           </Card>
@@ -169,8 +161,8 @@ export const ReflectionSummaryScreen = ({ navigation }) => {
           {summary.milestones && summary.milestones.length > 0 && (
             <Card style={styles.summaryCard}>
               <View style={styles.milestonesRow}>
-                <Ionicons name="trophy" size={16} color={COLORS.rust} />
-                <Text style={styles.cardText}>
+                <Ionicons name="trophy" size={16} color={c.accentRust} />
+                <Text style={[styles.cardText, { color: c.textPrimary }]}>
                   {summary.milestones.length} milestone{summary.milestones.length !== 1 ? 's' : ''} earned this month.
                 </Text>
               </View>
@@ -180,10 +172,10 @@ export const ReflectionSummaryScreen = ({ navigation }) => {
           {/* Premium gate for non-pro */}
           {!isPro && (
             <View style={styles.premiumGate}>
-              <View style={styles.premiumOverlay}>
-                <Ionicons name="lock-closed" size={24} color={COLORS.rust} />
-                <Text style={styles.premiumTitle}>Unlock Monthly Reflections</Text>
-                <Text style={styles.premiumSubtitle}>
+              <View style={[styles.premiumOverlay, { backgroundColor: c.surface }]}>
+                <Ionicons name="lock-closed" size={24} color={c.accentRust} />
+                <Text style={[styles.premiumTitle, { color: c.textPrimary }]}>Unlock Monthly Reflections</Text>
+                <Text style={[styles.premiumSubtitle, { color: c.textSecondary }]}>
                   See deeper patterns and track your transformation over time.
                 </Text>
                 <PrimaryButton
@@ -203,7 +195,6 @@ export const ReflectionSummaryScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.bg,
   },
   loadingContainer: {
     flex: 1,
@@ -226,7 +217,6 @@ const styles = StyleSheet.create({
   monthLabel: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
   },
 
   // Hero
@@ -238,13 +228,11 @@ const styles = StyleSheet.create({
   heroText: {
     fontFamily: typography.fontFamily.serif,
     fontSize: 22,
-    color: COLORS.textPrimary,
     textAlign: 'center',
     lineHeight: 34,
   },
   heroBold: {
     fontWeight: '700',
-    color: COLORS.rust,
   },
 
   // Summary cards
@@ -259,13 +247,11 @@ const styles = StyleSheet.create({
   },
   cardText: {
     fontSize: 16,
-    color: COLORS.textPrimary,
     textAlign: 'center',
     lineHeight: 24,
   },
   cardBold: {
     fontWeight: '700',
-    color: COLORS.rust,
   },
 
   // Mini progress bar
@@ -273,14 +259,12 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#F0ECE7',
     marginTop: 12,
     overflow: 'hidden',
   },
   miniBarFill: {
     height: '100%',
     borderRadius: 3,
-    backgroundColor: COLORS.rust,
   },
 
   // Milestones row
@@ -297,7 +281,6 @@ const styles = StyleSheet.create({
   },
   premiumOverlay: {
     alignItems: 'center',
-    backgroundColor: COLORS.white,
     borderRadius: 20,
     padding: 28,
     ...shadows.card,
@@ -305,13 +288,11 @@ const styles = StyleSheet.create({
   premiumTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     marginTop: 12,
     marginBottom: 6,
   },
   premiumSubtitle: {
     fontSize: 14,
-    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 16,
@@ -330,13 +311,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 15,
-    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
   },

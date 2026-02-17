@@ -11,14 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { AFFIRMATIONS } from '../constants';
 import { FALLBACK_AFFIRMATIONS } from '../constants';
-
-const COLORS = {
-  background: '#F5F2EE',
-  textPrimary: '#2D2A26',
-  textMuted: '#B0AAA2',
-  accent: '#C17666',
-  cardBackground: '#FFFFFF',
-};
+import { useColors } from '../hooks/useColors';
 
 const serifItalic = {
   fontFamily: Platform.OS === 'ios' ? 'Georgia-Italic' : 'serif',
@@ -27,6 +20,7 @@ const serifItalic = {
 
 export const WelcomeScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
+  const c = useColors();
 
   const affirmationText = useMemo(() => {
     if (AFFIRMATIONS && AFFIRMATIONS.length > 0) {
@@ -38,21 +32,21 @@ export const WelcomeScreen = ({ navigation }) => {
   }, []);
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+    <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: c.background }]}>
+      <StatusBar barStyle={c.statusBarStyle} backgroundColor={c.background} />
 
       <View style={styles.container}>
         {/* Brand */}
         <View style={styles.brandSection}>
-          <Text style={styles.brandTitle}>Mirrorcle</Text>
-          <Text style={styles.brandSubtitle}>REFLECT. EVOLVE. REPEAT.</Text>
+          <Text style={[styles.brandTitle, { color: c.textPrimary }]}>Mirrorcle</Text>
+          <Text style={[styles.brandSubtitle, { color: c.textMuted }]}>REFLECT. EVOLVE. REPEAT.</Text>
         </View>
 
         {/* Affirmation Card */}
         <View style={styles.cardWrapper}>
-          <View style={styles.card}>
-            <Text style={styles.quoteMark}>{'\u201C'}</Text>
-            <Text style={styles.cardText}>{affirmationText}</Text>
+          <View style={[styles.card, { backgroundColor: c.surface }]}>
+            <Text style={[styles.quoteMark, { color: c.textMuted }]}>{'\u201C'}</Text>
+            <Text style={[styles.cardText, { color: c.textPrimary }]}>{affirmationText}</Text>
           </View>
         </View>
 
@@ -64,11 +58,12 @@ export const WelcomeScreen = ({ navigation }) => {
             accessibilityLabel="Begin my journey"
             style={({ pressed }) => [
               styles.ctaButton,
+              { backgroundColor: c.accentRust },
               pressed && styles.ctaButtonPressed,
             ]}
           >
-            <Text style={styles.ctaButtonText}>Begin my journey</Text>
-            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+            <Text style={[styles.ctaButtonText, { color: c.textOnPrimary }]}>Begin my journey</Text>
+            <Ionicons name="arrow-forward" size={18} color={c.textOnPrimary} />
           </Pressable>
 
           <Pressable
@@ -77,7 +72,7 @@ export const WelcomeScreen = ({ navigation }) => {
             accessibilityLabel="Sign in"
             style={styles.signInButton}
           >
-            <Text style={styles.signInText}>ALREADY A MEMBER? SIGN IN</Text>
+            <Text style={[styles.signInText, { color: c.textMuted }]}>ALREADY A MEMBER? SIGN IN</Text>
           </Pressable>
         </View>
       </View>
@@ -88,7 +83,6 @@ export const WelcomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,
@@ -103,7 +97,6 @@ const styles = StyleSheet.create({
   },
   brandTitle: {
     fontSize: 48,
-    color: COLORS.textPrimary,
     ...serifItalic,
     marginBottom: 10,
   },
@@ -112,7 +105,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
-    color: COLORS.textMuted,
   },
 
   /* Affirmation Card */
@@ -122,7 +114,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   card: {
-    backgroundColor: COLORS.cardBackground,
     borderRadius: 24,
     paddingHorizontal: 32,
     paddingTop: 28,
@@ -143,7 +134,6 @@ const styles = StyleSheet.create({
   },
   quoteMark: {
     fontSize: 56,
-    color: COLORS.textMuted,
     ...serifItalic,
     lineHeight: 56,
     marginBottom: 4,
@@ -151,7 +141,6 @@ const styles = StyleSheet.create({
   },
   cardText: {
     fontSize: 24,
-    color: COLORS.textPrimary,
     ...serifItalic,
     textAlign: 'center',
     lineHeight: 34,
@@ -164,7 +153,6 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   ctaButton: {
-    backgroundColor: COLORS.accent,
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 28,
@@ -179,7 +167,6 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   ctaButtonText: {
-    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
   },
@@ -191,6 +178,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
-    color: COLORS.textMuted,
   },
 });

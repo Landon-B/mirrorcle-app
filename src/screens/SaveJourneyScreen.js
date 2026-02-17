@@ -27,18 +27,19 @@ import Animated, {
 } from 'react-native-reanimated';
 import { PrimaryButton } from '../components/common';
 import { typography } from '../styles/typography';
-import { colors } from '../styles/colors';
 import { spacing, borderRadius } from '../styles/spacing';
 import { useHaptics } from '../hooks/useHaptics';
 import { useApp } from '../context/AppContext';
 import { authService } from '../services/auth';
+import { useColors } from '../hooks/useColors';
 
-// Steps: name → credentials → verify → welcome
+// Steps: name -> credentials -> verify -> welcome
 const STEPS = { NAME: 0, CREDENTIALS: 1, VERIFY: 2, WELCOME: 3 };
 
 export const SaveJourneyScreen = ({ navigation, route }) => {
   const { completeOnboarding, updatePreferences } = useApp();
   const { selectionTap, successPulse, celebrationBurst } = useHaptics();
+  const c = useColors();
 
   const [step, setStep] = useState(STEPS.NAME);
   const [name, setName] = useState('');
@@ -178,7 +179,9 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
             key={i}
             style={[
               styles.progressDot,
-              i <= step ? styles.progressDotActive : styles.progressDotInactive,
+              i <= step
+                ? [styles.progressDotActive, { backgroundColor: c.textAccent }]
+                : [styles.progressDotInactive, { backgroundColor: c.border }],
               i === step && styles.progressDotCurrent,
             ]}
           />
@@ -194,20 +197,20 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
       exiting={FadeOut.duration(200)}
       style={styles.stepContent}
     >
-      <View style={styles.iconCircle}>
-        <Ionicons name="person-outline" size={32} color={colors.textAccent} />
+      <View style={[styles.iconCircle, { backgroundColor: c.accentPeach }]}>
+        <Ionicons name="person-outline" size={32} color={c.textAccent} />
       </View>
 
-      <Text style={styles.stepTitle}>What should we{'\n'}call you?</Text>
-      <Text style={styles.stepSubtitle}>
+      <Text style={[styles.stepTitle, { color: c.textPrimary }]}>What should we{'\n'}call you?</Text>
+      <Text style={[styles.stepSubtitle, { color: c.textSecondary }]}>
         This is how we'll address your affirmations.
       </Text>
 
       <View style={styles.inputContainer}>
         <TextInput
-          style={styles.nameInput}
+          style={[styles.nameInput, { color: c.textPrimary }]}
           placeholder="Your name"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={c.textMuted}
           value={name}
           onChangeText={setName}
           autoFocus
@@ -215,10 +218,10 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
           returnKeyType="next"
           onSubmitEditing={handleNameNext}
         />
-        <View style={styles.inputUnderline} />
+        <View style={[styles.inputUnderline, { backgroundColor: c.textAccent }]} />
       </View>
 
-      <Text style={styles.helperText}>You can change this later in settings.</Text>
+      <Text style={[styles.helperText, { color: c.textMuted }]}>You can change this later in settings.</Text>
     </Animated.View>
   );
 
@@ -229,23 +232,23 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
       exiting={FadeOut.duration(200)}
       style={styles.stepContent}
     >
-      <View style={styles.iconCircle}>
-        <Ionicons name="shield-checkmark-outline" size={32} color={colors.textAccent} />
+      <View style={[styles.iconCircle, { backgroundColor: c.accentPeach }]}>
+        <Ionicons name="shield-checkmark-outline" size={32} color={c.textAccent} />
       </View>
 
-      <Text style={styles.stepTitle}>Protect your{'\n'}journey</Text>
-      <Text style={styles.stepSubtitle}>
+      <Text style={[styles.stepTitle, { color: c.textPrimary }]}>Protect your{'\n'}journey</Text>
+      <Text style={[styles.stepSubtitle, { color: c.textSecondary }]}>
         So you never lose a moment of growth.
       </Text>
 
       <View style={styles.fieldsContainer}>
-        <View style={styles.fieldWrapper}>
-          <Ionicons name="mail-outline" size={20} color={colors.textMuted} style={styles.fieldIcon} />
+        <View style={[styles.fieldWrapper, { backgroundColor: c.surface, borderColor: c.inputBorder }]}>
+          <Ionicons name="mail-outline" size={20} color={c.textMuted} style={styles.fieldIcon} />
           <TextInput
             ref={emailRef}
-            style={styles.fieldInput}
+            style={[styles.fieldInput, { color: c.textPrimary }]}
             placeholder="Email address"
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={c.textMuted}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -257,13 +260,13 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
           />
         </View>
 
-        <View style={styles.fieldWrapper}>
-          <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} style={styles.fieldIcon} />
+        <View style={[styles.fieldWrapper, { backgroundColor: c.surface, borderColor: c.inputBorder }]}>
+          <Ionicons name="lock-closed-outline" size={20} color={c.textMuted} style={styles.fieldIcon} />
           <TextInput
             ref={passwordRef}
-            style={[styles.fieldInput, { flex: 1 }]}
+            style={[styles.fieldInput, { flex: 1, color: c.textPrimary }]}
             placeholder="Create a password"
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={c.textMuted}
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
@@ -274,7 +277,7 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
             <Ionicons
               name={showPassword ? 'eye-off-outline' : 'eye-outline'}
               size={20}
-              color={colors.textMuted}
+              color={c.textMuted}
             />
           </Pressable>
         </View>
@@ -289,21 +292,21 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
       exiting={FadeOut.duration(200)}
       style={styles.stepContent}
     >
-      <View style={styles.iconCircle}>
-        <Ionicons name="keypad-outline" size={32} color={colors.textAccent} />
+      <View style={[styles.iconCircle, { backgroundColor: c.accentPeach }]}>
+        <Ionicons name="keypad-outline" size={32} color={c.textAccent} />
       </View>
 
-      <Text style={styles.stepTitle}>Check your email</Text>
-      <Text style={styles.stepSubtitle}>
+      <Text style={[styles.stepTitle, { color: c.textPrimary }]}>Check your email</Text>
+      <Text style={[styles.stepSubtitle, { color: c.textSecondary }]}>
         We sent a verification code to{'\n'}
-        <Text style={styles.emailHighlight}>{email.trim().toLowerCase()}</Text>
+        <Text style={[styles.emailHighlight, { color: c.textAccent }]}>{email.trim().toLowerCase()}</Text>
       </Text>
 
       <View style={styles.inputContainer}>
         <TextInput
-          style={styles.otpInput}
+          style={[styles.otpInput, { color: c.textPrimary }]}
           placeholder="0000 0000"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={c.textMuted}
           value={otp}
           onChangeText={(text) => setOtp(formatOtp(text))}
           keyboardType="number-pad"
@@ -312,11 +315,11 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
           returnKeyType="done"
           onSubmitEditing={handleVerify}
         />
-        <View style={styles.inputUnderline} />
+        <View style={[styles.inputUnderline, { backgroundColor: c.textAccent }]} />
       </View>
 
       <Pressable onPress={handleResendOtp} hitSlop={12}>
-        <Text style={styles.resendText}>Didn't get it? Resend code</Text>
+        <Text style={[styles.resendText, { color: c.textAccent }]}>Didn't get it? Resend code</Text>
       </Pressable>
     </Animated.View>
   );
@@ -327,20 +330,20 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
       entering={FadeIn.duration(600)}
       style={styles.welcomeContent}
     >
-      <Animated.View style={[styles.sparkleCircle, sparkleAnimatedStyle]}>
-        <Ionicons name="sparkles" size={36} color={colors.textAccent} />
+      <Animated.View style={[styles.sparkleCircle, { backgroundColor: c.accentPeach }, sparkleAnimatedStyle]}>
+        <Ionicons name="sparkles" size={36} color={c.textAccent} />
       </Animated.View>
 
       <Animated.Text
         entering={FadeInDown.delay(300).duration(500)}
-        style={styles.welcomeTitle}
+        style={[styles.welcomeTitle, { color: c.textPrimary }]}
       >
         Welcome, {name.trim()}.
       </Animated.Text>
 
       <Animated.Text
         entering={FadeInDown.delay(500).duration(500)}
-        style={styles.welcomeSubtitle}
+        style={[styles.welcomeSubtitle, { color: c.textSecondary }]}
       >
         Your journey has already begun.{'\n'}Every session will be saved.
       </Animated.Text>
@@ -367,7 +370,7 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
   const buttonConfig = getButtonConfig();
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -378,10 +381,10 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
           {step > STEPS.NAME && step < STEPS.WELCOME && (
             <Pressable
               onPress={() => setStep(step - 1)}
-              style={styles.backButton}
+              style={[styles.backButton, { backgroundColor: c.surfaceTertiary }]}
               hitSlop={12}
             >
-              <Ionicons name="chevron-back" size={20} color={colors.textSecondary} />
+              <Ionicons name="chevron-back" size={20} color={c.textSecondary} />
             </Pressable>
           )}
           {renderProgressDots()}
@@ -398,7 +401,7 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
         {/* Footer */}
         <View style={styles.footer}>
           {loading && (
-            <ActivityIndicator color={colors.textAccent} style={styles.loadingIndicator} />
+            <ActivityIndicator color={c.textAccent} style={styles.loadingIndicator} />
           )}
 
           <PrimaryButton
@@ -410,7 +413,7 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
 
           {step !== STEPS.WELCOME && (
             <Pressable onPress={handleSkip} style={styles.skipButton} hitSlop={12}>
-              <Text style={styles.skipText}>I'll do this later</Text>
+              <Text style={[styles.skipText, { color: c.textMuted }]}>I'll do this later</Text>
             </Pressable>
           )}
         </View>
@@ -422,7 +425,6 @@ export const SaveJourneyScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   flex: {
     flex: 1,
@@ -441,7 +443,6 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: colors.surfaceTertiary,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'absolute',
@@ -461,11 +462,9 @@ const styles = StyleSheet.create({
   },
   progressDotActive: {
     width: 24,
-    backgroundColor: colors.textAccent,
   },
   progressDotInactive: {
     width: 24,
-    backgroundColor: colors.border,
   },
   progressDotCurrent: {
     width: 32,
@@ -486,7 +485,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.accentPeach,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xxl,
@@ -494,14 +492,12 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: typography.fontSize.title,
     fontWeight: typography.fontWeight.bold,
-    color: colors.textPrimary,
     textAlign: 'center',
     lineHeight: 36,
     marginBottom: spacing.md,
   },
   stepSubtitle: {
     fontSize: typography.fontSize.base,
-    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: spacing.xxxl,
@@ -514,20 +510,17 @@ const styles = StyleSheet.create({
   },
   nameInput: {
     fontSize: typography.fontSize.xl,
-    color: colors.textPrimary,
     textAlign: 'center',
     paddingVertical: spacing.md,
     fontWeight: typography.fontWeight.medium,
   },
   inputUnderline: {
     height: 2,
-    backgroundColor: colors.textAccent,
     borderRadius: 1,
     marginHorizontal: spacing.xxxxl,
   },
   helperText: {
     fontSize: typography.fontSize.sm,
-    color: colors.textMuted,
     textAlign: 'center',
   },
 
@@ -539,10 +532,8 @@ const styles = StyleSheet.create({
   fieldWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.inputBorder,
     paddingHorizontal: spacing.lg,
     paddingVertical: Platform.OS === 'ios' ? spacing.lg : spacing.md,
   },
@@ -552,25 +543,21 @@ const styles = StyleSheet.create({
   fieldInput: {
     flex: 1,
     fontSize: typography.fontSize.base,
-    color: colors.textPrimary,
   },
 
   // OTP
   otpInput: {
     fontSize: 32,
-    color: colors.textPrimary,
     textAlign: 'center',
     paddingVertical: spacing.md,
     fontWeight: typography.fontWeight.semibold,
     letterSpacing: 4,
   },
   emailHighlight: {
-    color: colors.textAccent,
     fontWeight: typography.fontWeight.medium,
   },
   resendText: {
     fontSize: typography.fontSize.md,
-    color: colors.textAccent,
     fontWeight: typography.fontWeight.medium,
     textAlign: 'center',
   },
@@ -584,7 +571,6 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: colors.accentPeach,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xxxl,
@@ -592,7 +578,6 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 26,
     fontWeight: typography.fontWeight.bold,
-    color: colors.textPrimary,
     textAlign: 'center',
     lineHeight: 34,
     marginBottom: spacing.md,
@@ -601,7 +586,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.serifItalic,
     fontSize: 17,
     fontStyle: 'italic',
-    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 26,
   },
@@ -621,7 +605,6 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: typography.fontSize.md,
-    color: colors.textMuted,
     fontWeight: typography.fontWeight.medium,
   },
 });
