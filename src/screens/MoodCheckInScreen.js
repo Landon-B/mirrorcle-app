@@ -33,7 +33,7 @@ export const MoodCheckInScreen = ({ navigation, route }) => {
         postMood: mood,
       });
     } else {
-      navigation.navigate('BreathingPrep', {
+      navigation.navigate('Session', {
         focusArea,
         mood,
       });
@@ -46,8 +46,8 @@ export const MoodCheckInScreen = ({ navigation, route }) => {
 
   const buttonTitle = isPost ? 'Complete Ritual' : 'Next';
 
-  // Progress dots: pre-session = step 2 of 3, post-session = step 1 of 2
-  const totalDots = isPost ? 2 : 3;
+  // Progress dots: pre-session = step 2 of 2, post-session = step 1 of 2
+  const totalDots = 2;
   const activeDot = isPost ? 0 : 1;
 
   return (
