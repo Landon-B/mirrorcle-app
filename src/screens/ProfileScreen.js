@@ -481,12 +481,14 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 2,
+    textAlign: 'center',
   },
   storyStatLabel: {
     fontSize: 11,
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    textAlign: 'center',
   },
   storyDivider: {
     width: 1,
