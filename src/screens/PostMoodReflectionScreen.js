@@ -4,35 +4,31 @@ import {
   Text,
   TextInput,
   Pressable,
-  ScrollView,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withDelay,
-  withSpring,
   FadeIn,
   FadeInDown,
+  FadeOut,
 } from 'react-native-reanimated';
-import { MOODS, MOOD_FAMILIES, getMoodsForFamily } from '../constants/feelings';
-import { POST_MOOD_RESPONSES } from './MoodCheckInScreen';
+import {
+  MOODS,
+  getQuadrantById,
+  MOOD_RESPONSES,
+  POST_MOOD_RESPONSES,
+} from '../constants/feelings';
 import { ScreenHeader, PrimaryButton } from '../components/common';
+import { QuadrantGrid } from '../components/mood/QuadrantGrid';
+import { BubbleCloud } from '../components/mood/BubbleCloud';
+import { EmotionBottomSheet } from '../components/mood/EmotionBottomSheet';
 import { sessionService } from '../services/session';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
 import { useHaptics } from '../hooks/useHaptics';
 import { useColors } from '../hooks/useColors';
-
-// --- Mood intensity levels ---
-const INTENSITY_LEVELS = [
-  { value: 1, label: 'A little' },
-  { value: 2, label: 'Somewhat' },
-  { value: 3, label: 'Deeply' },
-];
 
 export const PostMoodReflectionScreen = ({ navigation, route }) => {
   const {
@@ -42,95 +38,67 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
     feeling,
     preMood,
     focusArea,
-    preIntensity,
   } = route.params || {};
 
   const { selectionTap, successPulse, breathingPulse } = useHaptics();
   const c = useColors();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
-  const [selectedFamily, setSelectedFamily] = useState(null);
-  const [selectedMood, setSelectedMood] = useState(null);
-  const [selectedIntensity, setSelectedIntensity] = useState(null);
+  // State machine: 'quadrant' → 'bubbles'
+  const [step, setStep] = useState('quadrant');
+  const [selectedQuadrant, setSelectedQuadrant] = useState(null);
+  const [selectedEmotion, setSelectedEmotion] = useState(null);
   const [showReflection, setShowReflection] = useState(false);
   const [reflection, setReflection] = useState('');
 
-  // Animated mood response
-  const responseOpacity = useSharedValue(0);
-  const responseTranslateY = useSharedValue(8);
-  const intensityOpacity = useSharedValue(0);
+  // --- Handlers ---
 
-  const handleFamilySelect = useCallback((familyId) => {
-    selectionTap();
-    setSelectedFamily(familyId);
-    setSelectedMood(null);
-    setSelectedIntensity(null);
-    responseOpacity.value = 0;
-    intensityOpacity.value = 0;
-  }, [selectionTap, responseOpacity, intensityOpacity]);
-
-  const handleMoodSelect = useCallback((moodId) => {
-    breathingPulse();
-    setSelectedMood(moodId);
-    setSelectedIntensity(null);
-
-    // Animate the response in
-    responseOpacity.value = 0;
-    responseTranslateY.value = 8;
-    responseOpacity.value = withDelay(100, withTiming(1, { duration: 500 }));
-    responseTranslateY.value = withDelay(100, withSpring(0, { damping: 20, stiffness: 150 }));
-
-    // Animate intensity selector in
-    intensityOpacity.value = 0;
-    intensityOpacity.value = withDelay(400, withTiming(1, { duration: 400 }));
-
-    setTimeout(() => successPulse(), 180);
-  }, [breathingPulse, successPulse, responseOpacity, responseTranslateY, intensityOpacity]);
+  const handleQuadrantSelect = useCallback((quadrantId) => {
+    setSelectedQuadrant(quadrantId);
+    setSelectedEmotion(null);
+    setStep('bubbles');
+  }, []);
 
   const handleUnsure = useCallback(() => {
     breathingPulse();
-    setSelectedFamily(null);
-    setSelectedMood('unsure');
-    setSelectedIntensity(null);
+    const unsureMood = MOODS.find(m => m.id === 'unsure');
+    setSelectedEmotion(unsureMood);
+    setSelectedQuadrant(null);
+    setStep('unsure');
+  }, [breathingPulse]);
 
-    responseOpacity.value = 0;
-    responseTranslateY.value = 8;
-    responseOpacity.value = withDelay(100, withTiming(1, { duration: 500 }));
-    responseTranslateY.value = withDelay(100, withSpring(0, { damping: 20, stiffness: 150 }));
-
+  const handleBubbleSelect = useCallback((emotionId) => {
+    breathingPulse();
+    const mood = MOODS.find(m => m.id === emotionId);
+    setSelectedEmotion(mood);
     setTimeout(() => successPulse(), 180);
-  }, [breathingPulse, successPulse, responseOpacity, responseTranslateY]);
+  }, [breathingPulse, successPulse]);
 
-  const handleIntensitySelect = useCallback((value) => {
-    selectionTap();
-    setSelectedIntensity(value);
-  }, [selectionTap]);
+  const handleBubbleDeselect = useCallback(() => {
+    setSelectedEmotion(null);
+  }, []);
 
   const handleBack = useCallback(() => {
-    if (selectedMood === 'unsure') {
-      setSelectedMood(null);
-      responseOpacity.value = 0;
-      intensityOpacity.value = 0;
-    } else if (selectedFamily) {
-      setSelectedFamily(null);
-      setSelectedMood(null);
-      setSelectedIntensity(null);
-      responseOpacity.value = 0;
-      intensityOpacity.value = 0;
+    if (step === 'unsure') {
+      setStep('quadrant');
+      setSelectedEmotion(null);
+    } else if (step === 'bubbles') {
+      setStep('quadrant');
+      setSelectedQuadrant(null);
+      setSelectedEmotion(null);
     } else {
-      // Can't really go back to camera session — skip instead
       handleSkip();
     }
-  }, [selectedFamily, selectedMood, responseOpacity, intensityOpacity]);
+  }, [step]);
 
   const handleComplete = async () => {
-    if (!selectedMood) return;
-
-    const postMood = MOODS.find(m => m.id === selectedMood);
+    if (!selectedEmotion) return;
+    successPulse();
 
     // Persist post-session mood and reflection (best-effort)
     if (sessionId) {
       try {
-        await sessionService.recordMoodShift(sessionId, selectedMood, selectedIntensity);
+        await sessionService.recordMoodShift(sessionId, selectedEmotion.id);
       } catch (err) {
         console.log('Failed to record mood shift:', err);
       }
@@ -149,9 +117,7 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
       duration,
       feeling,
       preMood,
-      postMood,
-      postIntensity: selectedIntensity,
-      preIntensity,
+      postMood: selectedEmotion,
       reflection: reflection.trim() || null,
       focusArea,
     });
@@ -167,44 +133,28 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
     });
   };
 
-  const heading = selectedMood === 'unsure'
+  // --- Derived ---
+
+  const quadrant = selectedQuadrant ? getQuadrantById(selectedQuadrant) : null;
+
+  const heading = step === 'unsure'
     ? 'That\u2019s okay.'
-    : selectedFamily
-      ? 'Tell me more...'
+    : step === 'bubbles'
+      ? 'What fits closest?'
       : 'And now...\nhow are you?';
 
-  const subtitle = selectedMood === 'unsure'
+  const subtitle = step === 'unsure'
     ? 'Sometimes the shift is deeper than words.'
-    : selectedFamily
-      ? getFamilySubtitle(selectedFamily)
+    : step === 'bubbles'
+      ? quadrant?.description || ''
       : 'Just noticing what shifted.';
 
-  const responseText = selectedMood
-    ? (POST_MOOD_RESPONSES[selectedMood] || '')
+  const validationText = selectedEmotion
+    ? (POST_MOOD_RESPONSES[selectedEmotion.id] || '')
     : '';
 
-  const responseAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: responseOpacity.value,
-    transform: [{ translateY: responseTranslateY.value }],
-  }));
-
-  const intensityAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: intensityOpacity.value,
-  }));
-
-  const familyFeelings = selectedFamily ? getMoodsForFamily(selectedFamily) : [];
-  const selectedFamilyData = selectedFamily
-    ? MOOD_FAMILIES.find(f => f.id === selectedFamily)
-    : null;
-
-  // 5 families in 2-2-1 layout
-  const familyRows = [
-    [MOOD_FAMILIES[0], MOOD_FAMILIES[1]],
-    [MOOD_FAMILIES[2], MOOD_FAMILIES[3]],
-    [MOOD_FAMILIES[4]],
-  ];
-
-  const useWrappedGrid = familyFeelings.length > 3;
+  const cloudWidth = windowWidth - 24;
+  const cloudHeight = Math.min(windowHeight * 0.42, 380);
 
   return (
     <View style={[styles.container, { backgroundColor: c.background }]}>
@@ -218,15 +168,10 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={0}
       >
-        <ScrollView
-          style={styles.body}
-          contentContainerStyle={styles.bodyContent}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
-          {/* Heading */}
+        {/* Heading */}
+        <View style={styles.headingContainer}>
           <Animated.Text
-            key={`heading-${selectedFamily || selectedMood || 'root'}`}
+            key={`heading-${step}-${selectedQuadrant || ''}`}
             entering={FadeInDown.duration(400).delay(100)}
             style={[styles.heading, { color: c.textPrimary }]}
           >
@@ -234,246 +179,127 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
           </Animated.Text>
 
           <Animated.Text
-            key={`subtitle-${selectedFamily || selectedMood || 'root'}`}
+            key={`subtitle-${step}-${selectedQuadrant || ''}`}
             entering={FadeInDown.duration(350).delay(200)}
             style={[styles.subtitle, { color: c.textSecondary }]}
           >
             {subtitle}
           </Animated.Text>
+        </View>
 
-          {/* Layer 1: Family selection */}
-          {!selectedFamily && selectedMood !== 'unsure' && (
-            <View style={styles.familyGrid}>
-              {familyRows.map((row, rowIndex) => (
-                <Animated.View
-                  key={rowIndex}
-                  entering={FadeInDown.duration(400).delay(280 + rowIndex * 120).springify().damping(18)}
-                  style={styles.familyRow}
-                >
-                  {row.map((family) => (
-                    <Pressable
-                      key={family.id}
-                      onPress={() => handleFamilySelect(family.id)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${family.label} \u2014 ${family.description}`}
-                    >
-                      <View style={[styles.familyCard, { backgroundColor: c.surface }]}>
-                        <Text style={styles.familyEmoji}>{family.emoji}</Text>
-                        <Text style={[styles.familyLabel, { color: c.textPrimary }]}>
-                          {family.label}
-                        </Text>
-                        <Text style={[styles.familyDescription, { color: c.textMuted }]}>
-                          {family.description}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  ))}
-                </Animated.View>
-              ))}
+        {/* Step 1: Quadrant selection */}
+        {step === 'quadrant' && (
+          <Animated.View
+            entering={FadeIn.duration(300)}
+            exiting={FadeOut.duration(200)}
+            style={styles.contentArea}
+          >
+            <QuadrantGrid
+              onSelect={handleQuadrantSelect}
+              onUnsure={handleUnsure}
+              hapticTap={selectionTap}
+            />
+          </Animated.View>
+        )}
 
-              {/* "Not sure" escape hatch */}
-              <Animated.View entering={FadeInDown.duration(300).delay(650)}>
-                <Pressable onPress={handleUnsure} hitSlop={16}>
-                  <Text style={[styles.unsureLink, { color: c.textMuted }]}>
-                    I can't quite name it
-                  </Text>
-                </Pressable>
-              </Animated.View>
-            </View>
-          )}
-
-          {/* "Unsure" state */}
-          {selectedMood === 'unsure' && !selectedFamily && (
-            <Animated.View
-              entering={FadeIn.duration(300).delay(100)}
-              style={styles.unsureSection}
-            >
-              <Text style={styles.unsureEmoji}>{MOODS.find(m => m.id === 'unsure')?.emoji}</Text>
-              <Animated.View style={[styles.responseContainer, responseAnimatedStyle]}>
-                {responseText ? (
-                  <Text style={[styles.responseText, { color: c.accentRust }]}>
-                    {responseText}
-                  </Text>
-                ) : null}
-              </Animated.View>
-            </Animated.View>
-          )}
-
-          {/* Layer 2: Specific feelings */}
-          {selectedFamily && (
-            <View style={styles.feelingsSection}>
-              {/* Family badge */}
-              <View style={[styles.familyBadge, { backgroundColor: c.surfaceTertiary }]}>
-                <Text style={styles.familyBadgeEmoji}>{selectedFamilyData?.emoji}</Text>
-                <Text style={[styles.familyBadgeLabel, { color: c.accentRust }]}>
-                  {selectedFamilyData?.label}
+        {/* Step 2: Bubble cloud */}
+        {step === 'bubbles' && (
+          <Animated.View
+            entering={FadeIn.duration(350).delay(100)}
+            exiting={FadeOut.duration(200)}
+            style={styles.contentArea}
+          >
+            {quadrant && (
+              <View style={[styles.quadrantBadge, { backgroundColor: quadrant.colorLight }]}>
+                <View style={[styles.quadrantDot, { backgroundColor: quadrant.colorPrimary }]} />
+                <Text style={[styles.quadrantBadgeLabel, { color: quadrant.colorDark }]}>
+                  {quadrant.label}
                 </Text>
               </View>
+            )}
 
-              {/* Feeling cards */}
-              <View style={[
-                styles.feelingsGrid,
-                useWrappedGrid && styles.feelingsGridWrapped,
-              ]}>
-                {familyFeelings.map((mood) => {
-                  const isSelected = selectedMood === mood.id;
-                  const isDimmed = selectedMood && !isSelected;
-                  return (
-                    <Pressable
-                      key={mood.id}
-                      onPress={() => handleMoodSelect(mood.id)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${mood.label} \u2014 ${mood.description}`}
-                      accessibilityState={{ selected: isSelected }}
-                    >
-                      <View
-                        style={[
-                          styles.feelingCard,
-                          useWrappedGrid && styles.feelingCardSmall,
-                          {
-                            backgroundColor: isSelected ? c.accentPeach : c.surface,
-                            borderColor: isSelected ? c.accentRust : c.border,
-                            borderWidth: isSelected ? 2.5 : 1.5,
-                            shadowColor: isSelected ? c.accentRust : '#000',
-                            shadowOpacity: isSelected ? 0.3 : 0.06,
-                            shadowRadius: isSelected ? 16 : 8,
-                            elevation: isSelected ? 8 : 3,
-                            opacity: isDimmed ? 0.4 : 1,
-                            transform: [{ scale: isSelected ? 1.05 : (isDimmed ? 0.95 : 1) }],
-                          },
-                        ]}
-                      >
-                        <Text style={[
-                          styles.feelingEmoji,
-                          useWrappedGrid && styles.feelingEmojiSmall,
-                        ]}>{mood.emoji}</Text>
-                        <Text style={[
-                          styles.feelingMicroLabel,
-                          { color: isSelected ? c.accentRust : c.textMuted },
-                        ]}>
-                          {mood.label}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </View>
+            <BubbleCloud
+              quadrantId={selectedQuadrant}
+              selectedId={selectedEmotion?.id || null}
+              onSelect={handleBubbleSelect}
+              containerWidth={cloudWidth}
+              containerHeight={cloudHeight}
+            />
 
-              {/* Validation response */}
-              <Animated.View style={[styles.responseContainer, responseAnimatedStyle]}>
-                {selectedMood && (
-                  <>
-                    <Text style={[styles.selectedMoodLabel, { color: c.textPrimary }]}>
-                      {MOODS.find(m => m.id === selectedMood)?.label}
+            {/* Reflection input — appears after mood selection */}
+            {selectedEmotion && (
+              <Animated.View entering={FadeIn.delay(600).duration(400)} style={styles.reflectionSection}>
+                {!showReflection ? (
+                  <Pressable onPress={() => setShowReflection(true)}>
+                    <Text style={[styles.reflectionTrigger, { color: c.accentRust }]}>
+                      Add a reflection...
                     </Text>
-                    {responseText ? (
-                      <Text style={[styles.responseText, { color: c.accentRust }]}>
-                        {responseText}
-                      </Text>
-                    ) : null}
-                  </>
+                  </Pressable>
+                ) : (
+                  <View style={[styles.reflectionInputWrapper, { backgroundColor: c.surface }]}>
+                    <TextInput
+                      style={[styles.reflectionInput, { color: c.textPrimary }]}
+                      placeholder="What came up for you?"
+                      placeholderTextColor={c.inputPlaceholder}
+                      multiline
+                      maxLength={500}
+                      value={reflection}
+                      onChangeText={setReflection}
+                      autoFocus
+                    />
+                  </View>
                 )}
               </Animated.View>
+            )}
+          </Animated.View>
+        )}
 
-              {/* Intensity selector */}
-              {selectedMood && (
-                <Animated.View style={[styles.intensitySection, intensityAnimatedStyle]}>
-                  <Text style={[styles.intensityLabel, { color: c.textMuted }]}>How much?</Text>
-                  <View style={styles.intensityRow}>
-                    {INTENSITY_LEVELS.map((level) => {
-                      const isActive = selectedIntensity === level.value;
-                      return (
-                        <Pressable
-                          key={level.value}
-                          onPress={() => handleIntensitySelect(level.value)}
-                          hitSlop={8}
-                          accessibilityRole="button"
-                          accessibilityLabel={`${level.label} intensity`}
-                          accessibilityState={{ selected: isActive }}
-                        >
-                          <View style={styles.intensityOption}>
-                            <View style={[
-                              styles.intensityDot,
-                              {
-                                backgroundColor: isActive ? c.accentRust : c.surfaceTertiary,
-                                transform: [{ scale: isActive ? 1.15 : 1 }],
-                              },
-                            ]} />
-                            <Text style={[
-                              styles.intensityText,
-                              { color: isActive ? c.accentRust : c.textMuted },
-                              isActive && { fontWeight: '600' },
-                            ]}>
-                              {level.label}
-                            </Text>
-                          </View>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </Animated.View>
-              )}
+        {/* Unsure state */}
+        {step === 'unsure' && (
+          <Animated.View
+            entering={FadeIn.duration(300).delay(100)}
+            style={styles.unsureSection}
+          >
+            <Text style={styles.unsureEmoji}>{'\uD83E\uDD0D'}</Text>
+            <Text style={[styles.unsureValidation, { color: c.accentRust }]}>
+              {POST_MOOD_RESPONSES.unsure}
+            </Text>
+
+            <View style={styles.unsureButton}>
+              <PrimaryButton
+                title="Complete"
+                icon="sparkles"
+                onPress={handleComplete}
+              />
             </View>
-          )}
+          </Animated.View>
+        )}
 
-          {/* Optional reflection — appears after mood is selected */}
-          {selectedMood && (
-            <Animated.View entering={FadeIn.delay(800).duration(400)} style={styles.reflectionSection}>
-              {!showReflection ? (
-                <Pressable onPress={() => setShowReflection(true)}>
-                  <Text style={[styles.reflectionTrigger, { color: c.accentRust }]}>
-                    Add a reflection...
-                  </Text>
-                </Pressable>
-              ) : (
-                <View style={[styles.reflectionInputWrapper, { backgroundColor: c.surface }]}>
-                  <TextInput
-                    style={[styles.reflectionInput, { color: c.textPrimary }]}
-                    placeholder="What came up for you?"
-                    placeholderTextColor={c.inputPlaceholder}
-                    multiline
-                    maxLength={500}
-                    value={reflection}
-                    onChangeText={setReflection}
-                    autoFocus
-                  />
-                </View>
-              )}
-            </Animated.View>
-          )}
-
-        </ScrollView>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <PrimaryButton
-            title="Complete"
-            icon="sparkles"
-            onPress={handleComplete}
-            disabled={!selectedMood}
+        {/* Bottom sheet (for bubble selection) */}
+        {step === 'bubbles' && (
+          <EmotionBottomSheet
+            emotion={selectedEmotion}
+            validationText={validationText}
+            buttonTitle="Complete"
+            onConfirm={handleComplete}
+            onDismiss={handleBubbleDeselect}
+            visible={selectedEmotion !== null}
+            quadrantColor={quadrant?.colorPrimary}
           />
+        )}
 
-          <Pressable onPress={handleSkip} style={styles.skipButton}>
-            <Text style={[styles.skipText, { color: c.textMuted }]}>NOT RIGHT NOW</Text>
-          </Pressable>
-        </View>
+        {/* Footer — skip option */}
+        {step === 'quadrant' && (
+          <View style={styles.footer}>
+            <Pressable onPress={handleSkip} style={styles.skipButton}>
+              <Text style={[styles.skipText, { color: c.textMuted }]}>NOT RIGHT NOW</Text>
+            </Pressable>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </View>
   );
 };
-
-// --- Helpers ---
-
-function getFamilySubtitle(familyId) {
-  switch (familyId) {
-    case 'peaceful': return 'What shade of peace are you in?';
-    case 'tender':   return 'Let yourself name it gently.';
-    case 'electric': return 'Where is that energy coming from?';
-    case 'heavy':    return 'You\u2019re safe to feel this here.';
-    case 'still':    return 'There\u2019s no wrong way to feel here.';
-    default:         return 'Which feels closest?';
-  }
-}
 
 // --- Styles ---
 
@@ -484,188 +310,77 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  body: {
-    flex: 1,
-  },
-  bodyContent: {
+  headingContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    marginBottom: 8,
   },
   heading: {
     fontSize: 28,
     fontWeight: '700',
     lineHeight: 36,
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 8,
+    marginBottom: 6,
   },
   subtitle: {
     fontSize: 16,
     lineHeight: 22,
-    marginBottom: 28,
+    marginBottom: 16,
+  },
+  contentArea: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 12,
   },
 
-  // --- Family cards ---
-  familyGrid: {
-    gap: 14,
-    alignItems: 'center',
-  },
-  familyRow: {
+  // --- Quadrant badge ---
+  quadrantBadge: {
     flexDirection: 'row',
-    gap: 14,
-    justifyContent: 'center',
-  },
-  familyCard: {
-    width: 165,
-    borderRadius: 20,
-    paddingVertical: 22,
-    paddingHorizontal: 14,
     alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.card,
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+    alignSelf: 'center',
   },
-  familyEmoji: {
-    fontSize: 32,
-    marginBottom: 8,
+  quadrantDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
   },
-  familyLabel: {
-    fontSize: 17,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  familyDescription: {
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 16,
+  quadrantBadgeLabel: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 
-  // --- "Not sure" ---
-  unsureLink: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
-  },
+  // --- Unsure state ---
   unsureSection: {
+    flex: 1,
     alignItems: 'center',
-    marginTop: 20,
+    justifyContent: 'center',
+    paddingHorizontal: 40,
   },
   unsureEmoji: {
     fontSize: 48,
-    marginBottom: 16,
+    marginBottom: 20,
   },
-
-  // --- Feelings (layer 2) ---
-  feelingsSection: {
-    width: '100%',
-  },
-  familyBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    marginBottom: 24,
-    alignSelf: 'center',
-  },
-  familyBadgeEmoji: {
-    fontSize: 16,
-    marginRight: 6,
-  },
-  familyBadgeLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  feelingsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 20,
-  },
-  feelingsGridWrapped: {
-    flexWrap: 'wrap',
-    gap: 14,
-  },
-  feelingCard: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowOffset: { width: 0, height: 3 },
-  },
-  feelingCardSmall: {
-    width: 82,
-    height: 82,
-    borderRadius: 41,
-  },
-  feelingEmoji: {
-    fontSize: 32,
-  },
-  feelingEmojiSmall: {
-    fontSize: 28,
-  },
-  feelingMicroLabel: {
-    fontSize: 9,
-    fontWeight: '500',
-    marginTop: 2,
-    textAlign: 'center',
-    maxWidth: 72,
-  },
-
-  // --- Response ---
-  responseContainer: {
-    minHeight: 70,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 28,
-    paddingHorizontal: 24,
-  },
-  selectedMoodLabel: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  responseText: {
-    fontFamily: typography.fontFamily.serifItalic,
+  unsureValidation: {
     fontStyle: 'italic',
     fontSize: 16,
     lineHeight: 24,
     textAlign: 'center',
+    marginBottom: 32,
   },
-
-  // --- Intensity ---
-  intensitySection: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  intensityLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 12,
-  },
-  intensityRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 32,
-  },
-  intensityOption: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  intensityDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-  },
-  intensityText: {
-    fontSize: 12,
+  unsureButton: {
+    width: '100%',
   },
 
   // --- Reflection ---
   reflectionSection: {
-    marginTop: 20,
+    marginTop: 12,
     alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 8,
   },
   reflectionTrigger: {
     fontSize: 14,
@@ -673,7 +388,11 @@ const styles = StyleSheet.create({
   reflectionInputWrapper: {
     width: '100%',
     borderRadius: 16,
-    ...shadows.card,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
   },
   reflectionInput: {
     minHeight: 80,
@@ -691,7 +410,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   skipButton: {
-    marginTop: 16,
     paddingVertical: 8,
   },
   skipText: {

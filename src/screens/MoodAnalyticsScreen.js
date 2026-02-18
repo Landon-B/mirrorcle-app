@@ -13,7 +13,7 @@ import { useApp } from '../context/AppContext';
 import { ScreenHeader, Card, PrimaryButton } from '../components/common';
 import { MoodPatternChart } from '../components/personalization/MoodPatternChart';
 import { sessionService } from '../services/session';
-import { getMoodEmoji, getMoodLabel, FEELING_COLORS } from '../constants/feelings';
+import { getMoodLabel, getFeelingColor } from '../constants/feelings';
 import { useColors } from '../hooks/useColors';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
@@ -167,13 +167,12 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
                     {moodTransitions.map((t, index) => (
                       <Card key={index} style={styles.transitionCard}>
                         <View style={styles.transitionEmojis}>
-                          <Text style={styles.transitionEmoji}>{getMoodEmoji(t.from)}</Text>
+                          <View style={[styles.transitionDot, { backgroundColor: getFeelingColor(t.from) }]} />
+                          <Text style={[styles.transitionMoodLabel, { color: c.textPrimary }]}>{getMoodLabel(t.from)}</Text>
                           <Ionicons name="arrow-forward" size={14} color={c.textMuted} />
-                          <Text style={styles.transitionEmoji}>{getMoodEmoji(t.to)}</Text>
+                          <View style={[styles.transitionDot, { backgroundColor: getFeelingColor(t.to) }]} />
+                          <Text style={[styles.transitionMoodLabel, { color: c.textPrimary }]}>{getMoodLabel(t.to)}</Text>
                         </View>
-                        <Text style={[styles.transitionLabel, { color: c.textSecondary }]}>
-                          {getMoodLabel(t.from)} \u2192 {getMoodLabel(t.to)}
-                        </Text>
                         <Text style={[styles.transitionCount, { color: c.accentRust }]}>
                           {t.count} time{t.count !== 1 ? 's' : ''}
                         </Text>
@@ -281,12 +280,14 @@ const styles = StyleSheet.create({
     gap: 6,
     marginBottom: 6,
   },
-  transitionEmoji: {
-    fontSize: 20,
+  transitionDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
-  transitionLabel: {
-    fontSize: 12,
-    marginBottom: 2,
+  transitionMoodLabel: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   transitionCount: {
     fontSize: 13,

@@ -58,8 +58,8 @@ const MILESTONE_CONFIG = {
   },
   all_feelings_explored: {
     icon: 'color-palette',
-    title: 'Emotional Explorer',
-    message: 'You\u2019ve met every part of yourself in the mirror. That kind of self-awareness is a superpower.',
+    title: 'Full Spectrum',
+    message: 'You\u2019ve explored every corner of your emotional landscape \u2014 bright, charged, tender, and deep. That kind of self-awareness is a superpower.',
   },
   custom_affirmation_created: {
     icon: 'create',

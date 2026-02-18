@@ -599,7 +599,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
         duration,
         timeOfDay,
         focusAreaId: route.params?.focusArea?.id || null,
-        moodIntensity: route.params?.intensity || null,
+        moodIntensity: null,
       });
       sessionId = session?.id || null;
     } catch (e) {
@@ -611,7 +611,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
       duration,
       feeling,
       preMood: feeling,
-      preIntensity: route.params?.intensity || null,
+      preIntensity: null,
       focusArea: route.params?.focusArea,
     });
   };
@@ -630,7 +630,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
         duration,
         timeOfDay,
         focusAreaId: route.params?.focusArea?.id || null,
-        moodIntensity: route.params?.intensity || null,
+        moodIntensity: null,
       });
       sessionId = session?.id || null;
     } catch (e) {
@@ -642,7 +642,7 @@ export const CameraSessionScreen = ({ navigation, route }) => {
       duration,
       feeling,
       preMood: feeling,
-      preIntensity: route.params?.intensity || null,
+      preIntensity: null,
       focusArea: route.params?.focusArea,
     });
   };

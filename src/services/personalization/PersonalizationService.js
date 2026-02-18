@@ -1,5 +1,5 @@
 import { supabase } from '../../config/supabase';
-import { getMoodLabel } from '../../constants/feelings';
+import { getMoodLabel, getMoodById, QUADRANTS } from '../../constants/feelings';
 
 const MILESTONE_DEFINITIONS = {
   first_session: { title: 'First Steps', description: 'Completed your first mirror session' },
@@ -9,7 +9,7 @@ const MILESTONE_DEFINITIONS = {
   seven_day_streak: { title: 'Week Warrior', description: 'Maintained a 7-day streak' },
   thirty_day_streak: { title: 'Mirror Master', description: 'Maintained a 30-day streak' },
   first_favorite: { title: 'Found a Favorite', description: 'Saved your first affirmation' },
-  all_feelings_explored: { title: 'Full Spectrum', description: 'Explored every feeling' },
+  all_feelings_explored: { title: 'Full Spectrum', description: 'Explored all four emotional quadrants' },
   custom_affirmation_created: { title: 'Your Words', description: 'Created a custom affirmation' },
 };
 
@@ -132,7 +132,13 @@ class PersonalizationService {
     const favoritesCount = favorites.data?.length || 0;
     const customCount = customAffirmations.data?.length || 0;
     const uniqueFeelings = new Set(sessions.data?.map(s => s.feeling_id).filter(Boolean) || []);
-    const totalFeelings = feelings.data?.length || 0;
+    // Count unique quadrants explored (using client-side mood data)
+    const exploredQuadrants = new Set();
+    for (const feelingId of uniqueFeelings) {
+      const mood = getMoodById(feelingId);
+      if (mood?.quadrant) exploredQuadrants.add(mood.quadrant);
+    }
+    const totalQuadrants = QUADRANTS.length; // 4
 
     const checks = [
       { key: 'first_session', condition: totalSessions >= 1 },
@@ -142,7 +148,7 @@ class PersonalizationService {
       { key: 'seven_day_streak', condition: streak >= 7 },
       { key: 'thirty_day_streak', condition: streak >= 30 },
       { key: 'first_favorite', condition: favoritesCount >= 1 },
-      { key: 'all_feelings_explored', condition: totalFeelings > 0 && uniqueFeelings.size >= totalFeelings },
+      { key: 'all_feelings_explored', condition: exploredQuadrants.size >= totalQuadrants },
       { key: 'custom_affirmation_created', condition: customCount >= 1 },
     ];
 
@@ -218,7 +224,12 @@ class PersonalizationService {
     const favoritesCount = favoritesRes.data?.length || 0;
     const customCount = customRes.data?.length || 0;
     const uniqueFeelings = new Set(sessionsRes.data?.map(s => s.feeling_id).filter(Boolean) || []);
-    const totalFeelings = feelingsRes.data?.length || 0;
+    const exploredQuadrants = new Set();
+    for (const feelingId of uniqueFeelings) {
+      const mood = getMoodById(feelingId);
+      if (mood?.quadrant) exploredQuadrants.add(mood.quadrant);
+    }
+    const totalQuadrants = QUADRANTS.length;
 
     const milestones = [
       { key: 'first_session', title: 'First Session', current: totalSessions, target: 1 },
@@ -228,7 +239,7 @@ class PersonalizationService {
       { key: 'seven_day_streak', title: 'One Week Flow', current: streak, target: 7 },
       { key: 'thirty_day_streak', title: 'Monthly Rhythm', current: streak, target: 30 },
       { key: 'first_favorite', title: 'Found Your Words', current: favoritesCount, target: 1 },
-      { key: 'all_feelings_explored', title: 'Emotional Explorer', current: uniqueFeelings.size, target: totalFeelings || 6 },
+      { key: 'all_feelings_explored', title: 'Emotional Explorer', current: exploredQuadrants.size, target: totalQuadrants },
       { key: 'custom_affirmation_created', title: 'Your Own Words', current: customCount, target: 1 },
     ];
 

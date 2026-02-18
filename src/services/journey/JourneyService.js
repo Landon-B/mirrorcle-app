@@ -1,5 +1,5 @@
 import { supabase } from '../../config/supabase';
-import { getMoodLabel, getMoodEmoji } from '../../constants/feelings';
+import { getMoodLabel, getMoodEmoji, isPositiveMood, isNegativeMood } from '../../constants/feelings';
 import { getFocusAreaById } from '../../constants/focusAreas';
 
 /**
@@ -172,10 +172,8 @@ class JourneyService {
 
     // Mood shift patterns: count negative-to-positive transitions
     // (using session pre/post moods)
-    const positiveMoods = new Set(['calm', 'confident', 'energized', 'grateful', 'content', 'hopeful']);
-    const negativeMoods = new Set(['anxious', 'sad', 'overwhelmed', 'lonely', 'vulnerable', 'frustrated', 'ashamed', 'numb', 'disconnected', 'drained']);
+    // Mood shift: negative→positive transitions (quadrant-based)
     let moodShiftCount = 0;
-    // Pair moods by session_id (pre and post)
     const moodsBySession = {};
     for (const m of moods) {
       if (!moodsBySession[m.session_id]) {
@@ -187,7 +185,7 @@ class JourneyService {
       if (sessionMoods.length >= 2) {
         const pre = sessionMoods[0].feeling_id;
         const post = sessionMoods[sessionMoods.length - 1].feeling_id;
-        if (negativeMoods.has(pre) && positiveMoods.has(post)) {
+        if (isNegativeMood(pre) && isPositiveMood(post)) {
           moodShiftCount++;
         }
       }

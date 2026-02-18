@@ -15,7 +15,7 @@ import { shadows } from '../styles/spacing';
 import { useColors } from '../hooks/useColors';
 
 export const BreathingPrepScreen = ({ navigation, route }) => {
-  const { focusArea, mood, intensity } = route.params || {};
+  const { focusArea, mood } = route.params || {};
   const c = useColors();
 
   const previewAffirmation = useMemo(() => {
@@ -31,7 +31,6 @@ export const BreathingPrepScreen = ({ navigation, route }) => {
     navigation.navigate('Session', {
       focusArea,
       mood,
-      intensity,
       firstAffirmation: previewAffirmation,
     });
   };
