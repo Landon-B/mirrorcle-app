@@ -22,7 +22,7 @@ import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
 import { useHaptics } from '../hooks/useHaptics';
 import { usePersonalization } from '../hooks/usePersonalization';
-import { getMoodById, getMoodEmoji, MOODS, FEELING_COLORS } from '../constants/feelings';
+import { getMoodById, getMoodEmoji, MOODS, MOOD_FAMILIES, getMoodsForFamily, FEELING_COLORS } from '../constants/feelings';
 import { personalizationService } from '../services/personalization';
 import { sessionService } from '../services/session';
 import { useColors } from '../hooks/useColors';
@@ -103,7 +103,8 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
   const { checkNewMilestones } = usePersonalization();
   const c = useColors();
 
-  // Inline mood state
+  // Inline mood state (two-layer: family → specific)
+  const [selectedPostFamily, setSelectedPostFamily] = useState(null);
   const [selectedPostMood, setSelectedPostMood] = useState(null);
   const [showReflection, setShowReflection] = useState(false);
   const [reflection, setReflection] = useState('');
@@ -135,7 +136,14 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
     }
   }, []);
 
-  // Record post-mood when selected
+  // Family selection (first tap)
+  const handlePostFamilySelect = (familyId) => {
+    selectionTap();
+    setSelectedPostFamily(familyId);
+    setSelectedPostMood(null);
+  };
+
+  // Specific mood selection (second tap)
   const handlePostMoodSelect = (moodId) => {
     selectionTap();
     setSelectedPostMood(moodId);
@@ -212,21 +220,23 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
           </Text>
         </Animated.View>
 
-        {/* Inline mood selector */}
+        {/* Inline mood selector (two-layer: families → specific) */}
         <Animated.View
           entering={FadeInDown.delay(800).duration(500)}
           style={styles.moodSection}
         >
           <Text style={[styles.moodQuestion, { color: c.textSecondary }]}>How do you feel now?</Text>
+
+          {/* Family circles */}
           <View style={styles.moodEmojiRow}>
-            {MOODS.map((mood) => {
-              const isSelected = selectedPostMood === mood.id;
+            {MOOD_FAMILIES.map((family) => {
+              const isSelected = selectedPostFamily === family.id;
               return (
                 <Pressable
-                  key={mood.id}
-                  onPress={() => handlePostMoodSelect(mood.id)}
+                  key={family.id}
+                  onPress={() => handlePostFamilySelect(family.id)}
                   accessibilityRole="button"
-                  accessibilityLabel={`${mood.label} mood`}
+                  accessibilityLabel={`${family.label}`}
                   accessibilityState={{ selected: isSelected }}
                   style={[
                     styles.moodEmojiCircle,
@@ -234,11 +244,43 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
                     isSelected && { borderColor: c.accentRust },
                   ]}
                 >
-                  <Text style={styles.moodEmojiText}>{mood.emoji}</Text>
+                  <Text style={styles.moodEmojiText}>{family.emoji}</Text>
                 </Pressable>
               );
             })}
           </View>
+
+          {/* Specific feeling pills (appear after family selection) */}
+          {selectedPostFamily && (
+            <Animated.View entering={FadeInDown.duration(300)} style={styles.moodPillRow}>
+              {getMoodsForFamily(selectedPostFamily).map((mood) => {
+                const isSelected = selectedPostMood === mood.id;
+                return (
+                  <Pressable
+                    key={mood.id}
+                    onPress={() => handlePostMoodSelect(mood.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${mood.label} mood`}
+                    accessibilityState={{ selected: isSelected }}
+                    style={[
+                      styles.moodPill,
+                      { backgroundColor: c.surface, borderColor: c.border },
+                      isSelected && { borderColor: c.accentRust, backgroundColor: c.surfaceSecondary },
+                    ]}
+                  >
+                    <Text style={styles.moodPillEmoji}>{mood.emoji}</Text>
+                    <Text style={[
+                      styles.moodPillLabel,
+                      { color: c.textPrimary },
+                      isSelected && { color: c.accentRust },
+                    ]}>
+                      {mood.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </Animated.View>
+          )}
         </Animated.View>
 
         {/* Mood shift visualization (appears when mood selected) */}
@@ -411,6 +453,28 @@ const styles = StyleSheet.create({
   },
   moodEmojiText: {
     fontSize: 22,
+  },
+  moodPillRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  moodPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderWidth: 1.5,
+  },
+  moodPillEmoji: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  moodPillLabel: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 
   // --- Mood shift ---

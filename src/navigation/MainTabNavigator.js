@@ -10,10 +10,10 @@ import { useColors } from '../hooks/useColors';
 const Tab = createBottomTabNavigator();
 
 const TAB_ICONS = {
-  HomeTab: { focused: 'home', unfocused: 'home-outline' },
-  AffirmTab: { focused: 'mic', unfocused: 'mic-outline' },
-  GrowthTab: { focused: 'trending-up', unfocused: 'trending-up-outline' },
-  ProfileTab: { focused: 'person', unfocused: 'person-outline' },
+  HomeTab: { focused: 'sunny', unfocused: 'sunny-outline' },
+  AffirmTab: { focused: 'flower', unfocused: 'flower-outline' },
+  GrowthTab: { focused: 'footsteps', unfocused: 'footsteps-outline' },
+  ProfileTab: { focused: 'ellipse', unfocused: 'ellipse-outline' },
 };
 
 export const MainTabNavigator = () => {
@@ -43,10 +43,10 @@ export const MainTabNavigator = () => {
         },
       })}
     >
-      <Tab.Screen name="HomeTab" component={HomeStack} options={{ tabBarLabel: 'Home' }} />
-      <Tab.Screen name="AffirmTab" component={AffirmStack} options={{ tabBarLabel: 'Affirm' }} />
-      <Tab.Screen name="GrowthTab" component={GrowthStack} options={{ tabBarLabel: 'Growth' }} />
-      <Tab.Screen name="ProfileTab" component={ProfileStack} options={{ tabBarLabel: 'Profile' }} />
+      <Tab.Screen name="HomeTab" component={HomeStack} options={{ tabBarLabel: 'Today' }} />
+      <Tab.Screen name="AffirmTab" component={AffirmStack} options={{ tabBarLabel: 'Practice' }} />
+      <Tab.Screen name="GrowthTab" component={GrowthStack} options={{ tabBarLabel: 'Journey' }} />
+      <Tab.Screen name="ProfileTab" component={ProfileStack} options={{ tabBarLabel: 'Mirror' }} />
     </Tab.Navigator>
   );
 };

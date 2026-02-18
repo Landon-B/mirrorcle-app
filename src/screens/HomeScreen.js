@@ -22,7 +22,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useHaptics } from '../hooks/useHaptics';
 import { usePaywall } from '../hooks/usePaywall';
 import { useColors, useGradients } from '../hooks/useColors';
-import { MOODS } from '../constants/feelings';
+import { MOOD_FAMILIES } from '../constants/feelings';
 import { FOCUS_AREAS } from '../constants/focusAreas';
 import { formatRelativeDate } from '../utils/dateUtils';
 
@@ -74,7 +74,7 @@ const NewUserDashboard = ({ navigation, emotionalContext, selectedMood, onMoodSe
         <Text style={[styles.emotionalSubtitle, { color: c.textSecondary }]}>{greeting}</Text>
       </Animated.View>
 
-      {/* Mood Pills */}
+      {/* Mood Families */}
       <Animated.View entering={FadeInUp.delay(200).duration(500)}>
         <ScrollView
           horizontal
@@ -82,19 +82,19 @@ const NewUserDashboard = ({ navigation, emotionalContext, selectedMood, onMoodSe
           contentContainerStyle={styles.moodPillsContainer}
           style={styles.moodPillsScroll}
         >
-          {MOODS.map((mood) => {
-            const isSelected = selectedMood === mood.id;
+          {MOOD_FAMILIES.map((family) => {
+            const isSelected = selectedMood === family.id;
             return (
               <Pressable
-                key={mood.id}
-                onPress={() => onMoodSelect(mood.id)}
+                key={family.id}
+                onPress={() => onMoodSelect(family.id)}
                 style={[
                   styles.moodPill,
                   { borderColor: c.border, backgroundColor: c.surface },
                   isSelected && { backgroundColor: c.accentRust, borderColor: c.accentRust },
                 ]}
               >
-                <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+                <Text style={styles.moodEmoji}>{family.emoji}</Text>
                 <Text
                   style={[
                     styles.moodLabel,
@@ -102,7 +102,7 @@ const NewUserDashboard = ({ navigation, emotionalContext, selectedMood, onMoodSe
                     isSelected && { color: c.textOnPrimary },
                   ]}
                 >
-                  {mood.label}
+                  {family.label}
                 </Text>
               </Pressable>
             );
