@@ -31,7 +31,7 @@ export default {
         NSMicrophoneUsageDescription: "Mirrorcle needs microphone access to listen during affirmation sessions.",
         NSPhotoLibraryUsageDescription: "Mirrorcle may save session photos to your library."
       },
-      buildNumber: "6",
+      buildNumber: "7",
       bundleIdentifier: "com.anonymous.mirrorcleios"
     },
     android: {
