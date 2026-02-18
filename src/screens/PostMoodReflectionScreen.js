@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,28 +7,30 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import Animated, {
   FadeIn,
   FadeInDown,
-  FadeOut,
 } from 'react-native-reanimated';
-import {
-  MOODS,
-  getQuadrantById,
-  MOOD_RESPONSES,
-  POST_MOOD_RESPONSES,
-} from '../constants/feelings';
+import { LinearGradient } from 'expo-linear-gradient';
+import { QUADRANTS, POST_MOOD_RESPONSES, getMoodById, getQuadrantById } from '../constants/feelings';
 import { ScreenHeader, PrimaryButton } from '../components/common';
-import { QuadrantGrid } from '../components/mood/QuadrantGrid';
-import { BubbleCloud } from '../components/mood/BubbleCloud';
-import { EmotionBottomSheet } from '../components/mood/EmotionBottomSheet';
 import { sessionService } from '../services/session';
 import { typography } from '../styles/typography';
-import { shadows } from '../styles/spacing';
 import { useHaptics } from '../hooks/useHaptics';
 import { useColors } from '../hooks/useColors';
+
+// Map quadrant-level selections to representative mood IDs
+// so recordMoodShift() receives valid mood IDs from the MOODS array.
+const QUADRANT_MOOD_MAP = {
+  bright: 'energized',
+  charged: 'restless',
+  tender: 'calm',
+  deep: 'melancholy',
+  unsure: 'unsure',
+};
+
+const CIRCLE_SIZE = 72;
 
 export const PostMoodReflectionScreen = ({ navigation, route }) => {
   const {
@@ -40,65 +42,36 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
     focusArea,
   } = route.params || {};
 
-  const { selectionTap, successPulse, breathingPulse } = useHaptics();
+  const { breathingPulse, successPulse } = useHaptics();
   const c = useColors();
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
-  // State machine: 'quadrant' → 'bubbles'
-  const [step, setStep] = useState('quadrant');
   const [selectedQuadrant, setSelectedQuadrant] = useState(null);
-  const [selectedEmotion, setSelectedEmotion] = useState(null);
   const [showReflection, setShowReflection] = useState(false);
   const [reflection, setReflection] = useState('');
 
   // --- Handlers ---
 
-  const handleQuadrantSelect = useCallback((quadrantId) => {
+  const handleSelect = (quadrantId) => {
+    breathingPulse();
     setSelectedQuadrant(quadrantId);
-    setSelectedEmotion(null);
-    setStep('bubbles');
-  }, []);
-
-  const handleUnsure = useCallback(() => {
-    breathingPulse();
-    const unsureMood = MOODS.find(m => m.id === 'unsure');
-    setSelectedEmotion(unsureMood);
-    setSelectedQuadrant(null);
-    setStep('unsure');
-  }, [breathingPulse]);
-
-  const handleBubbleSelect = useCallback((emotionId) => {
-    breathingPulse();
-    const mood = MOODS.find(m => m.id === emotionId);
-    setSelectedEmotion(mood);
     setTimeout(() => successPulse(), 180);
-  }, [breathingPulse, successPulse]);
+  };
 
-  const handleBubbleDeselect = useCallback(() => {
-    setSelectedEmotion(null);
-  }, []);
-
-  const handleBack = useCallback(() => {
-    if (step === 'unsure') {
-      setStep('quadrant');
-      setSelectedEmotion(null);
-    } else if (step === 'bubbles') {
-      setStep('quadrant');
-      setSelectedQuadrant(null);
-      setSelectedEmotion(null);
-    } else {
-      handleSkip();
-    }
-  }, [step]);
+  const handleUnsure = () => {
+    breathingPulse();
+    setSelectedQuadrant('unsure');
+  };
 
   const handleComplete = async () => {
-    if (!selectedEmotion) return;
+    if (!selectedQuadrant) return;
     successPulse();
+
+    const moodId = QUADRANT_MOOD_MAP[selectedQuadrant];
 
     // Persist post-session mood and reflection (best-effort)
     if (sessionId) {
       try {
-        await sessionService.recordMoodShift(sessionId, selectedEmotion.id);
+        await sessionService.recordMoodShift(sessionId, moodId);
       } catch (err) {
         console.log('Failed to record mood shift:', err);
       }
@@ -112,12 +85,19 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
       }
     }
 
+    // Pass quadrant-level data for display (not the mapped mood).
+    // The user chose a quadrant, not a specific emotion — the celebration
+    // screen should reflect that level of granularity.
+    const quadrantData = selectedQuadrant !== 'unsure'
+      ? getQuadrantById(selectedQuadrant)
+      : null;
+
     navigation.navigate('SuccessCelebration', {
       completedPrompts,
       duration,
       feeling,
       preMood,
-      postMood: selectedEmotion,
+      postQuadrant: quadrantData,
       reflection: reflection.trim() || null,
       focusArea,
     });
@@ -135,32 +115,14 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
 
   // --- Derived ---
 
-  const quadrant = selectedQuadrant ? getQuadrantById(selectedQuadrant) : null;
-
-  const heading = step === 'unsure'
-    ? 'That\u2019s okay.'
-    : step === 'bubbles'
-      ? 'What fits closest?'
-      : 'And now...\nhow are you?';
-
-  const subtitle = step === 'unsure'
-    ? 'Sometimes the shift is deeper than words.'
-    : step === 'bubbles'
-      ? quadrant?.description || ''
-      : 'Just noticing what shifted.';
-
-  const validationText = selectedEmotion
-    ? (POST_MOOD_RESPONSES[selectedEmotion.id] || '')
-    : '';
-
-  const cloudWidth = windowWidth - 24;
-  const cloudHeight = Math.min(windowHeight * 0.42, 380);
+  const moodId = selectedQuadrant ? QUADRANT_MOOD_MAP[selectedQuadrant] : null;
+  const validationText = moodId ? (POST_MOOD_RESPONSES[moodId] || '') : '';
 
   return (
     <View style={[styles.container, { backgroundColor: c.background }]}>
       <ScreenHeader
         label="REFLECTION"
-        onBack={handleBack}
+        onBack={handleSkip}
       />
 
       <KeyboardAvoidingView
@@ -168,134 +130,143 @@ export const PostMoodReflectionScreen = ({ navigation, route }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={0}
       >
+        {/* Top spacer — pushes content toward center */}
+        <View style={styles.spacer} />
+
         {/* Heading */}
         <View style={styles.headingContainer}>
           <Animated.Text
-            key={`heading-${step}-${selectedQuadrant || ''}`}
             entering={FadeInDown.duration(400).delay(100)}
             style={[styles.heading, { color: c.textPrimary }]}
           >
-            {heading}
+            And now...{'\n'}how are you?
           </Animated.Text>
 
           <Animated.Text
-            key={`subtitle-${step}-${selectedQuadrant || ''}`}
             entering={FadeInDown.duration(350).delay(200)}
             style={[styles.subtitle, { color: c.textSecondary }]}
           >
-            {subtitle}
+            Just noticing what shifted.
           </Animated.Text>
         </View>
 
-        {/* Step 1: Quadrant selection */}
-        {step === 'quadrant' && (
-          <Animated.View
-            entering={FadeIn.duration(300)}
-            exiting={FadeOut.duration(200)}
-            style={styles.contentArea}
-          >
-            <QuadrantGrid
-              onSelect={handleQuadrantSelect}
-              onUnsure={handleUnsure}
-              hapticTap={selectionTap}
-            />
-          </Animated.View>
-        )}
+        {/* Quadrant row */}
+        <Animated.View
+          entering={FadeInDown.duration(400).delay(300).springify().damping(16)}
+          style={styles.quadrantRow}
+        >
+          {QUADRANTS.map((q) => {
+            const isSelected = selectedQuadrant === q.id;
+            const isDimmed = selectedQuadrant && !isSelected && selectedQuadrant !== 'unsure';
 
-        {/* Step 2: Bubble cloud */}
-        {step === 'bubbles' && (
-          <Animated.View
-            entering={FadeIn.duration(350).delay(100)}
-            exiting={FadeOut.duration(200)}
-            style={styles.contentArea}
-          >
-            {quadrant && (
-              <View style={[styles.quadrantBadge, { backgroundColor: quadrant.colorLight }]}>
-                <View style={[styles.quadrantDot, { backgroundColor: quadrant.colorPrimary }]} />
-                <Text style={[styles.quadrantBadgeLabel, { color: quadrant.colorDark }]}>
-                  {quadrant.label}
+            return (
+              <Pressable
+                key={q.id}
+                onPress={() => handleSelect(q.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`${q.label} — ${q.description}`}
+                accessibilityState={{ selected: isSelected }}
+              >
+                <View
+                  style={[
+                    styles.circleOuter,
+                    {
+                      borderColor: isSelected ? q.colorDark : 'transparent',
+                      borderWidth: isSelected ? 3 : 0,
+                      opacity: isDimmed ? 0.35 : 1,
+                      transform: [{ scale: isSelected ? 1.12 : (isDimmed ? 0.9 : 1) }],
+                    },
+                  ]}
+                >
+                  <LinearGradient
+                    colors={[q.colorLight, q.colorPrimary]}
+                    start={{ x: 0.2, y: 0 }}
+                    end={{ x: 0.8, y: 1 }}
+                    style={styles.circleGradient}
+                  />
+                </View>
+                <Text
+                  style={[
+                    styles.circleLabel,
+                    { color: isSelected ? q.colorDark : c.textMuted },
+                    isSelected && styles.circleLabelSelected,
+                  ]}
+                >
+                  {q.label}
                 </Text>
-              </View>
-            )}
+              </Pressable>
+            );
+          })}
+        </Animated.View>
 
-            <BubbleCloud
-              quadrantId={selectedQuadrant}
-              selectedId={selectedEmotion?.id || null}
-              onSelect={handleBubbleSelect}
-              containerWidth={cloudWidth}
-              containerHeight={cloudHeight}
-            />
+        {/* Unsure option */}
+        <Animated.View entering={FadeIn.duration(300).delay(500)}>
+          <Pressable onPress={handleUnsure} hitSlop={12} style={styles.unsureLink}>
+            <Text
+              style={[
+                styles.unsureLinkText,
+                { color: selectedQuadrant === 'unsure' ? c.accentRust : c.textMuted },
+              ]}
+            >
+              I'm not sure
+            </Text>
+          </Pressable>
+        </Animated.View>
 
-            {/* Reflection input — appears after mood selection */}
-            {selectedEmotion && (
-              <Animated.View entering={FadeIn.delay(600).duration(400)} style={styles.reflectionSection}>
-                {!showReflection ? (
-                  <Pressable onPress={() => setShowReflection(true)}>
-                    <Text style={[styles.reflectionTrigger, { color: c.accentRust }]}>
-                      Add a reflection...
-                    </Text>
-                  </Pressable>
-                ) : (
-                  <View style={[styles.reflectionInputWrapper, { backgroundColor: c.surface }]}>
-                    <TextInput
-                      style={[styles.reflectionInput, { color: c.textPrimary }]}
-                      placeholder="What came up for you?"
-                      placeholderTextColor={c.inputPlaceholder}
-                      multiline
-                      maxLength={500}
-                      value={reflection}
-                      onChangeText={setReflection}
-                      autoFocus
-                    />
-                  </View>
-                )}
-              </Animated.View>
-            )}
-          </Animated.View>
-        )}
-
-        {/* Unsure state */}
-        {step === 'unsure' && (
+        {/* Validation + reflection (appears after selection) */}
+        {selectedQuadrant && (
           <Animated.View
-            entering={FadeIn.duration(300).delay(100)}
-            style={styles.unsureSection}
+            key={`response-${selectedQuadrant}`}
+            entering={FadeIn.duration(400).delay(100)}
+            style={styles.responseSection}
           >
-            <Text style={styles.unsureEmoji}>{'\uD83E\uDD0D'}</Text>
-            <Text style={[styles.unsureValidation, { color: c.accentRust }]}>
-              {POST_MOOD_RESPONSES.unsure}
+            <Text style={[styles.validationText, { color: c.accentRust }]}>
+              {validationText}
             </Text>
 
-            <View style={styles.unsureButton}>
+            {/* Reflection input */}
+            {!showReflection ? (
+              <Pressable onPress={() => setShowReflection(true)} style={styles.reflectionTrigger}>
+                <Text style={[styles.reflectionTriggerText, { color: c.textMuted }]}>
+                  Add a reflection...
+                </Text>
+              </Pressable>
+            ) : (
+              <View style={[styles.reflectionInputWrapper, { backgroundColor: c.surface }]}>
+                <TextInput
+                  style={[styles.reflectionInput, { color: c.textPrimary }]}
+                  placeholder="What came up for you?"
+                  placeholderTextColor={c.inputPlaceholder}
+                  multiline
+                  maxLength={500}
+                  value={reflection}
+                  onChangeText={setReflection}
+                  autoFocus
+                />
+              </View>
+            )}
+          </Animated.View>
+        )}
+
+        {/* Bottom spacer — balances the centering */}
+        <View style={styles.spacer} />
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          {selectedQuadrant && (
+            <Animated.View entering={FadeIn.duration(300)}>
               <PrimaryButton
                 title="Complete"
                 icon="sparkles"
                 onPress={handleComplete}
               />
-            </View>
-          </Animated.View>
-        )}
+            </Animated.View>
+          )}
 
-        {/* Bottom sheet (for bubble selection) */}
-        {step === 'bubbles' && (
-          <EmotionBottomSheet
-            emotion={selectedEmotion}
-            validationText={validationText}
-            buttonTitle="Complete"
-            onConfirm={handleComplete}
-            onDismiss={handleBubbleDeselect}
-            visible={selectedEmotion !== null}
-            quadrantColor={quadrant?.colorPrimary}
-          />
-        )}
-
-        {/* Footer — skip option */}
-        {step === 'quadrant' && (
-          <View style={styles.footer}>
-            <Pressable onPress={handleSkip} style={styles.skipButton}>
-              <Text style={[styles.skipText, { color: c.textMuted }]}>NOT RIGHT NOW</Text>
-            </Pressable>
-          </View>
-        )}
+          <Pressable onPress={handleSkip} style={styles.skipButton}>
+            <Text style={[styles.skipText, { color: c.textMuted }]}>NOT RIGHT NOW</Text>
+          </Pressable>
+        </View>
       </KeyboardAvoidingView>
     </View>
   );
@@ -312,77 +283,79 @@ const styles = StyleSheet.create({
   },
   headingContainer: {
     paddingHorizontal: 20,
-    marginBottom: 8,
+    marginBottom: 28,
+    alignItems: 'center',
   },
   heading: {
     fontSize: 28,
     fontWeight: '700',
     lineHeight: 36,
-    marginTop: 8,
     marginBottom: 6,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
     lineHeight: 22,
-    marginBottom: 16,
-  },
-  contentArea: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 12,
+    textAlign: 'center',
   },
 
-  // --- Quadrant badge ---
-  quadrantBadge: {
+  // --- Quadrant row ---
+  quadrantRow: {
     flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 18,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  circleOuter: {
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    borderRadius: CIRCLE_SIZE / 2,
+    overflow: 'hidden',
     alignItems: 'center',
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    marginBottom: 12,
-    alignSelf: 'center',
+    justifyContent: 'center',
   },
-  quadrantDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
+  circleGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: CIRCLE_SIZE / 2,
   },
-  quadrantBadgeLabel: {
-    fontSize: 13,
+  circleLabel: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  circleLabelSelected: {
     fontWeight: '600',
   },
 
-  // --- Unsure state ---
-  unsureSection: {
-    flex: 1,
+  // --- Unsure ---
+  unsureLink: {
+    alignSelf: 'center',
+    paddingVertical: 8,
+    marginBottom: 24,
+  },
+  unsureLinkText: {
+    fontSize: 14,
+  },
+
+  // --- Response section ---
+  responseSection: {
+    paddingHorizontal: 24,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
   },
-  unsureEmoji: {
-    fontSize: 48,
-    marginBottom: 20,
-  },
-  unsureValidation: {
+  validationText: {
+    fontFamily: typography.fontFamily.serifItalic,
     fontStyle: 'italic',
     fontSize: 16,
     lineHeight: 24,
     textAlign: 'center',
-    marginBottom: 32,
-  },
-  unsureButton: {
-    width: '100%',
-  },
-
-  // --- Reflection ---
-  reflectionSection: {
-    marginTop: 12,
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: 8,
+    marginBottom: 20,
   },
   reflectionTrigger: {
+    paddingVertical: 4,
+  },
+  reflectionTriggerText: {
     fontSize: 14,
   },
   reflectionInputWrapper: {
@@ -402,6 +375,10 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
 
+  spacer: {
+    flex: 1,
+  },
+
   // --- Footer ---
   footer: {
     paddingHorizontal: 20,
@@ -410,7 +387,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   skipButton: {
-    paddingVertical: 8,
+    paddingVertical: 12,
+    marginTop: 8,
   },
   skipText: {
     fontSize: 11,

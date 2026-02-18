@@ -9,3 +9,4 @@ export { useSpeechMatcher } from './useSpeechMatcher';
 export { usePersonalization } from './usePersonalization';
 export { useJourney } from './useJourney';
 export { useTrial } from './useTrial';
+export { useMoodPicker } from './useMoodPicker';

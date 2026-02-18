@@ -104,7 +104,6 @@ const QuadrantCircle = ({ quadrant, onPress }) => {
         ]}
       >
         <Text style={styles.circleLabel}>{quadrant.label}</Text>
-        <Text style={styles.circleDescription}>{quadrant.description}</Text>
       </LinearGradient>
     </Pressable>
   );
@@ -143,16 +142,6 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.15)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
-  },
-  circleDescription: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.85)',
-    textAlign: 'center',
-    marginTop: 4,
-    maxWidth: 120,
-    textShadowColor: 'rgba(0,0,0,0.1)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   axisLabels: {
     flexDirection: 'column',

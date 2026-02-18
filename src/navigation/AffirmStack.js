@@ -4,7 +4,6 @@ import {
   AffirmationHomeScreen,
   FocusSelectionScreen,
   MoodCheckInScreen,
-  BreathingPrepScreen,
   CameraSessionScreen,
   PostMoodReflectionScreen,
   SuccessCelebrationScreen,
@@ -17,7 +16,6 @@ export const AffirmStack = () => (
     <Stack.Screen name="AffirmationHome" component={AffirmationHomeScreen} />
     <Stack.Screen name="FocusSelection" component={FocusSelectionScreen} />
     <Stack.Screen name="MoodCheckIn" component={MoodCheckInScreen} />
-    <Stack.Screen name="BreathingPrep" component={BreathingPrepScreen} />
     <Stack.Screen name="Session" component={CameraSessionScreen} />
     <Stack.Screen name="PostMoodReflection" component={PostMoodReflectionScreen} />
     <Stack.Screen name="SuccessCelebration" component={SuccessCelebrationScreen} />

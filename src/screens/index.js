@@ -21,7 +21,6 @@ export { HomeScreen } from './HomeScreen';
 export { AffirmationHomeScreen } from './AffirmationHomeScreen';
 export { FocusSelectionScreen } from './FocusSelectionScreen';
 export { MoodCheckInScreen } from './MoodCheckInScreen';
-export { BreathingPrepScreen } from './BreathingPrepScreen';
 export { CameraSessionScreen } from './CameraSessionScreen';
 export { PostMoodReflectionScreen } from './PostMoodReflectionScreen';
 export { SuccessCelebrationScreen } from './SuccessCelebrationScreen';

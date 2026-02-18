@@ -21,6 +21,7 @@ import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
 import { useHaptics } from '../hooks/useHaptics';
 import { usePersonalization } from '../hooks/usePersonalization';
+import { LinearGradient } from 'expo-linear-gradient';
 import { getMoodById, getMoodEmoji, FEELING_COLORS } from '../constants/feelings';
 import { personalizationService } from '../services/personalization';
 import { useColors } from '../hooks/useColors';
@@ -54,16 +55,15 @@ const getOrdinal = (n) => {
 };
 
 // --- Mood Visualization ---
-// Handles three scenarios: pre+post shift, pre-only, post-only
-const MoodSection = ({ preMood, postMood, colors: c }) => {
+// Pre-mood is a specific emotion (from bubble picker).
+// Post-mood is a quadrant (from lightweight post-session picker).
+// Handles: pre + post-quadrant, pre-only, neither.
+const MoodSection = ({ preMood, postQuadrant, colors: c }) => {
   const preMoodData = typeof preMood === 'string' ? getMoodById(preMood) : preMood;
-  const postMoodData = typeof postMood === 'string' ? getMoodById(postMood) : postMood;
 
-  // Both moods available \u2014 show shift visualization
-  if (preMoodData && postMoodData) {
+  // Pre-mood + post-quadrant — show emoji → quadrant color circle
+  if (preMoodData && postQuadrant) {
     const preColor = FEELING_COLORS[preMoodData.id] || c.textMuted;
-    const postColor = FEELING_COLORS[postMoodData.id] || c.textMuted;
-    const isSameMood = preMoodData.id === postMoodData.id;
 
     return (
       <Animated.View
@@ -75,21 +75,24 @@ const MoodSection = ({ preMood, postMood, colors: c }) => {
             <Text style={styles.moodShiftEmoji}>{preMoodData.emoji || getMoodEmoji(preMoodData.id)}</Text>
           </View>
           <Ionicons name="arrow-forward" size={16} color={c.disabled} />
-          <View style={[styles.moodShiftCircle, { borderColor: postColor, backgroundColor: c.surface }]}>
-            <Text style={styles.moodShiftEmoji}>{postMoodData.emoji || getMoodEmoji(postMoodData.id)}</Text>
+          <View style={[styles.moodShiftCircle, { borderColor: postQuadrant.colorDark, overflow: 'hidden' }]}>
+            <LinearGradient
+              colors={[postQuadrant.colorLight, postQuadrant.colorPrimary]}
+              start={{ x: 0.2, y: 0 }}
+              end={{ x: 0.8, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
           </View>
         </View>
         <Text style={[styles.moodNarrative, { color: c.textSecondary }]}>
-          {isSameMood
-            ? `You arrived ${preMoodData.label.toLowerCase()} \u2014 and honored that feeling.`
-            : `${preMoodData.label} \u2192 ${postMoodData.label}`}
+          {preMoodData.label} → {postQuadrant.label.toLowerCase()}
         </Text>
       </Animated.View>
     );
   }
 
-  // Pre-mood only \u2014 user skipped post-session check-in
-  if (preMoodData && !postMoodData) {
+  // Pre-mood only — user skipped post-session check-in
+  if (preMoodData) {
     const preColor = FEELING_COLORS[preMoodData.id] || c.textMuted;
 
     return (
@@ -101,26 +104,7 @@ const MoodSection = ({ preMood, postMood, colors: c }) => {
           <Text style={styles.moodShiftEmoji}>{preMoodData.emoji || getMoodEmoji(preMoodData.id)}</Text>
         </View>
         <Text style={[styles.moodNarrative, { color: c.textSecondary, marginTop: 8 }]}>
-          You arrived feeling {preMoodData.label.toLowerCase()} \u2014 and you still showed up.
-        </Text>
-      </Animated.View>
-    );
-  }
-
-  // Post-mood only \u2014 pre-mood wasn't recorded
-  if (!preMoodData && postMoodData) {
-    const postColor = FEELING_COLORS[postMoodData.id] || c.textMuted;
-
-    return (
-      <Animated.View
-        entering={FadeInDown.delay(600).duration(500)}
-        style={styles.moodShiftContainer}
-      >
-        <View style={[styles.moodShiftCircle, { borderColor: postColor, backgroundColor: c.surface, alignSelf: 'center' }]}>
-          <Text style={styles.moodShiftEmoji}>{postMoodData.emoji || getMoodEmoji(postMoodData.id)}</Text>
-        </View>
-        <Text style={[styles.moodNarrative, { color: c.textSecondary, marginTop: 8 }]}>
-          You're leaving feeling {postMoodData.label.toLowerCase()}. That's real.
+          You arrived feeling {preMoodData.label.toLowerCase()} — and you still showed up.
         </Text>
       </Animated.View>
     );
@@ -135,7 +119,7 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
     duration = 0,
     feeling,
     preMood,
-    postMood,
+    postQuadrant,
     reflection,
     focusArea,
   } = route.params || {};
@@ -224,9 +208,9 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
           </Text>
         </Animated.View>
 
-        {/* Mood visualization — shows shift, pre-only, or post-only */}
-        {(preMood || feeling || postMood) && (
-          <MoodSection preMood={preMood || feeling} postMood={postMood} colors={c} />
+        {/* Mood visualization — shows shift or pre-only */}
+        {(preMood || feeling) && (
+          <MoodSection preMood={preMood || feeling} postQuadrant={postQuadrant} colors={c} />
         )}
 
         {/* Reflection display (read-only, from PostMoodReflection) */}
