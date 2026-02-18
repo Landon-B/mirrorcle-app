@@ -53,38 +53,80 @@ const getOrdinal = (n) => {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 };
 
-// --- Mood Shift Visualization ---
-const MoodShiftSection = ({ preMood, postMood, colors: c }) => {
+// --- Mood Visualization ---
+// Handles three scenarios: pre+post shift, pre-only, post-only
+const MoodSection = ({ preMood, postMood, colors: c }) => {
   const preMoodData = typeof preMood === 'string' ? getMoodById(preMood) : preMood;
   const postMoodData = typeof postMood === 'string' ? getMoodById(postMood) : postMood;
 
-  if (!preMoodData || !postMoodData) return null;
+  // Both moods available \u2014 show shift visualization
+  if (preMoodData && postMoodData) {
+    const preColor = FEELING_COLORS[preMoodData.id] || c.textMuted;
+    const postColor = FEELING_COLORS[postMoodData.id] || c.textMuted;
+    const isSameMood = preMoodData.id === postMoodData.id;
 
-  const preColor = FEELING_COLORS[preMoodData.id] || c.textMuted;
-  const postColor = FEELING_COLORS[postMoodData.id] || c.textMuted;
-  const isSameMood = preMoodData.id === postMoodData.id;
+    return (
+      <Animated.View
+        entering={FadeInDown.delay(600).duration(500)}
+        style={styles.moodShiftContainer}
+      >
+        <View style={styles.moodRow}>
+          <View style={[styles.moodShiftCircle, { borderColor: preColor, backgroundColor: c.surface }]}>
+            <Text style={styles.moodShiftEmoji}>{preMoodData.emoji || getMoodEmoji(preMoodData.id)}</Text>
+          </View>
+          <Ionicons name="arrow-forward" size={16} color={c.disabled} />
+          <View style={[styles.moodShiftCircle, { borderColor: postColor, backgroundColor: c.surface }]}>
+            <Text style={styles.moodShiftEmoji}>{postMoodData.emoji || getMoodEmoji(postMoodData.id)}</Text>
+          </View>
+        </View>
+        <Text style={[styles.moodNarrative, { color: c.textSecondary }]}>
+          {isSameMood
+            ? `You arrived ${preMoodData.label.toLowerCase()} \u2014 and honored that feeling.`
+            : `${preMoodData.label} \u2192 ${postMoodData.label}`}
+        </Text>
+      </Animated.View>
+    );
+  }
 
-  return (
-    <Animated.View
-      entering={FadeInDown.delay(600).duration(500)}
-      style={styles.moodShiftContainer}
-    >
-      <View style={styles.moodRow}>
-        <View style={[styles.moodShiftCircle, { borderColor: preColor, backgroundColor: c.surface }]}>
+  // Pre-mood only \u2014 user skipped post-session check-in
+  if (preMoodData && !postMoodData) {
+    const preColor = FEELING_COLORS[preMoodData.id] || c.textMuted;
+
+    return (
+      <Animated.View
+        entering={FadeInDown.delay(600).duration(500)}
+        style={styles.moodShiftContainer}
+      >
+        <View style={[styles.moodShiftCircle, { borderColor: preColor, backgroundColor: c.surface, alignSelf: 'center' }]}>
           <Text style={styles.moodShiftEmoji}>{preMoodData.emoji || getMoodEmoji(preMoodData.id)}</Text>
         </View>
-        <Ionicons name="arrow-forward" size={16} color={c.disabled} />
-        <View style={[styles.moodShiftCircle, { borderColor: postColor, backgroundColor: c.surface }]}>
+        <Text style={[styles.moodNarrative, { color: c.textSecondary, marginTop: 8 }]}>
+          You arrived feeling {preMoodData.label.toLowerCase()} \u2014 and you still showed up.
+        </Text>
+      </Animated.View>
+    );
+  }
+
+  // Post-mood only \u2014 pre-mood wasn't recorded
+  if (!preMoodData && postMoodData) {
+    const postColor = FEELING_COLORS[postMoodData.id] || c.textMuted;
+
+    return (
+      <Animated.View
+        entering={FadeInDown.delay(600).duration(500)}
+        style={styles.moodShiftContainer}
+      >
+        <View style={[styles.moodShiftCircle, { borderColor: postColor, backgroundColor: c.surface, alignSelf: 'center' }]}>
           <Text style={styles.moodShiftEmoji}>{postMoodData.emoji || getMoodEmoji(postMoodData.id)}</Text>
         </View>
-      </View>
-      <Text style={[styles.moodNarrative, { color: c.textSecondary }]}>
-        {isSameMood
-          ? `You arrived ${preMoodData.label.toLowerCase()} \u2014 and honored that feeling.`
-          : `${preMoodData.label} \u2192 ${postMoodData.label}`}
-      </Text>
-    </Animated.View>
-  );
+        <Text style={[styles.moodNarrative, { color: c.textSecondary, marginTop: 8 }]}>
+          You're leaving feeling {postMoodData.label.toLowerCase()}. That's real.
+        </Text>
+      </Animated.View>
+    );
+  }
+
+  return null;
 };
 
 export const SuccessCelebrationScreen = ({ navigation, route }) => {
@@ -182,9 +224,9 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
           </Text>
         </Animated.View>
 
-        {/* Mood shift visualization (from PostMoodReflection data) */}
-        {postMood && (
-          <MoodShiftSection preMood={preMood || feeling} postMood={postMood} colors={c} />
+        {/* Mood visualization — shows shift, pre-only, or post-only */}
+        {(preMood || feeling || postMood) && (
+          <MoodSection preMood={preMood || feeling} postMood={postMood} colors={c} />
         )}
 
         {/* Reflection display (read-only, from PostMoodReflection) */}

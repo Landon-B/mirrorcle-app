@@ -103,15 +103,27 @@ const Bubble = React.memo(({
   const borderRadius = useSharedValue(radius);
   const opacity = useSharedValue(1);
 
-  // Entrance animation — staggered spring
+  // Idle floating — subtle Y oscillation
+  const floatOffset = useSharedValue(0);
+
+  // Entrance animation — staggered spring (runs once on mount)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   React.useEffect(() => {
     scale.value = withDelay(
       index * 60,
       withSpring(1, { damping: 14, stiffness: 120 })
     );
-  }, [index, scale]);
+    floatOffset.value = withDelay(
+      index * 200,
+      withRepeat(
+        withTiming(1, { duration: 2800 + index * 100 }),
+        -1,
+        true,
+      ),
+    );
+  }, []);
 
-  // Selection state changes
+  // Selection state changes — only react to selection props
   React.useEffect(() => {
     if (isSelected) {
       borderRadius.value = withTiming(radius * 0.3, { duration: 200 });
@@ -126,20 +138,8 @@ const Bubble = React.memo(({
       scale.value = withSpring(1, { damping: 14, stiffness: 120 });
       opacity.value = withTiming(1, { duration: 200 });
     }
-  }, [isSelected, hasSelection, radius, borderRadius, scale, opacity]);
-
-  // Idle floating — subtle Y oscillation
-  const floatOffset = useSharedValue(0);
-  React.useEffect(() => {
-    floatOffset.value = withDelay(
-      index * 200,
-      withRepeat(
-        withTiming(1, { duration: 2800 + index * 100 }),
-        -1,
-        true,
-      ),
-    );
-  }, [index, floatOffset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSelected, hasSelection, radius]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [

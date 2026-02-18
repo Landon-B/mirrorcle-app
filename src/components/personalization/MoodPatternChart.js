@@ -117,7 +117,8 @@ const QuadrantBar = ({ label, color, count, maxCount, index }) => {
       100 + index * 80,
       withTiming(percentage, { duration: 500 })
     );
-  }, [percentage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [percentage, index]);
 
   const barStyle = useAnimatedStyle(() => ({
     width: `${barWidth.value * 100}%`,
@@ -152,7 +153,8 @@ const MoodBar = ({ moodId, count, maxCount, index }) => {
       100 + index * 80,
       withTiming(percentage, { duration: 500 })
     );
-  }, [percentage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [percentage, index]);
 
   const barStyle = useAnimatedStyle(() => ({
     width: `${barWidth.value * 100}%`,

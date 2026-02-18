@@ -280,7 +280,7 @@ class SessionService {
         mood_type: moodType,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data;
