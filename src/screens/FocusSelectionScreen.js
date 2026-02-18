@@ -34,10 +34,13 @@ const FOCUS_AFFIRMATIONS = {
   'boundaries': 'Protecting your peace is an act of self-love.',
   'abundance': 'You are already enough. More is on its way.',
   'healing': 'Every breath is a gentle step forward.',
+  'letting-go': 'Release what no longer serves your becoming.',
+  'presence': 'Right here is the only place you need to be.',
+  'forgiveness': 'Forgiveness is a gift you give yourself.',
 };
 
-// Size of each emoji circle
-const CIRCLE_SIZE = 72;
+// Size of each emoji circle (smaller to fit 3 per row)
+const CIRCLE_SIZE = 64;
 const CIRCLE_HIT = CIRCLE_SIZE + 12; // touch target
 
 export const FocusSelectionScreen = ({ navigation }) => {
@@ -92,11 +95,11 @@ export const FocusSelectionScreen = ({ navigation }) => {
     transform: [{ translateY: responseTranslateY.value }],
   }));
 
-  // Layout: 3 rows of 2, with gentle horizontal offsets for organic feel
+  // Layout: 3 rows of 3
   const rows = [
-    [FOCUS_AREAS[0], FOCUS_AREAS[1]],
-    [FOCUS_AREAS[2], FOCUS_AREAS[3]],
-    [FOCUS_AREAS[4], FOCUS_AREAS[5]],
+    [FOCUS_AREAS[0], FOCUS_AREAS[1], FOCUS_AREAS[2]],
+    [FOCUS_AREAS[3], FOCUS_AREAS[4], FOCUS_AREAS[5]],
+    [FOCUS_AREAS[6], FOCUS_AREAS[7], FOCUS_AREAS[8]],
   ];
 
   return (
@@ -231,7 +234,7 @@ const styles = StyleSheet.create({
   constellationRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 28,
+    gap: 22,
   },
   emojiCircle: {
     width: CIRCLE_SIZE,

@@ -4,7 +4,6 @@ import {
   Text,
   Pressable,
   ScrollView,
-  TextInput,
   StyleSheet,
   Share,
 } from 'react-native';
@@ -22,9 +21,8 @@ import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
 import { useHaptics } from '../hooks/useHaptics';
 import { usePersonalization } from '../hooks/usePersonalization';
-import { getMoodById, getMoodEmoji, MOODS, MOOD_FAMILIES, getMoodsForFamily, FEELING_COLORS } from '../constants/feelings';
+import { getMoodById, getMoodEmoji, FEELING_COLORS } from '../constants/feelings';
 import { personalizationService } from '../services/personalization';
-import { sessionService } from '../services/session';
 import { useColors } from '../hooks/useColors';
 
 const THEME_UNLOCK_MAP = {
@@ -58,7 +56,7 @@ const getOrdinal = (n) => {
 // --- Mood Shift Visualization ---
 const MoodShiftSection = ({ preMood, postMood, colors: c }) => {
   const preMoodData = typeof preMood === 'string' ? getMoodById(preMood) : preMood;
-  const postMoodData = postMood;
+  const postMoodData = typeof postMood === 'string' ? getMoodById(postMood) : postMood;
 
   if (!preMoodData || !postMoodData) return null;
 
@@ -68,7 +66,7 @@ const MoodShiftSection = ({ preMood, postMood, colors: c }) => {
 
   return (
     <Animated.View
-      entering={FadeInDown.delay(1000).duration(500)}
+      entering={FadeInDown.delay(600).duration(500)}
       style={styles.moodShiftContainer}
     >
       <View style={styles.moodRow}>
@@ -77,7 +75,7 @@ const MoodShiftSection = ({ preMood, postMood, colors: c }) => {
         </View>
         <Ionicons name="arrow-forward" size={16} color={c.disabled} />
         <View style={[styles.moodShiftCircle, { borderColor: postColor, backgroundColor: c.surface }]}>
-          <Text style={styles.moodShiftEmoji}>{postMoodData.emoji}</Text>
+          <Text style={styles.moodShiftEmoji}>{postMoodData.emoji || getMoodEmoji(postMoodData.id)}</Text>
         </View>
       </View>
       <Text style={[styles.moodNarrative, { color: c.textSecondary }]}>
@@ -95,19 +93,15 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
     duration = 0,
     feeling,
     preMood,
+    postMood,
+    reflection,
     focusArea,
   } = route.params || {};
 
   const { stats, user } = useApp();
-  const { celebrationBurst, selectionTap } = useHaptics();
+  const { celebrationBurst } = useHaptics();
   const { checkNewMilestones } = usePersonalization();
   const c = useColors();
-
-  // Inline mood state (two-layer: family → specific)
-  const [selectedPostFamily, setSelectedPostFamily] = useState(null);
-  const [selectedPostMood, setSelectedPostMood] = useState(null);
-  const [showReflection, setShowReflection] = useState(false);
-  const [reflection, setReflection] = useState('');
 
   // Personalization data
   const [powerPhrase, setPowerPhrase] = useState(null);
@@ -136,33 +130,7 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
     }
   }, []);
 
-  // Family selection (first tap)
-  const handlePostFamilySelect = (familyId) => {
-    selectionTap();
-    setSelectedPostFamily(familyId);
-    setSelectedPostMood(null);
-  };
-
-  // Specific mood selection (second tap)
-  const handlePostMoodSelect = (moodId) => {
-    selectionTap();
-    setSelectedPostMood(moodId);
-
-    // Record mood shift
-    if (user?.id && feeling) {
-      sessionService.recordMoodShift?.(user.id, feeling, moodId)
-        .catch(err => console.log('Failed to record mood shift:', err));
-    }
-  };
-
-  const handleBackToHome = () => {
-    // Save reflection if present
-    if (reflection.trim() && user?.id) {
-      // Best-effort save
-      sessionService.saveReflection?.(user.id, reflection.trim())
-        .catch(() => {});
-    }
-
+  const handleDone = () => {
     // If milestones were earned, show celebration modal first
     if (newMilestones.length > 0) {
       const milestone = newMilestones[0];
@@ -176,12 +144,8 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
       return;
     }
 
-    const parent = navigation.getParent();
-    if (parent) {
-      parent.navigate('HomeTab', { screen: 'Home' });
-    } else {
-      navigation.navigate('HomeTab', { screen: 'Home' });
-    }
+    // Pop back to the affirmation wheel (root of the stack)
+    navigation.popToTop();
   };
 
   const handleShare = async () => {
@@ -195,7 +159,6 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
   };
 
   const streakMessage = getStreakMessage(stats.currentStreak, stats.totalSessions);
-  const postMoodData = selectedPostMood ? MOODS.find(m => m.id === selectedPostMood) : null;
 
   return (
     <View style={[styles.container, { backgroundColor: c.background }]}>
@@ -205,7 +168,6 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
       >
         {/* Lead emotional statement */}
         <Animated.View
@@ -220,102 +182,26 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
           </Text>
         </Animated.View>
 
-        {/* Inline mood selector (two-layer: families → specific) */}
-        <Animated.View
-          entering={FadeInDown.delay(800).duration(500)}
-          style={styles.moodSection}
-        >
-          <Text style={[styles.moodQuestion, { color: c.textSecondary }]}>How do you feel now?</Text>
-
-          {/* Family circles */}
-          <View style={styles.moodEmojiRow}>
-            {MOOD_FAMILIES.map((family) => {
-              const isSelected = selectedPostFamily === family.id;
-              return (
-                <Pressable
-                  key={family.id}
-                  onPress={() => handlePostFamilySelect(family.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${family.label}`}
-                  accessibilityState={{ selected: isSelected }}
-                  style={[
-                    styles.moodEmojiCircle,
-                    { backgroundColor: c.surface },
-                    isSelected && { borderColor: c.accentRust },
-                  ]}
-                >
-                  <Text style={styles.moodEmojiText}>{family.emoji}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          {/* Specific feeling pills (appear after family selection) */}
-          {selectedPostFamily && (
-            <Animated.View entering={FadeInDown.duration(300)} style={styles.moodPillRow}>
-              {getMoodsForFamily(selectedPostFamily).map((mood) => {
-                const isSelected = selectedPostMood === mood.id;
-                return (
-                  <Pressable
-                    key={mood.id}
-                    onPress={() => handlePostMoodSelect(mood.id)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${mood.label} mood`}
-                    accessibilityState={{ selected: isSelected }}
-                    style={[
-                      styles.moodPill,
-                      { backgroundColor: c.surface, borderColor: c.border },
-                      isSelected && { borderColor: c.accentRust, backgroundColor: c.surfaceSecondary },
-                    ]}
-                  >
-                    <Text style={styles.moodPillEmoji}>{mood.emoji}</Text>
-                    <Text style={[
-                      styles.moodPillLabel,
-                      { color: c.textPrimary },
-                      isSelected && { color: c.accentRust },
-                    ]}>
-                      {mood.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </Animated.View>
-          )}
-        </Animated.View>
-
-        {/* Mood shift visualization (appears when mood selected) */}
-        {postMoodData && (
-          <MoodShiftSection preMood={preMood || feeling} postMood={postMoodData} colors={c} />
+        {/* Mood shift visualization (from PostMoodReflection data) */}
+        {postMood && (
+          <MoodShiftSection preMood={preMood || feeling} postMood={postMood} colors={c} />
         )}
 
-        {/* Optional reflection expander */}
-        <Animated.View entering={FadeIn.delay(1200).duration(400)}>
-          {!showReflection ? (
-            <Pressable
-              onPress={() => setShowReflection(true)}
-              style={styles.reflectionTrigger}
-            >
-              <Text style={[styles.reflectionTriggerText, { color: c.accentRust }]}>Add a reflection...</Text>
-            </Pressable>
-          ) : (
-            <View style={[styles.reflectionInputWrapper, { backgroundColor: c.surface }]}>
-              <TextInput
-                style={[styles.reflectionInput, { color: c.textPrimary }]}
-                placeholder="What came up for you?"
-                placeholderTextColor={c.inputPlaceholder}
-                multiline
-                maxLength={500}
-                value={reflection}
-                onChangeText={setReflection}
-                autoFocus
-              />
-            </View>
-          )}
-        </Animated.View>
+        {/* Reflection display (read-only, from PostMoodReflection) */}
+        {reflection ? (
+          <Animated.View
+            entering={FadeIn.delay(800).duration(400)}
+            style={[styles.reflectionDisplay, { backgroundColor: c.surface }]}
+          >
+            <Text style={[styles.reflectionQuote, { color: c.textSecondary }]}>
+              &ldquo;{reflection}&rdquo;
+            </Text>
+          </Animated.View>
+        ) : null}
 
         {/* Session insight card */}
         <Animated.View
-          entering={FadeInUp.delay(1400).duration(600)}
+          entering={FadeInUp.delay(1000).duration(600)}
           style={[styles.insightCard, { backgroundColor: c.surface }]}
         >
           <Text style={[styles.insightText, { color: c.textPrimary }]}>
@@ -345,7 +231,7 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
         {/* Power phrase card */}
         {powerPhrase && (
           <Animated.View
-            entering={FadeInUp.delay(1600).duration(500)}
+            entering={FadeInUp.delay(1200).duration(500)}
             style={styles.personalizationCard}
           >
             <PowerPhraseCard
@@ -359,7 +245,7 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
         {/* Growth nudge card */}
         {growthNudge && (
           <Animated.View
-            entering={FadeInUp.delay(1800).duration(500)}
+            entering={FadeInUp.delay(1400).duration(500)}
             style={styles.personalizationCard}
           >
             <GrowthNudgeCard message={growthNudge.message} />
@@ -369,13 +255,13 @@ export const SuccessCelebrationScreen = ({ navigation, route }) => {
 
       {/* Footer actions */}
       <Animated.View
-        entering={FadeIn.delay(2000).duration(400)}
+        entering={FadeIn.delay(1600).duration(400)}
         style={styles.footer}
       >
         <PrimaryButton
-          title="Back to Home"
-          icon="arrow-forward"
-          onPress={handleBackToHome}
+          title="Done"
+          icon="checkmark"
+          onPress={handleDone}
         />
 
         <Pressable
@@ -425,62 +311,10 @@ const styles = StyleSheet.create({
     lineHeight: 38,
   },
 
-  // --- Inline mood selector ---
-  moodSection: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  moodQuestion: {
-    fontFamily: typography.fontFamily.serifItalic,
-    fontSize: 18,
-    fontStyle: 'italic',
-    marginBottom: 16,
-  },
-  moodEmojiRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  moodEmojiCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    ...shadows.card,
-  },
-  moodEmojiText: {
-    fontSize: 22,
-  },
-  moodPillRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 12,
-  },
-  moodPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderWidth: 1.5,
-  },
-  moodPillEmoji: {
-    fontSize: 16,
-    marginRight: 6,
-  },
-  moodPillLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-
   // --- Mood shift ---
   moodShiftContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   moodRow: {
     flexDirection: 'row',
@@ -506,26 +340,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // --- Reflection ---
-  reflectionTrigger: {
-    alignItems: 'center',
-    paddingVertical: 8,
-    marginBottom: 20,
-  },
-  reflectionTriggerText: {
-    fontSize: 14,
-  },
-  reflectionInputWrapper: {
+  // --- Reflection display ---
+  reflectionDisplay: {
     borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     marginBottom: 20,
     ...shadows.card,
   },
-  reflectionInput: {
-    minHeight: 80,
-    padding: 16,
+  reflectionQuote: {
+    fontFamily: typography.fontFamily.serifItalic,
+    fontStyle: 'italic',
     fontSize: 15,
     lineHeight: 22,
-    textAlignVertical: 'top',
+    textAlign: 'center',
   },
 
   // --- Insight card ---

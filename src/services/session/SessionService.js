@@ -14,7 +14,7 @@ class SessionService {
    * @param {number} sessionData.promptsCompleted - Number of prompts spoken
    * @returns {Promise<Object>}
    */
-  async createSession({ feelingId, durationSeconds = 0, promptsCompleted = 0, timeOfDay = null, focusAreaId = null }) {
+  async createSession({ feelingId, durationSeconds = 0, promptsCompleted = 0, timeOfDay = null, focusAreaId = null, moodIntensity = null }) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
@@ -36,6 +36,7 @@ class SessionService {
         prompts_completed: promptsCompleted,
         time_of_day: timeOfDay,
         focus_area_id: focusAreaId,
+        mood_intensity: moodIntensity,
       })
       .select()
       .single();
@@ -45,7 +46,7 @@ class SessionService {
     // Record mood history (non-blocking — session is already saved)
     if (feelingId) {
       try {
-        await this.recordMood(feelingId, session.id);
+        await this.recordMood(feelingId, session.id, moodIntensity, 'pre');
       } catch (moodError) {
         console.error('Error recording mood for session:', moodError);
       }
@@ -261,9 +262,11 @@ class SessionService {
    * Record a mood entry
    * @param {string} feelingId - Feeling ID
    * @param {string} sessionId - Optional session UUID
+   * @param {number|null} intensity - Mood intensity (1=mild, 2=moderate, 3=strong)
+   * @param {string} moodType - 'pre' or 'post'
    * @returns {Promise<Object>}
    */
-  async recordMood(feelingId, sessionId = null) {
+  async recordMood(feelingId, sessionId = null, intensity = null, moodType = 'pre') {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
@@ -273,12 +276,72 @@ class SessionService {
         user_id: user.id,
         feeling_id: feelingId,
         session_id: sessionId,
+        intensity,
+        mood_type: moodType,
       })
       .select()
       .single();
 
     if (error) throw error;
     return data;
+  }
+
+  /**
+   * Record a post-session mood shift
+   * Updates the session's post_mood_id and records in mood history.
+   * @param {string} sessionId - Session UUID
+   * @param {string} postMoodId - Post-session feeling ID
+   * @param {number|null} intensity - Mood intensity (1=mild, 2=moderate, 3=strong)
+   * @returns {Promise<Object>}
+   */
+  async recordMoodShift(sessionId, postMoodId, intensity = null) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Update the session's post-mood columns
+    const { data, error } = await supabase
+      .from('user_sessions')
+      .update({
+        post_mood_id: postMoodId,
+        post_mood_intensity: intensity,
+      })
+      .eq('id', sessionId)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Also record in mood history for journey/trend tracking
+    try {
+      await this.recordMood(postMoodId, sessionId, intensity, 'post');
+    } catch (moodError) {
+      console.error('Error recording post-session mood history:', moodError);
+    }
+
+    return this._transformSession(data);
+  }
+
+  /**
+   * Save a session reflection
+   * @param {string} sessionId - Session UUID
+   * @param {string} text - Reflection text
+   * @returns {Promise<Object>}
+   */
+  async saveReflection(sessionId, text) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase
+      .from('user_sessions')
+      .update({ reflection_text: text })
+      .eq('id', sessionId)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return this._transformSession(data);
   }
 
   /**
@@ -481,10 +544,14 @@ class SessionService {
       id: row.id,
       userId: row.user_id,
       feelingId: row.feeling_id,
+      postMoodId: row.post_mood_id,
       durationSeconds: row.duration_seconds,
       promptsCompleted: row.prompts_completed,
       timeOfDay: row.time_of_day,
       focusAreaId: row.focus_area_id,
+      moodIntensity: row.mood_intensity,
+      postMoodIntensity: row.post_mood_intensity,
+      reflectionText: row.reflection_text,
       createdAt: row.created_at,
     };
   }

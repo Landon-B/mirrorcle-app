@@ -173,7 +173,7 @@ class JourneyService {
     // Mood shift patterns: count negative-to-positive transitions
     // (using session pre/post moods)
     const positiveMoods = new Set(['calm', 'confident', 'energized', 'grateful', 'content', 'hopeful']);
-    const negativeMoods = new Set(['anxious', 'sad', 'overwhelmed', 'lonely', 'vulnerable', 'frustrated']);
+    const negativeMoods = new Set(['anxious', 'sad', 'overwhelmed', 'lonely', 'vulnerable', 'frustrated', 'ashamed', 'numb', 'disconnected', 'drained']);
     let moodShiftCount = 0;
     // Pair moods by session_id (pre and post)
     const moodsBySession = {};
@@ -268,8 +268,8 @@ class JourneyService {
     }
 
     // Check for mood patterns
-    const anxiousCount = moodIds.filter(m => m === 'anxious' || m === 'overwhelmed' || m === 'frustrated').length;
-    const calmCount = moodIds.filter(m => m === 'calm' || m === 'confident' || m === 'content' || m === 'grateful').length;
+    const anxiousCount = moodIds.filter(m => m === 'anxious' || m === 'overwhelmed' || m === 'frustrated' || m === 'ashamed' || m === 'numb' || m === 'disconnected' || m === 'drained').length;
+    const calmCount = moodIds.filter(m => m === 'calm' || m === 'confident' || m === 'content' || m === 'grateful' || m === 'hopeful').length;
 
     if (calmCount > anxiousCount && calmCount >= 3) {
       return 'You started discovering your calm.';

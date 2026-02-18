@@ -1,4 +1,5 @@
 import { supabase } from '../../config/supabase';
+import { getMoodLabel } from '../../constants/feelings';
 
 const MILESTONE_DEFINITIONS = {
   first_session: { title: 'First Steps', description: 'Completed your first mirror session' },
@@ -326,7 +327,7 @@ class PersonalizationService {
     if (isNewFeeling && moods.length > 3) {
       return {
         type: 'new_feeling',
-        message: `First time choosing "${recentFeeling}" — it takes courage to sit with something new.`,
+        message: `First time choosing "${getMoodLabel(recentFeeling)}" \u2014 it takes courage to sit with something new.`,
       };
     }
 

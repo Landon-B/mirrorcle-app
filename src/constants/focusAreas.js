@@ -1,10 +1,13 @@
 export const FOCUS_AREAS = [
-  { id: 'self-worth', label: 'Self-Worth', emoji: '\u2B50', tagName: 'self-worth' },
-  { id: 'confidence', label: 'Confidence', emoji: '\uD83D\uDC86', tagName: 'resilience' },
-  { id: 'love', label: 'Love', emoji: '\u2764\uFE0F', tagName: 'gratitude' },
-  { id: 'boundaries', label: 'Boundaries', emoji: '\uD83D\uDED1', tagName: 'validation' },
-  { id: 'abundance', label: 'Abundance', emoji: '\uD83D\uDCB0', tagName: 'joy' },
-  { id: 'healing', label: 'Healing', emoji: '\uD83C\uDF31', tagName: 'comfort' },
+  { id: 'self-worth',  label: 'Self-Worth',  emoji: '\uD83D\uDC9B',      tagName: 'self-worth' },   // 💛
+  { id: 'confidence',  label: 'Confidence',  emoji: '\uD83E\uDD81',      tagName: 'resilience' },   // 🦁
+  { id: 'love',        label: 'Love',        emoji: '\uD83E\uDEC2',      tagName: 'gratitude' },    // 🫂
+  { id: 'boundaries',  label: 'Boundaries',  emoji: '\uD83E\uDEB7',      tagName: 'validation' },   // 🪷
+  { id: 'abundance',   label: 'Abundance',   emoji: '\uD83C\uDF3B',      tagName: 'joy' },          // 🌻
+  { id: 'healing',     label: 'Healing',     emoji: '\uD83C\uDF31',      tagName: 'comfort' },      // 🌱
+  { id: 'letting-go',  label: 'Letting Go',  emoji: '\uD83C\uDF42',      tagName: 'peace' },        // 🍂
+  { id: 'presence',    label: 'Presence',    emoji: '\uD83E\uDEE7',      tagName: 'peace' },        // 🫧
+  { id: 'forgiveness', label: 'Forgiveness', emoji: '\uD83D\uDD4A\uFE0F', tagName: 'comfort' },     // 🕊️
 ];
 
 export const getFocusAreaById = (id) => FOCUS_AREAS.find(f => f.id === id);

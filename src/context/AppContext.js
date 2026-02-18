@@ -242,6 +242,7 @@ export const AppProvider = ({ children }) => {
           promptsCompleted: sessionData.completedPrompts || 0,
           timeOfDay: sessionData.timeOfDay || null,
           focusAreaId: sessionData.focusAreaId || null,
+          moodIntensity: sessionData.moodIntensity || null,
         });
 
         const transformedSession = {

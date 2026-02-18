@@ -591,22 +591,27 @@ export const CameraSessionScreen = ({ navigation, route }) => {
     }
     const count = completedCountRef.current;
     const duration = getSessionDuration();
+    let sessionId = null;
     try {
-      await recordSession({
+      const session = await recordSession({
         feeling,
         completedPrompts: count,
         duration,
         timeOfDay,
         focusAreaId: route.params?.focusArea?.id || null,
+        moodIntensity: route.params?.intensity || null,
       });
+      sessionId = session?.id || null;
     } catch (e) {
       console.log('Failed to record session:', e);
     }
-    navigation.replace('SuccessCelebration', {
+    navigation.replace('PostMoodReflection', {
+      sessionId,
       completedPrompts: count,
       duration,
       feeling,
       preMood: feeling,
+      preIntensity: route.params?.intensity || null,
       focusArea: route.params?.focusArea,
     });
   };
@@ -617,22 +622,27 @@ export const CameraSessionScreen = ({ navigation, route }) => {
     }
     const count = completedCountRef.current;
     const duration = getSessionDuration();
+    let sessionId = null;
     try {
-      await recordSession({
+      const session = await recordSession({
         feeling,
         completedPrompts: count,
         duration,
         timeOfDay,
         focusAreaId: route.params?.focusArea?.id || null,
+        moodIntensity: route.params?.intensity || null,
       });
+      sessionId = session?.id || null;
     } catch (e) {
       console.log('Failed to record session:', e);
     }
-    navigation.replace('SuccessCelebration', {
+    navigation.replace('PostMoodReflection', {
+      sessionId,
       completedPrompts: count,
       duration,
       feeling,
       preMood: feeling,
+      preIntensity: route.params?.intensity || null,
       focusArea: route.params?.focusArea,
     });
   };
