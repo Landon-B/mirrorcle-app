@@ -21,6 +21,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useApp } from '../context/AppContext';
 import { usePaywall } from '../hooks/usePaywall';
 import { useColors } from '../hooks/useColors';
+import { useCheckIn } from '../hooks/useCheckIn';
 import { getCardColors } from '../constants/cardPalette';
 import { typography } from '../styles/typography';
 
@@ -45,6 +46,7 @@ export const AffirmationHomeScreen = ({ navigation }) => {
   const { isPro, preferences, updatePreferences } = useApp();
   const { openPaywall } = usePaywall();
   const c = useColors();
+  const { sessionEntryType } = useCheckIn();
 
   // Shared values for gesture-driven animations
   const translateY = useSharedValue(0);
@@ -309,10 +311,17 @@ export const AffirmationHomeScreen = ({ navigation }) => {
               try {
                 const todaysFocus = await focusService.getTodaysFocus();
                 if (todaysFocus) {
-                  navigation.navigate('MoodCheckIn', {
-                    mode: 'pre-session',
-                    focusArea: todaysFocus,
-                  });
+                  // Smart routing: full check-in first-of-day, quick otherwise
+                  if (sessionEntryType === 'full') {
+                    navigation.navigate('MoodCheckIn', {
+                      mode: 'pre-session',
+                      focusArea: todaysFocus,
+                    });
+                  } else {
+                    navigation.navigate('QuickMoodPicker', {
+                      focusArea: todaysFocus,
+                    });
+                  }
                 } else {
                   navigation.navigate('FocusSelection');
                 }

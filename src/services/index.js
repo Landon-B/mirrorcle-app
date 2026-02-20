@@ -14,3 +14,4 @@ export { widgetDataService } from './widget';
 export { focusService } from './focus';
 export { journeyService } from './journey';
 export { trialService } from './trial';
+export { checkInService } from './checkin';

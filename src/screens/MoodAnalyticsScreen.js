@@ -6,6 +6,8 @@ import {
   Pressable,
   StyleSheet,
   ActivityIndicator,
+  Platform,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,17 +15,151 @@ import { useApp } from '../context/AppContext';
 import { ScreenHeader, Card, PrimaryButton } from '../components/common';
 import { MoodPatternChart } from '../components/personalization/MoodPatternChart';
 import { sessionService } from '../services/session';
-import { getMoodLabel, getFeelingColor } from '../constants/feelings';
+import { checkInService } from '../services/checkin';
+import { getMoodLabel, getFeelingColor, QUADRANTS } from '../constants/feelings';
 import { useColors } from '../hooks/useColors';
 import { typography } from '../styles/typography';
 import { shadows } from '../styles/spacing';
 import { usePaywall } from '../hooks/usePaywall';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const SERIF_ITALIC = Platform.OS === 'ios' ? 'Georgia-Italic' : 'serif';
 
 const TIME_RANGES = [
   { key: 'week', label: 'Week', days: 7 },
   { key: 'month', label: 'Month', days: 30 },
   { key: '3months', label: '3 Months', days: 90 },
 ];
+
+// --- Mood Trajectory Component ---
+const MoodTrajectoryChart = ({ data, c }) => {
+  if (!data || data.length < 2) return null;
+
+  const barHeight = 24;
+  const barGap = 6;
+  const maxWidth = SCREEN_WIDTH - 100; // Account for labels + padding
+
+  // Quadrant colors matching QUADRANTS constant
+  const quadrantColors = {
+    bright: QUADRANTS.find(q => q.id === 'bright')?.colorPrimary || '#D4956E',
+    charged: QUADRANTS.find(q => q.id === 'charged')?.colorPrimary || '#C17666',
+    tender: QUADRANTS.find(q => q.id === 'tender')?.colorPrimary || '#8DAA82',
+    deep: QUADRANTS.find(q => q.id === 'deep')?.colorPrimary || '#8898B0',
+  };
+
+  return (
+    <View style={trajectoryStyles.container}>
+      {data.map((week, index) => {
+        if (week.total === 0) return null;
+        const weekLabel = index === data.length - 1
+          ? 'Now'
+          : `${data.length - 1 - index}w`;
+
+        return (
+          <View key={week.week} style={trajectoryStyles.row}>
+            <Text style={[trajectoryStyles.weekLabel, { color: c.textMuted }]}>
+              {weekLabel}
+            </Text>
+            <View style={[trajectoryStyles.barContainer, { height: barHeight }]}>
+              {/* Stacked bar: bright + tender (positive) | charged + deep (negative) */}
+              {week.brightPct > 0 && (
+                <View style={[trajectoryStyles.segment, {
+                  width: `${week.brightPct}%`,
+                  backgroundColor: quadrantColors.bright,
+                  borderTopLeftRadius: 4,
+                  borderBottomLeftRadius: 4,
+                }]} />
+              )}
+              {week.tenderPct > 0 && (
+                <View style={[trajectoryStyles.segment, {
+                  width: `${week.tenderPct}%`,
+                  backgroundColor: quadrantColors.tender,
+                }]} />
+              )}
+              {week.chargedPct > 0 && (
+                <View style={[trajectoryStyles.segment, {
+                  width: `${week.chargedPct}%`,
+                  backgroundColor: quadrantColors.charged,
+                }]} />
+              )}
+              {week.deepPct > 0 && (
+                <View style={[trajectoryStyles.segment, {
+                  width: `${week.deepPct}%`,
+                  backgroundColor: quadrantColors.deep,
+                  borderTopRightRadius: 4,
+                  borderBottomRightRadius: 4,
+                }]} />
+              )}
+            </View>
+          </View>
+        );
+      })}
+
+      {/* Legend */}
+      <View style={trajectoryStyles.legend}>
+        {[
+          { id: 'bright', label: 'Bright' },
+          { id: 'tender', label: 'Tender' },
+          { id: 'charged', label: 'Charged' },
+          { id: 'deep', label: 'Deep' },
+        ].map(q => (
+          <View key={q.id} style={trajectoryStyles.legendItem}>
+            <View style={[trajectoryStyles.legendDot, { backgroundColor: quadrantColors[q.id] }]} />
+            <Text style={[trajectoryStyles.legendText, { color: c.textMuted }]}>{q.label}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+const trajectoryStyles = StyleSheet.create({
+  container: {
+    marginTop: 8,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 8,
+  },
+  weekLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    width: 28,
+    textAlign: 'right',
+  },
+  barContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    borderRadius: 4,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(0,0,0,0.03)',
+  },
+  segment: {
+    height: '100%',
+  },
+  legend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    marginTop: 14,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendText: {
+    fontSize: 10,
+    fontWeight: '500',
+  },
+});
 
 export const MoodAnalyticsScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -33,6 +169,7 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
   const [activeRange, setActiveRange] = useState('month');
   const [moodData, setMoodData] = useState(null);
   const [sessions, setSessions] = useState([]);
+  const [trajectoryData, setTrajectoryData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,13 +185,17 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
       start.setDate(start.getDate() - range.days);
       const end = new Date();
 
-      const [sessionsData, trendsData] = await Promise.all([
+      const weeksForTrajectory = Math.ceil(range.days / 7);
+
+      const [sessionsData, trendsData, trajData] = await Promise.all([
         sessionService.getSessionsInRange(start, end),
         sessionService.getMoodTrends(start, end),
+        checkInService.computeQuadrantTrajectory(weeksForTrajectory),
       ]);
 
       setSessions(sessionsData || []);
       setMoodData(trendsData || []);
+      setTrajectoryData(trajData || []);
     } catch (error) {
       console.error('Error loading mood data:', error);
     } finally {
@@ -151,6 +292,19 @@ export const MoodAnalyticsScreen = ({ navigation }) => {
             </View>
           ) : (
             <>
+              {/* Mood Trajectory — shows quadrant shift over time */}
+              {trajectoryData.length >= 2 && (
+                <View style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>Your Emotional Landscape</Text>
+                  <Text style={[styles.trajectorySubtitle, { color: c.textSecondary }]}>
+                    How your emotional landscape is shifting
+                  </Text>
+                  <Card style={styles.chartCard}>
+                    <MoodTrajectoryChart data={trajectoryData} c={c} />
+                  </Card>
+                </View>
+              )}
+
               {/* Mood Distribution */}
               <View style={styles.section}>
                 <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>How You've Been Feeling</Text>
@@ -256,6 +410,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
+    marginBottom: 12,
+  },
+  trajectorySubtitle: {
+    fontFamily: SERIF_ITALIC,
+    fontStyle: 'italic',
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: -8,
     marginBottom: 12,
   },
   chartCard: {

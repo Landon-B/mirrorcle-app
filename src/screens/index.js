@@ -22,6 +22,7 @@ export { AffirmationHomeScreen } from './AffirmationHomeScreen';
 export { FocusSelectionScreen } from './FocusSelectionScreen';
 export { MoodCheckInScreen } from './MoodCheckInScreen';
 export { CameraSessionScreen } from './CameraSessionScreen';
+export { QuickMoodPickerScreen } from './QuickMoodPickerScreen';
 export { PostMoodReflectionScreen } from './PostMoodReflectionScreen';
 export { SuccessCelebrationScreen } from './SuccessCelebrationScreen';
 

@@ -21,6 +21,7 @@ import { ScreenHeader, PrimaryButton } from '../components/common';
 import { typography } from '../styles/typography';
 import { useHaptics } from '../hooks/useHaptics';
 import { useColors } from '../hooks/useColors';
+import { useCheckIn } from '../hooks/useCheckIn';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -48,6 +49,7 @@ export const FocusSelectionScreen = ({ navigation }) => {
   const { isPro, checkAccess, PaywallComponent } = useFeatureGate();
   const { selectionTap, successPulse } = useHaptics();
   const c = useColors();
+  const { sessionEntryType } = useCheckIn();
 
   // Animated affirmation + label response
   const responseOpacity = useSharedValue(0);
@@ -61,10 +63,18 @@ export const FocusSelectionScreen = ({ navigation }) => {
     // Persist today's focus (fire-and-forget)
     focusService.setTodaysFocus(focusArea.id).catch(console.error);
 
-    navigation.navigate('MoodCheckIn', {
-      mode: 'pre-session',
-      focusArea,
-    });
+    // Smart routing: full mood check-in on first-of-day / after break,
+    // quick quadrant-only picker for repeat sessions
+    if (sessionEntryType === 'full') {
+      navigation.navigate('MoodCheckIn', {
+        mode: 'pre-session',
+        focusArea,
+      });
+    } else {
+      navigation.navigate('QuickMoodPicker', {
+        focusArea,
+      });
+    }
   };
 
   const handleSelectArea = (id) => {

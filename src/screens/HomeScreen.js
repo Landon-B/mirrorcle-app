@@ -22,6 +22,8 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useHaptics } from '../hooks/useHaptics';
 import { usePaywall } from '../hooks/usePaywall';
 import { useColors, useGradients } from '../hooks/useColors';
+import { useCheckIn } from '../hooks/useCheckIn';
+import { MoodCheckInCard } from '../components/home/MoodCheckInCard';
 import { MOOD_FAMILIES } from '../constants/feelings';
 import { FOCUS_AREAS } from '../constants/focusAreas';
 import { formatRelativeDate } from '../utils/dateUtils';
@@ -198,6 +200,7 @@ const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions,
   const { isFavorite, toggleFavorite } = useFavorites();
   const { successPulse } = useHaptics();
   const { openPaywall } = usePaywall();
+  const { checkInType, checkInReason, checkinStreak, recordCheckIn } = useCheckIn();
 
   const {
     greetingName,
@@ -224,11 +227,14 @@ const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions,
 
   const isReturning = stats.currentStreak === 0 && stats.totalSessions > 0;
 
-  // Dynamic stagger base — accounts for optional trial card
+  // Dynamic stagger base — accounts for optional check-in card + trial card
+  const hasCheckInCard = checkInType !== 'none';
   const hasTrialCard = trialStatus.isInTrial && dayContent;
-  const resonanceDelay = hasTrialCard ? 600 : 400;
-  const intentionDelay = hasTrialCard ? 800 : 600;
-  const ctaDelay = hasTrialCard ? 1000 : 800;
+  const baseDelay = hasCheckInCard ? 400 : 200;
+  const trialOffset = hasTrialCard ? 200 : 0;
+  const resonanceDelay = baseDelay + 200 + trialOffset;
+  const intentionDelay = baseDelay + 400 + trialOffset;
+  const ctaDelay = baseDelay + 600 + trialOffset;
 
   return (
     <>
@@ -247,8 +253,20 @@ const ReturningUserDashboard = ({ navigation, emotionalContext, stats, sessions,
         <Text style={[styles.emotionalSubtitle, { color: c.textSecondary }]}>{greeting}</Text>
       </Animated.View>
 
+      {/* Mood Check-In Card — standalone daily check-in (above Rhythm) */}
+      {checkInType !== 'none' && (
+        <Animated.View entering={FadeInUp.delay(200).duration(500)}>
+          <MoodCheckInCard
+            reason={checkInReason}
+            checkinStreak={checkinStreak}
+            onCheckIn={recordCheckIn}
+            c={c}
+          />
+        </Animated.View>
+      )}
+
       {/* Rhythm Card — Narrative-First with warm gradient wash */}
-      <Animated.View entering={FadeInUp.delay(200).duration(500)}>
+      <Animated.View entering={FadeInUp.delay(checkInType !== 'none' ? 400 : 200).duration(500)}>
         {isReturning ? (
           <View style={[styles.momentumCardOuter, { backgroundColor: c.surface, shadowColor: c.cardShadow }]}>
             <LinearGradient

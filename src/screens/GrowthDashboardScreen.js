@@ -1,14 +1,17 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { usePersonalization } from '../hooks/usePersonalization';
+import { useCheckIn } from '../hooks/useCheckIn';
 import { useColors } from '../hooks/useColors';
 import { Card } from '../components/common';
 import { MilestoneProgressCard } from '../components/personalization/MilestoneProgressCard';
 import { personalizationService } from '../services/personalization';
 import { quotesService } from '../services/quotes';
+
+const SERIF_ITALIC = Platform.OS === 'ios' ? 'Georgia-Italic' : 'serif';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -256,6 +259,251 @@ const chartStyles = StyleSheet.create({
   },
 });
 
+// --- Emotional Baseline Chart ---
+const BaselineChart = ({ weeks, c }) => {
+  const chartHeight = 100;
+  const chartWidth = SCREEN_WIDTH - 80; // Account for padding
+
+  if (!weeks || weeks.length < 2) return null;
+
+  const maxValence = 100;
+  const points = weeks.map((w, i) => ({
+    x: (i / (weeks.length - 1)) * chartWidth,
+    y: chartHeight - (w.valence / maxValence) * chartHeight,
+    valence: w.valence,
+    week: w.week,
+  }));
+
+  // Simple SVG-less line chart using View positioning
+  return (
+    <View style={baselineStyles.chartContainer}>
+      <View style={[baselineStyles.chartArea, { height: chartHeight }]}>
+        {/* Horizontal guide lines */}
+        <View style={[baselineStyles.guideLine, { top: 0 }]} />
+        <View style={[baselineStyles.guideLine, { top: chartHeight * 0.5 }]} />
+        <View style={[baselineStyles.guideLine, { bottom: 0 }]} />
+
+        {/* Data points */}
+        {points.map((point, i) => {
+          const isLast = i === points.length - 1;
+          return (
+            <View
+              key={i}
+              style={[
+                baselineStyles.dataPoint,
+                {
+                  left: point.x - 4,
+                  top: point.y - 4,
+                  backgroundColor: isLast ? c.accentRust : c.accentPeach,
+                  width: isLast ? 10 : 8,
+                  height: isLast ? 10 : 8,
+                  borderRadius: isLast ? 5 : 4,
+                },
+                isLast && { shadowColor: c.accentRust, shadowOpacity: 0.4, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 4 },
+              ]}
+            />
+          );
+        })}
+
+        {/* Connect points with lines (approximated with thin Views) */}
+        {points.map((point, i) => {
+          if (i === 0) return null;
+          const prev = points[i - 1];
+          const dx = point.x - prev.x;
+          const dy = point.y - prev.y;
+          const length = Math.sqrt(dx * dx + dy * dy);
+          const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+          return (
+            <View
+              key={`line-${i}`}
+              style={{
+                position: 'absolute',
+                left: prev.x,
+                top: prev.y,
+                width: length,
+                height: 2,
+                backgroundColor: c.accentPeach,
+                opacity: 0.6,
+                transform: [{ rotate: `${angle}deg` }],
+                transformOrigin: 'left center',
+              }}
+            />
+          );
+        })}
+      </View>
+
+      {/* X-axis labels (show first, middle, last) */}
+      <View style={baselineStyles.xAxisLabels}>
+        <Text style={[baselineStyles.xLabel, { color: c.textMuted }]}>
+          {weeks.length > 0 ? `${weeks.length}w ago` : ''}
+        </Text>
+        <Text style={[baselineStyles.xLabel, { color: c.textMuted }]}>
+          {weeks.length > 2 ? `${Math.floor(weeks.length / 2)}w ago` : ''}
+        </Text>
+        <Text style={[baselineStyles.xLabel, { color: c.accentRust, fontWeight: '600' }]}>
+          This week
+        </Text>
+      </View>
+    </View>
+  );
+};
+
+const EmotionalBaselineCard = ({ c }) => {
+  const { baseline, baselineLoading, loadBaseline } = useCheckIn();
+
+  useEffect(() => {
+    loadBaseline();
+  }, [loadBaseline]);
+
+  if (baselineLoading && !baseline) return null;
+  if (!baseline) return null;
+
+  // Determine narrative copy
+  let narrativeCopy = 'Check in daily to see your emotional baseline emerge.';
+  let trendIcon = 'analytics-outline';
+  let trendColor = c.textSecondary;
+
+  if (baseline.hasEnoughData) {
+    if (baseline.monthTrend === 'rising') {
+      narrativeCopy = `Your emotional baseline is rising. +${baseline.monthDelta}% vs last month.`;
+      trendIcon = 'trending-up';
+      trendColor = c.accentRust;
+    } else if (baseline.monthTrend === 'dipping') {
+      narrativeCopy = "Your baseline dipped this week. That's okay \u2014 showing up is what matters.";
+      trendIcon = 'trending-down';
+      trendColor = c.textSecondary;
+    } else {
+      narrativeCopy = 'Your baseline is steady. Consistency is its own kind of growth.';
+      trendIcon = 'remove-outline';
+      trendColor = c.accentRust;
+    }
+  }
+
+  return (
+    <Card style={baselineStyles.card}>
+      <View style={baselineStyles.header}>
+        <View style={[baselineStyles.iconCircle, { backgroundColor: c.surfaceSecondary }]}>
+          <Ionicons name="heart-half" size={18} color={c.accentRust} />
+        </View>
+        <View style={baselineStyles.headerText}>
+          <Text style={[baselineStyles.title, { color: c.textPrimary }]}>Emotional Baseline</Text>
+          {baseline.hasEnoughData && baseline.current && (
+            <View style={baselineStyles.trendRow}>
+              <Ionicons name={trendIcon} size={14} color={trendColor} />
+              <Text style={[baselineStyles.trendText, { color: trendColor }]}>
+                {baseline.current.valence}% positive this week
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      {/* Narrative */}
+      <Text style={[baselineStyles.narrative, { color: c.textSecondary }]}>
+        {narrativeCopy}
+      </Text>
+
+      {/* Chart */}
+      {baseline.hasEnoughData && baseline.weeks.length >= 2 && (
+        <BaselineChart weeks={baseline.weeks} c={c} />
+      )}
+
+      {/* Not enough data prompt */}
+      {!baseline.hasEnoughData && (
+        <View style={baselineStyles.emptyState}>
+          <Ionicons name="pulse-outline" size={24} color={c.accentPeach} />
+          <Text style={[baselineStyles.emptyText, { color: c.textMuted }]}>
+            {baseline.totalDataPoints > 0
+              ? `${baseline.totalDataPoints} mood entries so far. A few more days and your baseline will appear.`
+              : 'Your baseline chart will appear after a few days of mood check-ins.'}
+          </Text>
+        </View>
+      )}
+    </Card>
+  );
+};
+
+const baselineStyles = StyleSheet.create({
+  card: {
+    marginBottom: 20,
+    padding: 18,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 10,
+  },
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  trendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  trendText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  narrative: {
+    fontFamily: SERIF_ITALIC,
+    fontStyle: 'italic',
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  chartContainer: {
+    marginTop: 4,
+  },
+  chartArea: {
+    position: 'relative',
+    marginHorizontal: 4,
+  },
+  guideLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.04)',
+  },
+  dataPoint: {
+    position: 'absolute',
+  },
+  xAxisLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  xLabel: {
+    fontSize: 10,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    gap: 8,
+  },
+  emptyText: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: 12,
+  },
+});
+
 export const GrowthDashboardScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const { stats, sessions, user, isPro } = useApp();
@@ -345,6 +593,9 @@ export const GrowthDashboardScreen = ({ navigation }) => {
             </View>
           </View>
         </View>
+
+        {/* Emotional Baseline — hero card */}
+        <EmotionalBaselineCard c={c} />
 
         {/* Time Range Tabs */}
         <View style={[styles.tabRow, { backgroundColor: c.surfaceTertiary }]}>

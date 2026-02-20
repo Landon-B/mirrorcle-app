@@ -2,6 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ Reminders
+- **Apple OAuth secret expires August 18, 2026** — Regenerate with `node scripts/generate-apple-secret.js /path/to/AuthKey_C7F7BPSSW8.p8` and update in Supabase.
+
 ## Build & Run Commands
 
 ```bash
